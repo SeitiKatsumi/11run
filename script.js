@@ -639,7 +639,7 @@ async function loadAppVersion() {
   if (!versionTarget) return;
   try {
     const health = await api("/api/health");
-    const rawVersion = String(health.version || APP_VERSION_FALLBACK);
+    const rawVersion = String(health.version || APP_VERSION_FALLBACK).trim();
     const version = rawVersion.length > 12 ? rawVersion.slice(0, 12) : rawVersion;
     versionTarget.textContent = `deploy ${version}`;
   } catch {
