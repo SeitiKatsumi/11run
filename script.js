@@ -92,7 +92,9 @@ const dialog = document.querySelector("#activityDialog");
 const detail = document.querySelector("#activityDetail");
 
 async function api(path, options = {}) {
-  const athleteHeaders = state.selectedAthleteId ? { "X-Athlete-Id": state.selectedAthleteId } : {};
+  const scopedPaths = ["/api/integrations", "/api/activities", "/api/sync", "/api/strava/auth"];
+  const shouldScopeAthlete = scopedPaths.some((prefix) => path.startsWith(prefix));
+  const athleteHeaders = shouldScopeAthlete && state.selectedAthleteId ? { "X-Athlete-Id": state.selectedAthleteId } : {};
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json", ...athleteHeaders, ...(options.headers || {}) },
     ...options
@@ -388,23 +390,6 @@ function syncSelectedAthlete() {
   else localStorage.removeItem("selectedAthleteId");
 }
 
-function ensureCurrentUserAthleteFallback() {
-  if (!state.currentUser || state.athletes.length || state.currentUser.role !== "admin") return;
-  state.athletes = [{
-    id: state.currentUser.id,
-    tenantId: state.currentUser.tenantId,
-    role: state.currentUser.role,
-    name: state.currentUser.name,
-    email: state.currentUser.email,
-    whatsapp: state.currentUser.whatsapp || "",
-    teamName: "",
-    coachName: "",
-    age: "",
-    weightKg: "",
-    heightCm: ""
-  }];
-}
-
 function renderAthleteSelector() {
   const selector = document.querySelector("#athleteSelector");
   if (!selector) return;
@@ -537,28 +522,23 @@ async function boot() {
       return;
     }
     showApp();
-    try {
-      state.athletes = await api("/api/athletes");
-    } catch (error) {
-      state.athletes = [];
-      setLog([`Erro ao carregar atletas: ${error.message}`], true);
-    }
-    ensureCurrentUserAthleteFallback();
+    state.athletes = await api("/api/athletes");
     syncSelectedAthlete();
-    try {
-      state.integrations = await api("/api/integrations");
-    } catch (error) {
-      state.integrations = {};
-      setLog([`Erro ao carregar integrações: ${error.message}`], true);
-    }
-    try {
-      state.activities = await api("/api/activities");
-    } catch (error) {
-      state.activities = [];
-      setLog([`Erro ao carregar atividades: ${error.message}`], true);
-    }
+    state.integrations = await api("/api/integrations");
+    state.activities = await api("/api/activities");
   } catch (error) {
-    showLogin(error.message === "Login obrigatório." ? "" : error.message);
+    if (error.message === "Login obrigatório.") showLogin();
+    else {
+      showApp();
+      renderProviders();
+      renderAthletes();
+      renderAthleteSelector();
+      renderAthleteIdentity();
+      renderCalendar();
+      renderHeroMetrics();
+      renderTrainingInsights();
+      setLog([`Erro ao carregar dados do banco: ${error.message}`], true);
+    }
     return;
   }
 

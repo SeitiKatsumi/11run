@@ -458,16 +458,17 @@ function formatAthlete(row) {
 
 function formatUser(row) {
   if (!row) return null;
+  const role = String(row.email || "").toLowerCase() === DEFAULT_ADMIN_EMAIL ? "admin" : row.role;
   return {
     id: row.id,
     tenantId: row.tenant_id,
-    role: row.role,
+    role,
     roleLabel: {
       admin: "Super admin",
       manager: "Equipe",
       coach: "Treinador",
       athlete: "Atleta"
-    }[row.role] || row.role,
+    }[role] || role,
     name: row.name,
     email: row.email,
     whatsapp: row.whatsapp || ""
@@ -493,7 +494,16 @@ async function getSessionUser(req, tenantId) {
 
 async function ensureUserAthleteProfile(tenantId, user) {
   if (!pool || !user) return;
-  if (user.role !== "admin" && user.role !== "athlete") return;
+  if (String(user.email || "").toLowerCase() === DEFAULT_ADMIN_EMAIL) {
+    await query(
+      `UPDATE users
+          SET role = 'admin',
+              name = COALESCE(NULLIF(name, ''), 'Seiti Katsumi')
+        WHERE id = $1`,
+      [user.id]
+    );
+  }
+  if (user.role !== "admin" && user.role !== "athlete" && String(user.email || "").toLowerCase() !== DEFAULT_ADMIN_EMAIL) return;
   await query(
     `INSERT INTO athlete_profiles (user_id)
      VALUES ($1)
@@ -515,17 +525,18 @@ async function createSession(tenantId, userId) {
 
 async function listAthletes(tenantId, user = null) {
   if (!pool) return readJson(ATHLETES_FILE, []);
+  const isAdmin = user?.role === "admin" || String(user?.email || "").toLowerCase() === DEFAULT_ADMIN_EMAIL;
   const filters = ["u.tenant_id = $1", "ap.user_id IS NOT NULL"];
   const params = [tenantId];
-  if (user?.role === "athlete") {
+  if (!isAdmin && user?.role === "athlete") {
     params.push(user.id);
     filters.push(`u.id = $${params.length}`);
   }
-  if (user?.role === "coach") {
+  if (!isAdmin && user?.role === "coach") {
     params.push(user.id);
     filters.push(`ap.coach_user_id = $${params.length}`);
   }
-  if (user?.role === "manager") {
+  if (!isAdmin && user?.role === "manager") {
     params.push(user.id);
     filters.push(`t.manager_user_id = $${params.length}`);
   }
@@ -1132,7 +1143,8 @@ async function handleApi(req, res, url) {
     }
 
     if (req.method === "GET" && url.pathname === "/api/athletes") {
-      const { tenant, user } = await contextFromReq(req);
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
       requireUser(user);
       await ensureUserAthleteProfile(tenant.id, user);
       sendJson(res, 200, await listAthletes(tenant.id, user));
@@ -1140,8 +1152,10 @@ async function handleApi(req, res, url) {
     }
 
     if (req.method === "POST" && url.pathname === "/api/athletes") {
-      const { tenant, user } = await contextFromReq(req);
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
       requireRole(user, ["admin", "manager", "coach"]);
+      await ensureUserAthleteProfile(tenant.id, user);
       const body = await readRequestBody(req);
       const athlete = await createAthlete(tenant.id, body);
       sendJson(res, 201, { athlete, athletes: await listAthletes(tenant.id, user) });
