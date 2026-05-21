@@ -84,6 +84,16 @@ button {
   color: #ffb3bd;
 }
 
+.form-message {
+  min-height: 20px;
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+
+.form-message.is-error {
+  color: #ffb3bd;
+}
+
 .shell {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);

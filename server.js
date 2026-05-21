@@ -364,14 +364,24 @@ async function getTenant(slug = DEFAULT_TENANT_SLUG) {
 
 async function ensureDefaultAdmin(tenantId) {
   if (!pool || !DEFAULT_ADMIN_EMAIL || !DEFAULT_ADMIN_PASSWORD) return;
-  await query(
+  const adminResult = await query(
     `INSERT INTO users (tenant_id, role, name, email, password_hash)
-     VALUES ($1, 'admin', 'Super Admin', $2, $3)
+     VALUES ($1, 'admin', 'Seiti Katsumi', $2, $3)
      ON CONFLICT (tenant_id, email)
      DO UPDATE SET role = 'admin',
-                   password_hash = COALESCE(users.password_hash, EXCLUDED.password_hash)`,
+                   name = COALESCE(NULLIF(users.name, 'Super Admin'), EXCLUDED.name),
+                   password_hash = COALESCE(users.password_hash, EXCLUDED.password_hash)
+     RETURNING id`,
     [tenantId, DEFAULT_ADMIN_EMAIL, hashPassword(DEFAULT_ADMIN_PASSWORD)]
   );
+  const adminId = adminResult.rows[0].id;
+  await query(
+    `INSERT INTO athlete_profiles (user_id)
+     VALUES ($1)
+     ON CONFLICT (user_id) DO NOTHING`,
+    [adminId]
+  );
+  await ensureTenantIntegrations(tenantId, adminId);
 }
 
 async function ensureTenantIntegrations(tenantId, athleteUserId = null) {
@@ -415,7 +425,12 @@ async function getPrimaryAthleteId(tenantId) {
     return athletes[0]?.id || null;
   }
   const result = await query(
-    "SELECT id FROM users WHERE tenant_id = $1 AND role = 'athlete' ORDER BY created_at ASC LIMIT 1",
+    `SELECT u.id
+       FROM users u
+       JOIN athlete_profiles ap ON ap.user_id = u.id
+      WHERE u.tenant_id = $1
+      ORDER BY u.created_at ASC
+      LIMIT 1`,
     [tenantId]
   );
   return result.rows[0]?.id || null;
@@ -488,7 +503,7 @@ async function createSession(tenantId, userId) {
 
 async function listAthletes(tenantId, user = null) {
   if (!pool) return readJson(ATHLETES_FILE, []);
-  const filters = ["u.tenant_id = $1", "u.role = 'athlete'"];
+  const filters = ["u.tenant_id = $1", "ap.user_id IS NOT NULL"];
   const params = [tenantId];
   if (user?.role === "athlete") {
     params.push(user.id);
@@ -582,18 +597,18 @@ async function createAthlete(tenantId, input) {
   if (!pool) {
     const athletes = readJson(ATHLETES_FILE, []);
     const existingIndex = athletes.findIndex((item) => item.email === athlete.email);
+    if (existingIndex >= 0) throw new Error("Não foi possível cadastrar: já existe um atleta com este e-mail.");
     const record = {
-      id: existingIndex >= 0 ? athletes[existingIndex].id : crypto.randomUUID(),
+      id: crypto.randomUUID(),
       tenantId,
       role: "athlete",
       ...athlete,
       teamName: athlete.teamName || "",
       coachName: athlete.coachName || "",
       coachEmail: athlete.coachEmail || "",
-      createdAt: existingIndex >= 0 ? athletes[existingIndex].createdAt : new Date().toISOString()
+      createdAt: new Date().toISOString()
     };
-    if (existingIndex >= 0) athletes[existingIndex] = record;
-    else athletes.unshift(record);
+    athletes.unshift(record);
     writeJson(ATHLETES_FILE, athletes);
     return record;
   }
@@ -601,6 +616,17 @@ async function createAthlete(tenantId, input) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const existingUser = await client.query(
+      `SELECT u.id, u.role, ap.user_id AS athlete_profile_id
+         FROM users u
+         LEFT JOIN athlete_profiles ap ON ap.user_id = u.id
+        WHERE u.tenant_id = $1 AND u.email = $2
+        LIMIT 1`,
+      [tenantId, athlete.email]
+    );
+    if (existingUser.rows[0]?.athlete_profile_id) {
+      throw new Error("Não foi possível cadastrar: já existe um atleta com este e-mail.");
+    }
     let teamId = null;
     let coachId = null;
     if (athlete.teamName) {

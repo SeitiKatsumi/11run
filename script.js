@@ -385,6 +385,13 @@ function setLog(items, isError = false) {
   log.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 }
 
+function setAthleteMessage(message, isError = false) {
+  const target = document.querySelector("#athleteMessage");
+  if (!target) return;
+  target.classList.toggle("is-error", isError);
+  target.textContent = message;
+}
+
 async function saveProvider(provider) {
   if (!state.selectedAthleteId) {
     setLog(["Cadastre e selecione um atleta antes de salvar integrações."], true);
@@ -436,6 +443,7 @@ async function saveAthlete(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const body = Object.fromEntries(new FormData(form).entries());
+  setAthleteMessage("Salvando atleta...");
   try {
     const payload = await api("/api/athletes", {
       method: "POST",
@@ -448,8 +456,10 @@ async function saveAthlete(event) {
     renderAthleteSelector();
     renderAthleteIdentity();
     form.reset();
+    setAthleteMessage(`Atleta ${payload.athlete.name} cadastrado com sucesso.`);
     setLog([`Atleta ${payload.athlete.name} salvo com sucesso.`]);
   } catch (error) {
+    setAthleteMessage(error.message, true);
     setLog([error.message], true);
   }
 }
