@@ -98,6 +98,37 @@ button {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   min-height: 100vh;
+  transition: grid-template-columns 180ms ease;
+}
+
+.rail-backdrop {
+  display: none;
+}
+
+.menu-toggle {
+  position: fixed;
+  top: 14px;
+  left: 208px;
+  z-index: 40;
+  width: 42px;
+  height: 42px;
+  display: inline-grid;
+  place-items: center;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(8, 9, 10, 0.78);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.menu-toggle span {
+  width: 18px;
+  height: 2px;
+  display: block;
+  border-radius: 999px;
+  background: var(--heading);
 }
 
 .rail {
@@ -115,13 +146,24 @@ button {
 }
 
 .brand {
-  display: block;
+  display: grid;
+  gap: 6px;
   padding: 8px 0;
+  color: var(--soft);
+  text-decoration: none;
 }
 
 .brand img {
   width: 168px;
   display: block;
+}
+
+.app-version {
+  color: var(--soft);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 nav {
@@ -141,6 +183,7 @@ nav a {
   border: 1px solid transparent;
   border-radius: var(--radius);
   font-weight: 650;
+  text-transform: uppercase;
 }
 
 nav a:hover,
@@ -156,6 +199,37 @@ nav a.is-active {
   display: inline-grid;
   place-items: center;
   color: var(--orange);
+}
+
+.shell.rail-collapsed {
+  grid-template-columns: 86px minmax(0, 1fr);
+}
+
+.shell.rail-collapsed .menu-toggle {
+  left: 22px;
+}
+
+.shell.rail-collapsed .rail {
+  padding: 28px 12px;
+}
+
+.shell.rail-collapsed .brand {
+  justify-items: center;
+}
+
+.shell.rail-collapsed .brand img {
+  width: 58px;
+}
+
+.shell.rail-collapsed .app-version,
+.shell.rail-collapsed .nav-label,
+.shell.rail-collapsed .athlete-chip {
+  display: none;
+}
+
+.shell.rail-collapsed nav a {
+  justify-content: center;
+  padding: 10px;
 }
 
 .athlete-chip {
@@ -824,45 +898,6 @@ dialog::backdrop {
 }
 
 @media (max-width: 1080px) {
-  .shell {
-    grid-template-columns: 1fr;
-  }
-
-  .rail {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    top: auto;
-    height: auto;
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto;
-    align-items: center;
-    padding: 8px 12px;
-  }
-
-  .brand img {
-    width: 98px;
-  }
-
-  .athlete-chip {
-    display: none;
-  }
-
-  nav {
-    grid-auto-flow: column;
-    justify-content: end;
-    overflow-x: auto;
-  }
-
-  nav a {
-    min-width: max-content;
-  }
-
-  .view {
-    padding-bottom: 92px;
-  }
-
   .training-grid,
   .settings-grid,
   .athlete-grid {
@@ -870,17 +905,126 @@ dialog::backdrop {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
+  .menu-toggle,
+  .shell.rail-collapsed .menu-toggle {
+    left: 14px;
+  }
+
+  .shell,
+  .shell.rail-collapsed {
+    display: block;
+  }
+
+  .rail {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(84vw, 320px);
+    height: 100vh;
+    padding: 72px 18px 18px;
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+    z-index: 35;
+  }
+
+  .shell.menu-open .rail {
+    transform: translateX(0);
+  }
+
+  .rail-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(0, 0, 0, 0.68);
+    backdrop-filter: blur(6px);
+  }
+
+  .shell.menu-open .rail-backdrop {
+    display: block;
+  }
+
+  .shell.rail-collapsed .brand img,
+  .brand img {
+    width: 156px;
+  }
+
+  .shell.rail-collapsed .brand {
+    justify-items: start;
+  }
+
+  .shell.rail-collapsed .app-version,
+  .shell.rail-collapsed .nav-label,
+  .shell.rail-collapsed .athlete-chip {
+    display: initial;
+  }
+
+  .shell.rail-collapsed .athlete-chip {
+    display: block;
+  }
+
+  .shell.rail-collapsed nav a,
+  nav a {
+    justify-content: flex-start;
+    padding: 10px 12px;
+  }
+
+  .view {
+    padding: 70px 14px 24px;
+  }
+
+  .home-view {
+    padding: 0;
+  }
+
   .hero {
-    min-height: calc(100vh - 70px);
+    min-height: 100svh;
+    align-items: end;
   }
 
   .hero-bg {
-    object-position: 46% center;
+    object-position: 57% center;
+  }
+
+  .hero-shade {
+    background:
+      linear-gradient(90deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.44) 62%, rgba(0, 0, 0, 0.78)),
+      linear-gradient(0deg, rgba(0, 0, 0, 0.94), transparent 54%);
   }
 
   .hero-content {
-    padding: 22px;
+    max-width: 100%;
+    padding: 92px 18px 22px;
+  }
+
+  .hero-logo {
+    width: min(230px, 72vw);
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-size: clamp(38px, 12vw, 62px);
+    line-height: 1;
+  }
+
+  .hero-content p:not(.kicker) {
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .hero-actions,
+  .toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .hero-actions button,
+  .toolbar button,
+  .toolbar .segmented,
+  .page-header .secondary-action {
+    width: 100%;
   }
 
   .hero-metrics {
@@ -888,15 +1032,35 @@ dialog::backdrop {
     right: auto;
     bottom: auto;
     grid-template-columns: 1fr;
-    padding: 0 22px 92px;
+    padding: 0 18px 24px;
   }
 
   .page-header {
     display: block;
+    padding-top: 8px;
+  }
+
+  .page-header h2 {
+    font-size: clamp(36px, 11vw, 52px);
+    line-height: 1;
   }
 
   .toolbar {
     margin-top: 16px;
+  }
+
+  .segmented {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .icon-button {
+    width: 100%;
+  }
+
+  .calendar-top,
+  .section-title,
+  .provider-heading {
+    display: block;
   }
 
   .calendar-month,
@@ -914,11 +1078,11 @@ dialog::backdrop {
   }
 
   .provider-card {
-    grid-template-columns: auto 1fr;
+    grid-template-columns: 1fr;
   }
 
-  .provider-heading {
-    display: block;
+  .provider-meta {
+    grid-template-columns: auto 1fr;
   }
 
   .credential-grid,
@@ -927,6 +1091,21 @@ dialog::backdrop {
   }
 
   .detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .panel {
+    padding: 14px;
+  }
+
+  .primary-action,
+  .secondary-action {
+    width: 100%;
+  }
+
+  .hero-metrics div {
+    padding: 14px;
   }
 }

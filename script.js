@@ -9,6 +9,8 @@ const state = {
   currentUser: null
 };
 
+const APP_VERSION_FALLBACK = "local-ui";
+
 const providerDefinitions = {
   strava: {
     name: "Strava",
@@ -90,6 +92,38 @@ const monthNames = ["Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho", "
 const calendar = document.querySelector("#calendar");
 const dialog = document.querySelector("#activityDialog");
 const detail = document.querySelector("#activityDetail");
+const shell = document.querySelector("#appShell");
+const menuToggle = document.querySelector("#menuToggle");
+const railBackdrop = document.querySelector("#railBackdrop");
+
+function isMobileLayout() {
+  return window.matchMedia("(max-width: 900px)").matches;
+}
+
+function setMenuOpen(open) {
+  if (!shell) return;
+  shell.classList.toggle("menu-open", open);
+  if (menuToggle) menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function setRailCollapsed(collapsed) {
+  if (!shell) return;
+  shell.classList.toggle("rail-collapsed", collapsed);
+  localStorage.setItem("railCollapsed", collapsed ? "1" : "0");
+}
+
+function toggleMenu() {
+  if (!shell) return;
+  if (isMobileLayout()) {
+    setMenuOpen(!shell.classList.contains("menu-open"));
+    return;
+  }
+  setRailCollapsed(!shell.classList.contains("rail-collapsed"));
+}
+
+function closeMobileMenu() {
+  if (isMobileLayout()) setMenuOpen(false);
+}
 
 async function api(path, options = {}) {
   const scopedPaths = ["/api/integrations", "/api/activities", "/api/sync", "/api/strava/auth"];
@@ -146,6 +180,7 @@ function setView(view) {
   document.querySelectorAll("[data-view]").forEach((section) => section.classList.toggle("is-visible", section.dataset.view === view));
   document.querySelectorAll("[data-view-link]").forEach((link) => link.classList.toggle("is-active", link.dataset.viewLink === view));
   location.hash = view === "training" ? "treinamentos" : view === "settings" ? "configuracao" : view === "athlete" ? "atleta" : "home";
+  closeMobileMenu();
 }
 
 function visibleActivities() {
@@ -507,10 +542,23 @@ async function saveAthlete(event) {
   }
 }
 
-async function boot() {
+async function loadAppVersion() {
+  const versionTarget = document.querySelector("#appVersion");
+  if (!versionTarget) return;
   try {
-    const initialHash = location.hash.replace("#", "").split("?")[0];
-    const status = new URLSearchParams(location.hash.split("?")[1] || "");
+    const health = await api("/api/health");
+    const rawVersion = String(health.version || APP_VERSION_FALLBACK);
+    const version = rawVersion.length > 12 ? rawVersion.slice(0, 12) : rawVersion;
+    versionTarget.textContent = `deploy ${version}`;
+  } catch {
+    versionTarget.textContent = `deploy ${APP_VERSION_FALLBACK}`;
+  }
+}
+
+async function boot() {
+  const initialHash = location.hash.replace("#", "").split("?")[0];
+  const status = new URLSearchParams(location.hash.split("?")[1] || "");
+  try {
     if (status.get("athlete")) {
       state.selectedAthleteId = status.get("athlete");
       localStorage.setItem("selectedAthleteId", state.selectedAthleteId);
@@ -538,13 +586,18 @@ async function boot() {
       renderHeroMetrics();
       renderTrainingInsights();
       setLog([`Erro ao carregar dados do banco: ${error.message}`], true);
+      if (initialHash === "treinamentos") setView("training");
+      else if (initialHash === "atleta") setView("athlete");
+      else if (initialHash === "configuracao") setView("settings");
+      else setView("home");
     }
     return;
   }
 
   if (initialHash === "treinamentos") setView("training");
-  if (initialHash === "atleta") setView("athlete");
-  if (initialHash === "configuracao") setView("settings");
+  else if (initialHash === "atleta") setView("athlete");
+  else if (initialHash === "configuracao") setView("settings");
+  else setView("home");
   renderProviders();
   renderAthletes();
   renderAthleteSelector();
@@ -556,6 +609,13 @@ async function boot() {
   if (status.get("strava") === "connected") setLog(["Strava conectado. Clique em Importar e atualizar para puxar as atividades reais."]);
   if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorização."}`], true);
 }
+
+if (shell && localStorage.getItem("railCollapsed") === "1") setRailCollapsed(true);
+if (menuToggle) menuToggle.addEventListener("click", toggleMenu);
+if (railBackdrop) railBackdrop.addEventListener("click", () => setMenuOpen(false));
+window.addEventListener("resize", () => {
+  if (!isMobileLayout()) setMenuOpen(false);
+});
 
 document.querySelectorAll("[data-view-link]").forEach((link) => {
   link.addEventListener("click", (event) => {
@@ -650,4 +710,5 @@ document.querySelector("#syncSelected").addEventListener("click", runSync);
 document.querySelector("[data-import-demo]").addEventListener("click", runSync);
 document.querySelector("#athleteForm").addEventListener("submit", saveAthlete);
 
+loadAppVersion();
 boot();

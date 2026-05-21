@@ -24,6 +24,7 @@ const DATABASE_URL = process.env.DATABASE_URL || "";
 const DEFAULT_ADMIN_EMAIL = (process.env.DEFAULT_ADMIN_EMAIL || "seitikatsumi@gmail.com").trim().toLowerCase();
 const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || "bs000229";
 const SESSION_COOKIE = "onzerun_session";
+const APP_VERSION = process.env.APP_VERSION || process.env.CAPROVER_GIT_COMMIT_SHA || "local";
 
 const pool = DATABASE_URL && Pool
   ? new Pool({
@@ -1100,7 +1101,12 @@ function requireRole(user, roles) {
 async function handleApi(req, res, url) {
   try {
     if (req.method === "GET" && url.pathname === "/api/health") {
-      sendJson(res, 200, { ok: true, database: pool ? "postgres" : "json", publicBaseUrl: PUBLIC_BASE_URL });
+      sendJson(res, 200, { ok: true, database: pool ? "postgres" : "json", publicBaseUrl: PUBLIC_BASE_URL, version: APP_VERSION });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/version") {
+      sendJson(res, 200, { version: APP_VERSION, publicBaseUrl: PUBLIC_BASE_URL });
       return;
     }
 

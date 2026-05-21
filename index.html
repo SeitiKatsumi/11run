@@ -26,15 +26,22 @@
     </section>
 
     <div class="shell" id="appShell" hidden>
+      <button class="menu-toggle" id="menuToggle" type="button" aria-label="Alternar menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="rail-backdrop" id="railBackdrop" aria-hidden="true"></div>
       <aside class="rail" aria-label="Menu principal">
         <a class="brand" href="#home" data-view-link="home" aria-label="11RUN início">
           <img src="assets/logo-orange-white.png" alt="11RUN" />
+          <span id="appVersion" class="app-version">versão --</span>
         </a>
         <nav>
-          <a href="#home" class="is-active" data-view-link="home"><span class="nav-icon">H</span>Home</a>
-          <a href="#treinamentos" data-view-link="training"><span class="nav-icon">T</span>Treinamentos</a>
-          <a href="#atleta" data-view-link="athlete"><span class="nav-icon">A</span>Atleta</a>
-          <a href="#configuracao" data-view-link="settings"><span class="nav-icon">C</span>Configuração</a>
+          <a href="#home" class="is-active" data-view-link="home"><span class="nav-icon">H</span><span class="nav-label">Home</span></a>
+          <a href="#treinamentos" data-view-link="training"><span class="nav-icon">T</span><span class="nav-label">Treinamentos</span></a>
+          <a href="#atleta" data-view-link="athlete"><span class="nav-icon">A</span><span class="nav-label">Atleta</span></a>
+          <a href="#configuracao" data-view-link="settings"><span class="nav-icon">C</span><span class="nav-label">Configuração</span></a>
         </nav>
         <div class="athlete-chip">
           <span>Atleta selecionado</span>
