@@ -21,6 +21,9 @@ const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://127.0.0.1:${PORT
 const DEFAULT_TENANT_SLUG = process.env.DEFAULT_TENANT_SLUG || "default";
 const DEFAULT_TENANT_NAME = process.env.DEFAULT_TENANT_NAME || "11RUN";
 const DATABASE_URL = process.env.DATABASE_URL || "";
+const DEFAULT_ADMIN_EMAIL = (process.env.DEFAULT_ADMIN_EMAIL || "seitikatsumi@gmail.com").trim().toLowerCase();
+const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || "bs000229";
+const SESSION_COOKIE = "onzerun_session";
 
 const pool = DATABASE_URL && Pool
   ? new Pool({
@@ -220,6 +223,39 @@ function mergeDefined(target, source) {
   }
 }
 
+function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
+  const hash = crypto.scryptSync(String(password), salt, 64).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, storedHash) {
+  if (!storedHash || !storedHash.includes(":")) return false;
+  const [salt, hash] = storedHash.split(":");
+  const candidate = hashPassword(password, salt).split(":")[1];
+  return crypto.timingSafeEqual(Buffer.from(candidate, "hex"), Buffer.from(hash, "hex"));
+}
+
+function parseCookies(req) {
+  return Object.fromEntries(
+    String(req.headers.cookie || "")
+      .split(";")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map((item) => {
+        const [key, ...rest] = item.split("=");
+        return [key, decodeURIComponent(rest.join("="))];
+      })
+  );
+}
+
+function setSessionCookie(res, token) {
+  res.setHeader("Set-Cookie", `${SESSION_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`);
+}
+
+function clearSessionCookie(res) {
+  res.setHeader("Set-Cookie", `${SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+}
+
 function sanitizeIntegrations(integrations) {
   const copy = clone(integrations);
   for (const integration of Object.values(copy)) {
@@ -311,6 +347,7 @@ async function initDatabase() {
     [DEFAULT_TENANT_SLUG, DEFAULT_TENANT_NAME]
   );
   const tenant = await getTenant(DEFAULT_TENANT_SLUG);
+  await ensureDefaultAdmin(tenant.id);
   await ensureTenantIntegrations(tenant.id);
 }
 
@@ -323,6 +360,18 @@ async function getTenant(slug = DEFAULT_TENANT_SLUG) {
     [slug, slug]
   );
   return created.rows[0];
+}
+
+async function ensureDefaultAdmin(tenantId) {
+  if (!pool || !DEFAULT_ADMIN_EMAIL || !DEFAULT_ADMIN_PASSWORD) return;
+  await query(
+    `INSERT INTO users (tenant_id, role, name, email, password_hash)
+     VALUES ($1, 'admin', 'Super Admin', $2, $3)
+     ON CONFLICT (tenant_id, email)
+     DO UPDATE SET role = 'admin',
+                   password_hash = COALESCE(users.password_hash, EXCLUDED.password_hash)`,
+    [tenantId, DEFAULT_ADMIN_EMAIL, hashPassword(DEFAULT_ADMIN_PASSWORD)]
+  );
 }
 
 async function ensureTenantIntegrations(tenantId, athleteUserId = null) {
@@ -380,6 +429,11 @@ function formatAthlete(row) {
     name: row.name,
     email: row.email,
     whatsapp: row.whatsapp || "",
+    teamId: row.team_id || "",
+    teamName: row.team_name || "",
+    coachId: row.coach_user_id || "",
+    coachName: row.coach_name || "",
+    coachEmail: row.coach_email || "",
     age: row.age == null ? "" : Number(row.age),
     weightKg: row.weight_kg == null ? "" : Number(row.weight_kg),
     heightCm: row.height_cm == null ? "" : Number(row.height_cm),
@@ -387,18 +441,89 @@ function formatAthlete(row) {
   };
 }
 
-async function listAthletes(tenantId) {
+function formatUser(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    role: row.role,
+    roleLabel: {
+      admin: "Super admin",
+      manager: "Equipe",
+      coach: "Treinador",
+      athlete: "Atleta"
+    }[row.role] || row.role,
+    name: row.name,
+    email: row.email,
+    whatsapp: row.whatsapp || ""
+  };
+}
+
+async function getSessionUser(req, tenantId) {
+  if (!pool) return null;
+  const token = parseCookies(req)[SESSION_COOKIE];
+  if (!token) return null;
+  const result = await query(
+    `SELECT u.*
+       FROM sessions s
+       JOIN users u ON u.id = s.user_id
+      WHERE s.token = $1
+        AND s.tenant_id = $2
+        AND s.expires_at > now()
+      LIMIT 1`,
+    [token, tenantId]
+  );
+  return formatUser(result.rows[0]);
+}
+
+async function createSession(tenantId, userId) {
+  const token = crypto.randomBytes(32).toString("hex");
+  await query(
+    `INSERT INTO sessions (token, tenant_id, user_id, expires_at)
+     VALUES ($1, $2, $3, now() + interval '7 days')`,
+    [token, tenantId, userId]
+  );
+  return token;
+}
+
+async function listAthletes(tenantId, user = null) {
   if (!pool) return readJson(ATHLETES_FILE, []);
+  const filters = ["u.tenant_id = $1", "u.role = 'athlete'"];
+  const params = [tenantId];
+  if (user?.role === "athlete") {
+    params.push(user.id);
+    filters.push(`u.id = $${params.length}`);
+  }
+  if (user?.role === "coach") {
+    params.push(user.id);
+    filters.push(`ap.coach_user_id = $${params.length}`);
+  }
+  if (user?.role === "manager") {
+    params.push(user.id);
+    filters.push(`t.manager_user_id = $${params.length}`);
+  }
   const result = await query(
     `SELECT u.id, u.tenant_id, u.role, u.name, u.email, u.whatsapp, u.created_at,
-            ap.age, ap.weight_kg, ap.height_cm
+            ap.age, ap.weight_kg, ap.height_cm, ap.team_id, ap.coach_user_id,
+            t.name AS team_name,
+            c.name AS coach_name,
+            c.email AS coach_email
        FROM users u
        LEFT JOIN athlete_profiles ap ON ap.user_id = u.id
-      WHERE u.tenant_id = $1 AND u.role = 'athlete'
+       LEFT JOIN teams t ON t.id = ap.team_id
+       LEFT JOIN users c ON c.id = ap.coach_user_id
+      WHERE ${filters.join(" AND ")}
       ORDER BY u.created_at DESC`,
-    [tenantId]
+    params
   );
   return result.rows.map(formatAthlete);
+}
+
+async function canAccessAthlete(tenantId, user, athleteUserId) {
+  if (!user || !athleteUserId || user.role === "admin") return true;
+  if (user.role === "athlete") return String(user.id) === String(athleteUserId);
+  const visible = await listAthletes(tenantId, user);
+  return visible.some((athlete) => String(athlete.id) === String(athleteUserId));
 }
 
 function validateAthlete(input) {
@@ -408,6 +533,10 @@ function validateAthlete(input) {
   const age = input.age === "" || input.age == null ? null : Number(input.age);
   const weightKg = input.weightKg === "" || input.weightKg == null ? null : Number(input.weightKg);
   const heightCm = input.heightCm === "" || input.heightCm == null ? null : Number(input.heightCm);
+  const teamName = String(input.teamName || "").trim();
+  const coachName = String(input.coachName || "").trim();
+  const coachEmail = String(input.coachEmail || "").trim().toLowerCase();
+  const password = String(input.password || "").trim();
 
   if (!name) throw new Error("Informe o nome do atleta.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Informe um e-mail válido.");
@@ -415,7 +544,37 @@ function validateAthlete(input) {
   if (weightKg != null && (!Number.isFinite(weightKg) || weightKg <= 0)) throw new Error("Informe um peso válido.");
   if (heightCm != null && (!Number.isFinite(heightCm) || heightCm <= 0)) throw new Error("Informe uma altura válida.");
 
-  return { name, email, whatsapp, age, weightKg, heightCm };
+  return { name, email, whatsapp, age, weightKg, heightCm, teamName, coachName, coachEmail, password };
+}
+
+async function ensureTeam(tenantId, name) {
+  const cleanName = String(name || "").trim();
+  if (!pool || !cleanName) return null;
+  const result = await query(
+    `INSERT INTO teams (tenant_id, name)
+     VALUES ($1, $2)
+     ON CONFLICT (tenant_id, name)
+     DO UPDATE SET name = EXCLUDED.name
+     RETURNING id`,
+    [tenantId, cleanName]
+  );
+  return result.rows[0].id;
+}
+
+async function ensureCoach(tenantId, name, email) {
+  const cleanEmail = String(email || "").trim().toLowerCase();
+  if (!pool || !cleanEmail) return null;
+  const cleanName = String(name || "").trim() || cleanEmail;
+  const result = await query(
+    `INSERT INTO users (tenant_id, role, name, email)
+     VALUES ($1, 'coach', $2, $3)
+     ON CONFLICT (tenant_id, email)
+     DO UPDATE SET name = EXCLUDED.name,
+                   role = CASE WHEN users.role = 'athlete' THEN users.role ELSE 'coach' END
+     RETURNING id`,
+    [tenantId, cleanName, cleanEmail]
+  );
+  return result.rows[0].id;
 }
 
 async function createAthlete(tenantId, input) {
@@ -428,6 +587,9 @@ async function createAthlete(tenantId, input) {
       tenantId,
       role: "athlete",
       ...athlete,
+      teamName: athlete.teamName || "",
+      coachName: athlete.coachName || "",
+      coachEmail: athlete.coachEmail || "",
       createdAt: existingIndex >= 0 ? athletes[existingIndex].createdAt : new Date().toISOString()
     };
     if (existingIndex >= 0) athletes[existingIndex] = record;
@@ -439,21 +601,54 @@ async function createAthlete(tenantId, input) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    let teamId = null;
+    let coachId = null;
+    if (athlete.teamName) {
+      const teamResult = await client.query(
+        `INSERT INTO teams (tenant_id, name)
+         VALUES ($1, $2)
+         ON CONFLICT (tenant_id, name)
+         DO UPDATE SET name = EXCLUDED.name
+         RETURNING id`,
+        [tenantId, athlete.teamName]
+      );
+      teamId = teamResult.rows[0].id;
+    }
+    if (athlete.coachEmail) {
+      const coachResult = await client.query(
+        `INSERT INTO users (tenant_id, role, name, email)
+         VALUES ($1, 'coach', $2, $3)
+         ON CONFLICT (tenant_id, email)
+         DO UPDATE SET name = EXCLUDED.name,
+                       role = CASE WHEN users.role = 'athlete' THEN users.role ELSE 'coach' END
+         RETURNING id`,
+        [tenantId, athlete.coachName || athlete.coachEmail, athlete.coachEmail]
+      );
+      coachId = coachResult.rows[0].id;
+    }
+    const passwordHash = athlete.password ? hashPassword(athlete.password) : null;
     const userResult = await client.query(
-      `INSERT INTO users (tenant_id, role, name, email, whatsapp)
-       VALUES ($1, 'athlete', $2, $3, $4)
+      `INSERT INTO users (tenant_id, role, name, email, whatsapp, password_hash)
+       VALUES ($1, 'athlete', $2, $3, $4, $5)
        ON CONFLICT (tenant_id, email)
-       DO UPDATE SET name = EXCLUDED.name, whatsapp = EXCLUDED.whatsapp
+       DO UPDATE SET name = EXCLUDED.name,
+                     whatsapp = EXCLUDED.whatsapp,
+                     password_hash = COALESCE(EXCLUDED.password_hash, users.password_hash)
        RETURNING *`,
-      [tenantId, athlete.name, athlete.email, athlete.whatsapp]
+      [tenantId, athlete.name, athlete.email, athlete.whatsapp, passwordHash]
     );
     const user = userResult.rows[0];
     await client.query(
-      `INSERT INTO athlete_profiles (user_id, age, weight_kg, height_cm)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO athlete_profiles (user_id, team_id, coach_user_id, age, weight_kg, height_cm)
+       VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (user_id)
-       DO UPDATE SET age = EXCLUDED.age, weight_kg = EXCLUDED.weight_kg, height_cm = EXCLUDED.height_cm, updated_at = now()`,
-      [user.id, athlete.age, athlete.weightKg, athlete.heightCm]
+       DO UPDATE SET team_id = EXCLUDED.team_id,
+                     coach_user_id = EXCLUDED.coach_user_id,
+                     age = EXCLUDED.age,
+                     weight_kg = EXCLUDED.weight_kg,
+                     height_cm = EXCLUDED.height_cm,
+                     updated_at = now()`,
+      [user.id, teamId, coachId, athlete.age, athlete.weightKg, athlete.heightCm]
     );
     await client.query("COMMIT");
     await ensureTenantIntegrations(tenantId, user.id);
@@ -575,16 +770,17 @@ function activityRowToApi(row) {
   };
 }
 
-async function listActivities(tenantId) {
+async function listActivities(tenantId, athleteUserId = null) {
   if (!pool) return readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
+  const params = athleteUserId ? [tenantId, athleteUserId] : [tenantId];
   const result = await query(
     `SELECT provider, provider_activity_id, activity_date, title, type, description, distance, duration, pace, load, external_url
        FROM activities
       WHERE tenant_id = $1
+        ${athleteUserId ? "AND athlete_user_id = $2" : ""}
       ORDER BY activity_date ASC`,
-    [tenantId]
+    params
   );
-  if (result.rows.length === 0) return DEMO_ACTIVITIES;
   return result.rows.map(activityRowToApi);
 }
 
@@ -816,11 +1012,36 @@ async function handleStravaCallback(url, res) {
 
 async function contextFromReq(req) {
   const tenant = await getTenant(tenantSlugFromReq(req));
+  const user = await getSessionUser(req, tenant.id);
   const athleteIdFromHeader = req.headers["x-athlete-id"] || null;
+  const athleteUserId = user?.role === "athlete"
+    ? user.id
+    : athleteIdFromHeader || await getPrimaryAthleteId(tenant.id);
+  if (user && athleteUserId && !(await canAccessAthlete(tenant.id, user, athleteUserId))) {
+    const error = new Error("Usuário sem permissão para acessar este atleta.");
+    error.statusCode = 403;
+    throw error;
+  }
   return {
     tenant,
-    athleteUserId: athleteIdFromHeader || await getPrimaryAthleteId(tenant.id)
+    user,
+    athleteUserId
   };
+}
+
+function requireUser(user) {
+  if (user) return;
+  const error = new Error("Login obrigatório.");
+  error.statusCode = 401;
+  throw error;
+}
+
+function requireRole(user, roles) {
+  requireUser(user);
+  if (roles.includes(user.role)) return;
+  const error = new Error("Usuário sem permissão para esta ação.");
+  error.statusCode = 403;
+  throw error;
 }
 
 async function handleApi(req, res, url) {
@@ -830,34 +1051,77 @@ async function handleApi(req, res, url) {
       return;
     }
 
+    if (req.method === "GET" && url.pathname === "/api/me") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      sendJson(res, 200, { user: await getSessionUser(req, tenant.id) });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/login") {
+      if (!pool) throw new Error("Login exige Postgres configurado.");
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const body = await readRequestBody(req);
+      const email = String(body.email || "").trim().toLowerCase();
+      const password = String(body.password || "");
+      const result = await query(
+        "SELECT * FROM users WHERE tenant_id = $1 AND email = $2 LIMIT 1",
+        [tenant.id, email]
+      );
+      const row = result.rows[0];
+      if (!row || !verifyPassword(password, row.password_hash)) {
+        const error = new Error("E-mail ou senha inválidos.");
+        error.statusCode = 401;
+        throw error;
+      }
+      const token = await createSession(tenant.id, row.id);
+      setSessionCookie(res, token);
+      sendJson(res, 200, { user: formatUser(row) });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/logout") {
+      if (pool) {
+        const token = parseCookies(req)[SESSION_COOKIE];
+        if (token) await query("DELETE FROM sessions WHERE token = $1", [token]);
+      }
+      clearSessionCookie(res);
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/athletes") {
-      const { tenant } = await contextFromReq(req);
-      sendJson(res, 200, await listAthletes(tenant.id));
+      const { tenant, user } = await contextFromReq(req);
+      requireUser(user);
+      sendJson(res, 200, await listAthletes(tenant.id, user));
       return;
     }
 
     if (req.method === "POST" && url.pathname === "/api/athletes") {
-      const { tenant } = await contextFromReq(req);
+      const { tenant, user } = await contextFromReq(req);
+      requireRole(user, ["admin", "manager", "coach"]);
       const body = await readRequestBody(req);
       const athlete = await createAthlete(tenant.id, body);
-      sendJson(res, 201, { athlete, athletes: await listAthletes(tenant.id) });
+      sendJson(res, 201, { athlete, athletes: await listAthletes(tenant.id, user) });
       return;
     }
 
     if (req.method === "GET" && url.pathname === "/api/integrations") {
-      const { tenant, athleteUserId } = await contextFromReq(req);
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
       sendJson(res, 200, sanitizeIntegrations(await getIntegrations(tenant.id, athleteUserId)));
       return;
     }
 
     if (req.method === "GET" && url.pathname === "/api/activities") {
-      const { tenant } = await contextFromReq(req);
-      sendJson(res, 200, await listActivities(tenant.id));
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      sendJson(res, 200, await listActivities(tenant.id, athleteUserId));
       return;
     }
 
     if (req.method === "POST" && url.pathname === "/api/integrations") {
-      const { tenant, athleteUserId } = await contextFromReq(req);
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireRole(user, ["admin", "manager", "coach", "athlete"]);
       const body = await readRequestBody(req);
       const provider = String(body.provider || "").toLowerCase();
       await saveIntegration(tenant.id, athleteUserId, provider, {
@@ -869,7 +1133,16 @@ async function handleApi(req, res, url) {
     }
 
     if (req.method === "GET" && url.pathname === "/api/strava/auth") {
-      const { tenant, athleteUserId } = await contextFromReq(req);
+      const { tenant, user } = await contextFromReq(req);
+      requireUser(user);
+      const athleteUserId = user.role === "athlete"
+        ? user.id
+        : url.searchParams.get("athlete") || await getPrimaryAthleteId(tenant.id);
+      if (!(await canAccessAthlete(tenant.id, user, athleteUserId))) {
+        const error = new Error("Usuário sem permissão para conectar este atleta.");
+        error.statusCode = 403;
+        throw error;
+      }
       const integrations = await getIntegrations(tenant.id, athleteUserId);
       const integration = integrations.strava;
       const credentials = integration.credentials || {};
@@ -899,7 +1172,8 @@ async function handleApi(req, res, url) {
     }
 
     if (req.method === "POST" && url.pathname === "/api/sync") {
-      const { tenant, athleteUserId } = await contextFromReq(req);
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
       const body = await readRequestBody(req);
       const days = Number(body.days || 30);
       const providers = Array.isArray(body.providers) ? body.providers.map((item) => String(item).toLowerCase()) : [];
@@ -911,7 +1185,7 @@ async function handleApi(req, res, url) {
       }
       sendJson(res, 200, {
         imported: result.length,
-        activities: await listActivities(tenant.id),
+        activities: await listActivities(tenant.id, athleteUserId),
         warnings
       });
       return;
@@ -920,7 +1194,7 @@ async function handleApi(req, res, url) {
     sendJson(res, 404, { error: "Endpoint não encontrado." });
   } catch (error) {
     console.error(error);
-    sendJson(res, 500, { error: error.message || "Erro interno." });
+    sendJson(res, error.statusCode || 500, { error: error.message || "Erro interno." });
   }
 }
 

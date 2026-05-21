@@ -42,6 +42,48 @@ button {
   cursor: pointer;
 }
 
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.58)),
+    url("assets/hero-runner.png") center / cover no-repeat;
+}
+
+.login-screen[hidden],
+.shell[hidden] {
+  display: none;
+}
+
+.login-card {
+  width: min(460px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(10, 10, 12, 0.86);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.login-card img {
+  width: 210px;
+}
+
+.login-card h1 {
+  margin: 0 0 4px;
+  font-size: 36px;
+}
+
+.login-message {
+  min-height: 20px;
+  margin: 0;
+  color: #ffb3bd;
+}
+
 .shell {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
@@ -132,6 +174,17 @@ nav a.is-active {
   margin-top: 6px;
   color: var(--heading);
   font-weight: 650;
+}
+
+.athlete-select {
+  width: 100%;
+  min-height: 36px;
+  margin-top: 10px;
+  padding: 0 10px;
+  color: var(--heading);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.34);
 }
 
 main {

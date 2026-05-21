@@ -7,7 +7,25 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="shell">
+    <section class="login-screen" id="loginScreen" hidden>
+      <form class="login-card" id="loginForm">
+        <img src="assets/logo-orange-white.png" alt="11RUN" />
+        <p class="kicker">Acesso</p>
+        <h1>Entrar no painel</h1>
+        <label class="credential-field">
+          <span>E-mail</span>
+          <input name="email" type="email" autocomplete="email" required />
+        </label>
+        <label class="credential-field">
+          <span>Senha</span>
+          <input name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <button class="primary-action" type="submit">Entrar</button>
+        <p id="loginMessage" class="login-message"></p>
+      </form>
+    </section>
+
+    <div class="shell" id="appShell" hidden>
       <aside class="rail" aria-label="Menu principal">
         <a class="brand" href="#home" data-view-link="home" aria-label="11RUN início">
           <img src="assets/logo-orange-white.png" alt="11RUN" />
@@ -19,8 +37,11 @@
           <a href="#configuracao" data-view-link="settings"><span class="nav-icon">C</span>Configuração</a>
         </nav>
         <div class="athlete-chip">
-          <span>Atleta</span>
-          <strong>Marina Apex</strong>
+          <span>Atleta selecionado</span>
+          <strong id="sidebarAthleteName">Atleta não cadastrado</strong>
+          <select id="athleteSelector" class="athlete-select" aria-label="Selecionar atleta">
+            <option value="">Nenhum atleta</option>
+          </select>
         </div>
       </aside>
 
@@ -84,8 +105,8 @@
                 <img src="assets/logo-orange.png" alt="" />
                 <div>
                   <span>Atleta ativo</span>
-                  <strong>Marina Apex</strong>
-                  <p>Maratona alvo em 12 semanas</p>
+                  <strong id="activeAthleteName">Atleta não cadastrado</strong>
+                  <p id="activeAthleteMeta">Cadastre um atleta para personalizar o painel.</p>
                 </div>
               </div>
               <div class="insight-list">
@@ -139,8 +160,24 @@
                   <span>WhatsApp</span>
                   <input name="whatsapp" autocomplete="tel" />
                 </label>
+                <label class="credential-field">
+                  <span>Equipe</span>
+                  <input name="teamName" autocomplete="organization" />
+                </label>
+                <label class="credential-field">
+                  <span>Nome do treinador</span>
+                  <input name="coachName" autocomplete="name" />
+                </label>
+                <label class="credential-field">
+                  <span>E-mail do treinador</span>
+                  <input name="coachEmail" type="email" autocomplete="email" />
+                </label>
+                <label class="credential-field">
+                  <span>Senha do atleta</span>
+                  <input name="password" type="password" autocomplete="new-password" />
+                </label>
               </div>
-              <button class="primary-action compact" type="submit">Salvar atleta</button>
+          <button class="primary-action compact" type="submit">Salvar atleta</button>
             </form>
 
             <aside class="panel athlete-list-panel">

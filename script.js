@@ -4,7 +4,9 @@ const state = {
   cursor: new Date(),
   activities: [],
   integrations: {},
-  athletes: []
+  athletes: [],
+  selectedAthleteId: localStorage.getItem("selectedAthleteId") || "",
+  currentUser: null
 };
 
 const providerDefinitions = {
@@ -90,13 +92,25 @@ const dialog = document.querySelector("#activityDialog");
 const detail = document.querySelector("#activityDetail");
 
 async function api(path, options = {}) {
+  const athleteHeaders = state.selectedAthleteId ? { "X-Athlete-Id": state.selectedAthleteId } : {};
   const response = await fetch(path, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    headers: { "Content-Type": "application/json", ...athleteHeaders, ...(options.headers || {}) },
     ...options
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.error || `Erro HTTP ${response.status}`);
   return payload;
+}
+
+function showLogin(message = "") {
+  document.querySelector("#loginScreen").hidden = false;
+  document.querySelector("#appShell").hidden = true;
+  document.querySelector("#loginMessage").textContent = message;
+}
+
+function showApp() {
+  document.querySelector("#loginScreen").hidden = true;
+  document.querySelector("#appShell").hidden = false;
 }
 
 function escapeHtml(value) {
@@ -259,6 +273,51 @@ function renderProviders() {
   }).join("");
 }
 
+function getActiveAthlete() {
+  return state.athletes.find((athlete) => String(athlete.id) === String(state.selectedAthleteId)) || state.athletes[0] || null;
+}
+
+function formatAthleteMeta(athlete) {
+  if (!athlete) return "Cadastre um atleta para personalizar o painel.";
+  const items = [];
+  if (athlete.teamName) items.push(athlete.teamName);
+  if (athlete.coachName) items.push(`Treinador: ${athlete.coachName}`);
+  if (athlete.age) items.push(`${athlete.age} anos`);
+  if (athlete.weightKg) items.push(`${athlete.weightKg} kg`);
+  if (athlete.heightCm) items.push(`${athlete.heightCm} cm`);
+  return items.length ? items.join(" - ") : athlete.email || "Perfil de atleta cadastrado.";
+}
+
+function renderAthleteIdentity() {
+  const athlete = getActiveAthlete();
+  const name = athlete?.name || "Atleta não cadastrado";
+  const sidebarName = document.querySelector("#sidebarAthleteName");
+  const activeName = document.querySelector("#activeAthleteName");
+  const activeMeta = document.querySelector("#activeAthleteMeta");
+  if (sidebarName) sidebarName.textContent = name;
+  if (activeName) activeName.textContent = name;
+  if (activeMeta) activeMeta.textContent = formatAthleteMeta(athlete);
+}
+
+function syncSelectedAthlete() {
+  if (state.athletes.length && !state.athletes.some((athlete) => String(athlete.id) === String(state.selectedAthleteId))) {
+    state.selectedAthleteId = state.athletes[0].id;
+  }
+  if (!state.athletes.length) state.selectedAthleteId = "";
+  if (state.selectedAthleteId) localStorage.setItem("selectedAthleteId", state.selectedAthleteId);
+  else localStorage.removeItem("selectedAthleteId");
+}
+
+function renderAthleteSelector() {
+  const selector = document.querySelector("#athleteSelector");
+  if (!selector) return;
+  selector.innerHTML = state.athletes.length
+    ? state.athletes.map((athlete) => `<option value="${escapeHtml(athlete.id)}">${escapeHtml(athlete.name)}</option>`).join("")
+    : `<option value="">Nenhum atleta</option>`;
+  selector.value = state.selectedAthleteId || "";
+  selector.disabled = !state.athletes.length;
+}
+
 function renderAthletes() {
   const list = document.querySelector("#athleteList");
   if (!list) return;
@@ -273,6 +332,8 @@ function renderAthletes() {
         <span>${escapeHtml(athlete.email)}</span>
       </div>
       <p>${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
+      <p>Equipe: ${escapeHtml(athlete.teamName || "não vinculada")}</p>
+      <p>Treinador: ${escapeHtml(athlete.coachName || "não vinculado")}</p>
       <p>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</p>
     </article>
   `).join("");
@@ -285,6 +346,10 @@ function setLog(items, isError = false) {
 }
 
 async function saveProvider(provider) {
+  if (!state.selectedAthleteId) {
+    setLog(["Cadastre e selecione um atleta antes de salvar integrações."], true);
+    return false;
+  }
   const form = document.querySelector(`[data-provider="${provider}"]`);
   const credentials = {};
   form.querySelectorAll("input[name]:not([name='enabled'])").forEach((input) => {
@@ -297,9 +362,14 @@ async function saveProvider(provider) {
   });
   renderProviders();
   setLog([`${providerDefinitions[provider].name}: credenciais salvas localmente.`]);
+  return true;
 }
 
 async function runSync() {
+  if (!state.selectedAthleteId) {
+    setLog(["Cadastre e selecione um atleta antes de importar atividades."], true);
+    return;
+  }
   const days = document.querySelector("#importWindow").value;
   const providers = [...document.querySelectorAll(".provider-form input[name='enabled']:checked")]
     .map((input) => input.closest(".provider-form").dataset.provider);
@@ -331,7 +401,11 @@ async function saveAthlete(event) {
       body: JSON.stringify(body)
     });
     state.athletes = payload.athletes || [];
+    state.selectedAthleteId = payload.athlete.id;
+    syncSelectedAthlete();
     renderAthletes();
+    renderAthleteSelector();
+    renderAthleteIdentity();
     form.reset();
     setLog([`Atleta ${payload.athlete.name} salvo com sucesso.`]);
   } catch (error) {
@@ -341,16 +415,24 @@ async function saveAthlete(event) {
 
 async function boot() {
   try {
-    const [integrations, activities, athletes] = await Promise.all([
+    const session = await api("/api/me");
+    state.currentUser = session.user;
+    if (!state.currentUser) {
+      showLogin();
+      return;
+    }
+    showApp();
+    state.athletes = await api("/api/athletes");
+    syncSelectedAthlete();
+    const [integrations, activities] = await Promise.all([
       api("/api/integrations"),
-      api("/api/activities"),
-      api("/api/athletes")
+      api("/api/activities")
     ]);
     state.integrations = integrations;
     state.activities = activities;
-    state.athletes = athletes;
   } catch (error) {
-    setLog([error.message], true);
+    showLogin(error.message === "Login obrigatório." ? "" : error.message);
+    return;
   }
 
   const initialHash = location.hash.replace("#", "").split("?")[0];
@@ -359,6 +441,8 @@ async function boot() {
   if (initialHash === "configuracao") setView("settings");
   renderProviders();
   renderAthletes();
+  renderAthleteSelector();
+  renderAthleteIdentity();
   renderCalendar();
 
   const status = new URLSearchParams(location.hash.split("?")[1] || "");
@@ -397,6 +481,43 @@ document.querySelectorAll("[data-period-shift]").forEach((button) => {
   });
 });
 
+document.querySelector("#loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const body = Object.fromEntries(new FormData(form).entries());
+  try {
+    const payload = await api("/api/login", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    state.currentUser = payload.user;
+    form.reset();
+    await boot();
+  } catch (error) {
+    showLogin(error.message);
+  }
+});
+
+document.querySelector("#athleteSelector").addEventListener("change", async (event) => {
+  state.selectedAthleteId = event.currentTarget.value;
+  syncSelectedAthlete();
+  renderAthleteIdentity();
+  try {
+    const [integrations, activities] = await Promise.all([
+      api("/api/integrations"),
+      api("/api/activities")
+    ]);
+    state.integrations = integrations;
+    state.activities = activities;
+    renderProviders();
+    renderCalendar();
+    const athlete = getActiveAthlete();
+    setLog([`Atleta selecionado: ${athlete?.name || "nenhum"}. Integrações e calendário atualizados.`]);
+  } catch (error) {
+    setLog([error.message], true);
+  }
+});
+
 calendar.addEventListener("click", (event) => {
   const activityButton = event.target.closest("[data-activity-id]");
   if (activityButton) openActivity(activityButton.dataset.activityId);
@@ -409,8 +530,10 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (event.target.closest("[data-connect-strava]")) {
-    await saveProvider("strava");
-    window.location.href = "/api/strava/auth";
+    const saved = await saveProvider("strava");
+    if (!saved) return;
+    const athleteParam = state.selectedAthleteId ? `?athlete=${encodeURIComponent(state.selectedAthleteId)}` : "";
+    window.location.href = `/api/strava/auth${athleteParam}`;
   }
 });
 
