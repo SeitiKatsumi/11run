@@ -6,17 +6,19 @@ const state = {
   integrations: {},
   athletes: [],
   selectedAthleteId: localStorage.getItem("selectedAthleteId") || "",
-  currentUser: null
+  currentUser: null,
+  editingAthleteId: ""
 };
 
 const APP_VERSION_FALLBACK = "local-ui";
+const SECRET_MASK = "********";
 
 const providerDefinitions = {
   strava: {
     name: "Strava",
     mark: "S",
     status: "OAuth oficial funcionando",
-    strategy: "Use Client ID, Client Secret e Redirect URI. Depois clique em Conectar Strava para autorizar os escopos read e activity:read_all.",
+    strategy: "Use Client ID, Client Secret e Redirect URI. Depois clique em Conectar Strava para autorizar read, activity:read e activity:read_all.",
     fields: [
       ["clientId", "Client ID"],
       ["clientSecret", "Client Secret", "password"],
@@ -126,7 +128,7 @@ function closeMobileMenu() {
 }
 
 async function api(path, options = {}) {
-  const scopedPaths = ["/api/integrations", "/api/activities", "/api/sync", "/api/strava/auth"];
+  const scopedPaths = ["/api/integrations", "/api/activities", "/api/sync", "/api/strava/auth", "/api/strava/test"];
   const shouldScopeAthlete = scopedPaths.some((prefix) => path.startsWith(prefix));
   const athleteHeaders = shouldScopeAthlete && state.selectedAthleteId ? { "X-Athlete-Id": state.selectedAthleteId } : {};
   const response = await fetch(path, {
@@ -348,6 +350,10 @@ function renderProviders() {
     const hasStoredToken = integration.token?.access_token === "stored" || integration.token?.refresh_token === "stored";
     const isConnected = Boolean(integration.connected || hasStoredToken);
     const connected = isConnected ? "Conectado" : "Não conectado";
+    const scope = String(integration.token?.scope || "");
+    const stravaScopeWarning = key === "strava" && isConnected && !scope.split(/[,\s]+/).some((item) => item === "activity:read" || item === "activity:read_all")
+      ? `<p class="provider-warning">Reconecte aprovando activity:read ou activity:read_all para importar atividades.</p>`
+      : "";
     const fields = definition.fields.map(([field, label, type = "text"]) => `
       <label class="credential-field">
         <span>${escapeHtml(label)}</span>
@@ -358,6 +364,7 @@ function renderProviders() {
       <div class="provider-actions">
         <button class="primary-action compact" data-save-provider="${key}" type="button">Salvar credenciais</button>
         <button class="secondary-action compact" data-connect-strava type="button">Conectar Strava</button>
+        <button class="secondary-action compact" data-test-strava type="button">Testar Strava</button>
       </div>
     ` : `
       <div class="provider-actions">
@@ -381,6 +388,7 @@ function renderProviders() {
           </div>
           <p>${escapeHtml(definition.strategy)}</p>
           <p class="provider-state">${connected} para ${escapeHtml(getActiveAthlete()?.name || "o atleta selecionado")} - <a href="${definition.docs}" target="_blank" rel="noreferrer">docs oficiais</a></p>
+          ${stravaScopeWarning}
           ${athlete}
           <div class="credential-grid">${fields}</div>
           ${stravaActions}
@@ -443,7 +451,7 @@ function renderAthletes() {
     return;
   }
   list.innerHTML = state.athletes.map((athlete) => `
-    <article class="athlete-list-item">
+    <article class="athlete-list-item ${String(athlete.id) === String(state.selectedAthleteId) ? "is-selected" : ""}">
       <div>
         <strong>${escapeHtml(athlete.name)}</strong>
         <span>${escapeHtml(athlete.email)}</span>
@@ -452,6 +460,10 @@ function renderAthletes() {
       <p>Equipe: ${escapeHtml(athlete.teamName || "não vinculada")}</p>
       <p>Treinador: ${escapeHtml(athlete.coachName || "não vinculado")}</p>
       <p>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</p>
+      <div class="athlete-item-actions">
+        <button class="secondary-action compact" type="button" data-edit-athlete="${escapeHtml(athlete.id)}">Editar</button>
+        <button class="danger-action" type="button" data-delete-athlete="${escapeHtml(athlete.id)}">Excluir</button>
+      </div>
     </article>
   `).join("");
 }
@@ -469,6 +481,66 @@ function setAthleteMessage(message, isError = false) {
   target.textContent = message;
 }
 
+function resetAthleteForm(message = "") {
+  const form = document.querySelector("#athleteForm");
+  if (!form) return;
+  form.reset();
+  state.editingAthleteId = "";
+  const submit = document.querySelector("#athleteSubmitButton");
+  const cancel = document.querySelector("#cancelAthleteEdit");
+  if (submit) submit.textContent = "Salvar atleta";
+  if (cancel) cancel.hidden = true;
+  if (message) setAthleteMessage(message);
+}
+
+function editAthlete(athleteId) {
+  const athlete = state.athletes.find((item) => String(item.id) === String(athleteId));
+  const form = document.querySelector("#athleteForm");
+  if (!athlete || !form) return;
+  state.editingAthleteId = athlete.id;
+  form.elements.name.value = athlete.name || "";
+  form.elements.email.value = athlete.email || "";
+  form.elements.age.value = athlete.age || "";
+  form.elements.weightKg.value = athlete.weightKg || "";
+  form.elements.heightCm.value = athlete.heightCm || "";
+  form.elements.whatsapp.value = athlete.whatsapp || "";
+  form.elements.teamName.value = athlete.teamName || "";
+  form.elements.coachName.value = athlete.coachName || "";
+  form.elements.coachEmail.value = athlete.coachEmail || "";
+  form.elements.password.value = "";
+  const submit = document.querySelector("#athleteSubmitButton");
+  const cancel = document.querySelector("#cancelAthleteEdit");
+  if (submit) submit.textContent = "Atualizar atleta";
+  if (cancel) cancel.hidden = false;
+  setAthleteMessage(`Editando ${athlete.name}.`);
+}
+
+async function deleteAthlete(athleteId) {
+  const athlete = state.athletes.find((item) => String(item.id) === String(athleteId));
+  if (!athlete) return;
+  if (!window.confirm(`Excluir o atleta ${athlete.name}? Esta ação remove integrações e atividades importadas deste atleta.`)) return;
+  try {
+    setAthleteMessage("Excluindo atleta...");
+    const payload = await api(`/api/athletes/${encodeURIComponent(athlete.id)}`, { method: "DELETE" });
+    state.athletes = payload.athletes || [];
+    if (String(state.selectedAthleteId) === String(athlete.id)) state.selectedAthleteId = state.athletes[0]?.id || "";
+    syncSelectedAthlete();
+    state.integrations = state.selectedAthleteId ? await api("/api/integrations") : {};
+    state.activities = state.selectedAthleteId ? await api("/api/activities") : [];
+    renderAthletes();
+    renderAthleteSelector();
+    renderAthleteIdentity();
+    renderProviders();
+    renderCalendar();
+    renderHeroMetrics();
+    renderTrainingInsights();
+    resetAthleteForm(`Atleta ${athlete.name} excluído.`);
+  } catch (error) {
+    setAthleteMessage(error.message, true);
+    setLog([error.message], true);
+  }
+}
+
 async function saveProvider(provider) {
   if (!state.selectedAthleteId) {
     setLog(["Cadastre e selecione um atleta antes de salvar integrações."], true);
@@ -477,7 +549,9 @@ async function saveProvider(provider) {
   const form = document.querySelector(`[data-provider="${provider}"]`);
   const credentials = {};
   form.querySelectorAll("input[name]:not([name='enabled'])").forEach((input) => {
-    credentials[input.name] = input.value.trim();
+    const value = input.value.trim();
+    if (value === SECRET_MASK) return;
+    credentials[input.name] = value;
   });
   const enabled = form.querySelector("input[name='enabled']").checked;
   state.integrations = await api("/api/integrations", {
@@ -517,14 +591,33 @@ async function runSync() {
   }
 }
 
+async function testStrava() {
+  if (!state.selectedAthleteId) {
+    setLog(["Selecione um atleta antes de testar o Strava."], true);
+    return;
+  }
+  try {
+    setLog(["Testando conexão real com o Strava..."]);
+    const payload = await api("/api/strava/test");
+    const athlete = payload.athlete || {};
+    const name = [athlete.firstname, athlete.lastname].filter(Boolean).join(" ") || athlete.username || "atleta Strava";
+    setLog([`Strava conectado para ${name}. Escopos: ${payload.scope || "não informado"}.`]);
+    state.integrations = await api("/api/integrations");
+    renderProviders();
+  } catch (error) {
+    setLog([error.message], true);
+  }
+}
+
 async function saveAthlete(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const body = Object.fromEntries(new FormData(form).entries());
-  setAthleteMessage("Salvando atleta...");
+  const editingId = state.editingAthleteId;
+  setAthleteMessage(editingId ? "Atualizando atleta..." : "Salvando atleta...");
   try {
-    const payload = await api("/api/athletes", {
-      method: "POST",
+    const payload = await api(editingId ? `/api/athletes/${encodeURIComponent(editingId)}` : "/api/athletes", {
+      method: editingId ? "PUT" : "POST",
       body: JSON.stringify(body)
     });
     state.athletes = payload.athletes || [];
@@ -533,8 +626,7 @@ async function saveAthlete(event) {
     renderAthletes();
     renderAthleteSelector();
     renderAthleteIdentity();
-    form.reset();
-    setAthleteMessage(`Atleta ${payload.athlete.name} cadastrado com sucesso.`);
+    resetAthleteForm(`Atleta ${payload.athlete.name} ${editingId ? "atualizado" : "cadastrado"} com sucesso.`);
     setLog([`Atleta ${payload.athlete.name} salvo com sucesso.`]);
   } catch (error) {
     setAthleteMessage(error.message, true);
@@ -608,6 +700,7 @@ async function boot() {
 
   if (status.get("strava") === "connected") setLog(["Strava conectado. Clique em Importar e atualizar para puxar as atividades reais."]);
   if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorização."}`], true);
+  if (status.get("strava") === "state_error") setLog(["Erro Strava: estado OAuth inválido ou expirado. Clique em Conectar Strava novamente."], true);
 }
 
 if (shell && localStorage.getItem("railCollapsed") === "1") setRailCollapsed(true);
@@ -693,6 +786,16 @@ calendar.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", async (event) => {
+  const editButton = event.target.closest("[data-edit-athlete]");
+  if (editButton) {
+    editAthlete(editButton.dataset.editAthlete);
+    return;
+  }
+  const deleteButton = event.target.closest("[data-delete-athlete]");
+  if (deleteButton) {
+    await deleteAthlete(deleteButton.dataset.deleteAthlete);
+    return;
+  }
   const saveButton = event.target.closest("[data-save-provider]");
   if (saveButton) {
     await saveProvider(saveButton.dataset.saveProvider);
@@ -703,12 +806,17 @@ document.addEventListener("click", async (event) => {
     if (!saved) return;
     const athleteParam = state.selectedAthleteId ? `?athlete=${encodeURIComponent(state.selectedAthleteId)}` : "";
     window.location.href = `/api/strava/auth${athleteParam}`;
+    return;
+  }
+  if (event.target.closest("[data-test-strava]")) {
+    await testStrava();
   }
 });
 
 document.querySelector("#syncSelected").addEventListener("click", runSync);
 document.querySelector("[data-import-demo]").addEventListener("click", runSync);
 document.querySelector("#athleteForm").addEventListener("submit", saveAthlete);
+document.querySelector("#cancelAthleteEdit").addEventListener("click", () => resetAthleteForm("Edição cancelada."));
 
 loadAppVersion();
 boot();

@@ -25,6 +25,8 @@ const DEFAULT_ADMIN_EMAIL = (process.env.DEFAULT_ADMIN_EMAIL || "seitikatsumi@gm
 const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || "bs000229";
 const SESSION_COOKIE = "onzerun_session";
 const APP_VERSION = process.env.APP_VERSION || process.env.CAPROVER_GIT_COMMIT_SHA || "local";
+const SECRET_MASK = "********";
+const STRAVA_REQUIRED_ACTIVITY_SCOPES = ["activity:read", "activity:read_all"];
 
 const pool = DATABASE_URL && Pool
   ? new Pool({
@@ -59,7 +61,7 @@ function defaultIntegrations() {
         clientId: "",
         clientSecret: "",
         redirectUri: callback("/api/strava/callback"),
-        scopes: "read,activity:read_all"
+        scopes: "read,activity:read,activity:read_all"
       },
       token: null,
       athlete: null
@@ -220,8 +222,24 @@ function clone(value) {
 
 function mergeDefined(target, source) {
   for (const [key, value] of Object.entries(source || {})) {
-    if (value !== undefined && value !== "********") target[key] = value;
+    if (value !== undefined && value !== SECRET_MASK) target[key] = value;
   }
+}
+
+function mergeCredentials(...sources) {
+  const merged = {};
+  for (const source of sources) {
+    for (const [key, value] of Object.entries(source || {})) {
+      if (value !== undefined && value !== null && value !== "" && value !== SECRET_MASK) merged[key] = value;
+    }
+  }
+  return merged;
+}
+
+function httpError(message, statusCode = 400) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
 }
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
@@ -260,11 +278,11 @@ function clearSessionCookie(res) {
 function sanitizeIntegrations(integrations) {
   const copy = clone(integrations);
   for (const integration of Object.values(copy)) {
-    if (integration.credentials?.clientSecret) integration.credentials.clientSecret = "********";
-    if (integration.credentials?.partnerClientSecret) integration.credentials.partnerClientSecret = "********";
-    if (integration.credentials?.fallbackApiKey) integration.credentials.fallbackApiKey = "********";
-    if (integration.credentials?.accessToken) integration.credentials.accessToken = "********";
-    if (integration.credentials?.subscriptionKey) integration.credentials.subscriptionKey = "********";
+    if (integration.credentials?.clientSecret) integration.credentials.clientSecret = SECRET_MASK;
+    if (integration.credentials?.partnerClientSecret) integration.credentials.partnerClientSecret = SECRET_MASK;
+    if (integration.credentials?.fallbackApiKey) integration.credentials.fallbackApiKey = SECRET_MASK;
+    if (integration.credentials?.accessToken) integration.credentials.accessToken = SECRET_MASK;
+    if (integration.credentials?.subscriptionKey) integration.credentials.subscriptionKey = SECRET_MASK;
     if (integration.token?.access_token) integration.token.access_token = "stored";
     if (integration.token?.refresh_token) integration.token.refresh_token = "stored";
   }
@@ -383,6 +401,7 @@ async function ensureDefaultAdmin(tenantId) {
     [adminId]
   );
   await ensureTenantIntegrations(tenantId, adminId);
+  await migrateGlobalStravaTokenToAthlete(tenantId, adminId);
 }
 
 async function ensureTenantIntegrations(tenantId, athleteUserId = null) {
@@ -414,6 +433,49 @@ async function ensureTenantIntegrations(tenantId, athleteUserId = null) {
       );
     }
   }
+}
+
+async function migrateGlobalStravaTokenToAthlete(tenantId, athleteUserId) {
+  if (!pool || !athleteUserId) return;
+  const result = await query(
+    `SELECT credentials, token, athlete, connected
+       FROM integrations
+      WHERE tenant_id = $1
+        AND athlete_user_id IS NULL
+        AND provider = 'strava'
+        AND token IS NOT NULL
+      LIMIT 1`,
+    [tenantId]
+  );
+  const globalIntegration = result.rows[0];
+  if (!globalIntegration) return;
+  const athleteIntegration = await query(
+    `SELECT id, credentials, token, connected
+       FROM integrations
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND provider = 'strava'
+      LIMIT 1`,
+    [tenantId, athleteUserId]
+  );
+  const row = athleteIntegration.rows[0];
+  if (!row || row.token || row.connected) return;
+  await query(
+    `UPDATE integrations
+        SET connected = $1,
+            credentials = $2,
+            token = $3,
+            athlete = $4,
+            updated_at = now()
+      WHERE id = $5`,
+    [
+      Boolean(globalIntegration.connected),
+      JSON.stringify(mergeCredentials(globalIntegration.credentials, row.credentials)),
+      JSON.stringify(globalIntegration.token),
+      globalIntegration.athlete ? JSON.stringify(globalIntegration.athlete) : null,
+      row.id
+    ]
+  );
 }
 
 function tenantSlugFromReq(req) {
@@ -621,7 +683,7 @@ async function createAthlete(tenantId, input) {
   if (!pool) {
     const athletes = readJson(ATHLETES_FILE, []);
     const existingIndex = athletes.findIndex((item) => item.email === athlete.email);
-    if (existingIndex >= 0) throw new Error("Não foi possível cadastrar: já existe um atleta com este e-mail.");
+    if (existingIndex >= 0) throw httpError("Não foi possível cadastrar: já existe um atleta com este e-mail.", 409);
     const record = {
       id: crypto.randomUUID(),
       tenantId,
@@ -649,7 +711,7 @@ async function createAthlete(tenantId, input) {
       [tenantId, athlete.email]
     );
     if (existingUser.rows[0]?.athlete_profile_id) {
-      throw new Error("Não foi possível cadastrar: já existe um atleta com este e-mail.");
+      throw httpError("Não foi possível cadastrar: já existe um atleta com este e-mail.", 409);
     }
     let teamId = null;
     let coachId = null;
@@ -711,9 +773,151 @@ async function createAthlete(tenantId, input) {
   }
 }
 
+async function updateAthlete(tenantId, athleteUserId, input) {
+  const athlete = validateAthlete(input);
+  if (!pool) {
+    const athletes = readJson(ATHLETES_FILE, []);
+    const index = athletes.findIndex((item) => String(item.id) === String(athleteUserId));
+    if (index < 0) throw httpError("Atleta não encontrado.", 404);
+    const duplicated = athletes.some((item) => String(item.id) !== String(athleteUserId) && item.email === athlete.email);
+    if (duplicated) throw httpError("Não foi possível atualizar: já existe um atleta com este e-mail.", 409);
+    athletes[index] = {
+      ...athletes[index],
+      ...athlete,
+      teamName: athlete.teamName || "",
+      coachName: athlete.coachName || "",
+      coachEmail: athlete.coachEmail || ""
+    };
+    writeJson(ATHLETES_FILE, athletes);
+    return athletes[index];
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const existing = await client.query(
+      `SELECT u.id, u.email, u.role
+         FROM users u
+         JOIN athlete_profiles ap ON ap.user_id = u.id
+        WHERE u.tenant_id = $1 AND u.id = $2
+        LIMIT 1`,
+      [tenantId, athleteUserId]
+    );
+    if (!existing.rows[0]) throw httpError("Atleta não encontrado.", 404);
+    const duplicate = await client.query(
+      `SELECT id FROM users
+        WHERE tenant_id = $1
+          AND email = $2
+          AND id <> $3
+        LIMIT 1`,
+      [tenantId, athlete.email, athleteUserId]
+    );
+    if (duplicate.rows[0]) throw httpError("Não foi possível atualizar: já existe um atleta com este e-mail.", 409);
+
+    let teamId = null;
+    let coachId = null;
+    if (athlete.teamName) {
+      const teamResult = await client.query(
+        `INSERT INTO teams (tenant_id, name)
+         VALUES ($1, $2)
+         ON CONFLICT (tenant_id, name)
+         DO UPDATE SET name = EXCLUDED.name
+         RETURNING id`,
+        [tenantId, athlete.teamName]
+      );
+      teamId = teamResult.rows[0].id;
+    }
+    if (athlete.coachEmail) {
+      const coachResult = await client.query(
+        `INSERT INTO users (tenant_id, role, name, email)
+         VALUES ($1, 'coach', $2, $3)
+         ON CONFLICT (tenant_id, email)
+         DO UPDATE SET name = EXCLUDED.name,
+                       role = CASE WHEN users.role = 'athlete' THEN users.role ELSE 'coach' END
+         RETURNING id`,
+        [tenantId, athlete.coachName || athlete.coachEmail, athlete.coachEmail]
+      );
+      coachId = coachResult.rows[0].id;
+    }
+    const passwordHash = athlete.password ? hashPassword(athlete.password) : null;
+    await client.query(
+      `UPDATE users
+          SET name = $1,
+              email = $2,
+              whatsapp = $3,
+              password_hash = COALESCE($4, password_hash)
+        WHERE tenant_id = $5 AND id = $6`,
+      [athlete.name, athlete.email, athlete.whatsapp, passwordHash, tenantId, athleteUserId]
+    );
+    await client.query(
+      `UPDATE athlete_profiles
+          SET team_id = $1,
+              coach_user_id = $2,
+              age = $3,
+              weight_kg = $4,
+              height_cm = $5,
+              updated_at = now()
+        WHERE user_id = $6`,
+      [teamId, coachId, athlete.age, athlete.weightKg, athlete.heightCm, athleteUserId]
+    );
+    await client.query("COMMIT");
+    await ensureTenantIntegrations(tenantId, athleteUserId);
+    return (await listAthletes(tenantId)).find((item) => String(item.id) === String(athleteUserId));
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function deleteAthlete(tenantId, athleteUserId, actorUser) {
+  if (!pool) {
+    const athletes = readJson(ATHLETES_FILE, []);
+    const target = athletes.find((item) => String(item.id) === String(athleteUserId));
+    if (!target) throw httpError("Atleta não encontrado.", 404);
+    writeJson(ATHLETES_FILE, athletes.filter((item) => String(item.id) !== String(athleteUserId)));
+    return;
+  }
+  const existing = await query(
+    `SELECT u.id, u.email, u.role
+       FROM users u
+       JOIN athlete_profiles ap ON ap.user_id = u.id
+      WHERE u.tenant_id = $1 AND u.id = $2
+      LIMIT 1`,
+    [tenantId, athleteUserId]
+  );
+  const athlete = existing.rows[0];
+  if (!athlete) throw httpError("Atleta não encontrado.", 404);
+  if (String(athlete.email || "").toLowerCase() === DEFAULT_ADMIN_EMAIL || String(actorUser?.id) === String(athleteUserId)) {
+    throw httpError("Não é possível excluir o usuário super admin ou o usuário logado.", 400);
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("DELETE FROM activities WHERE tenant_id = $1 AND athlete_user_id = $2", [tenantId, athleteUserId]);
+    await client.query("DELETE FROM users WHERE tenant_id = $1 AND id = $2", [tenantId, athleteUserId]);
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 async function getIntegrations(tenantId, athleteUserId = null) {
   if (!pool) return readJson(INTEGRATIONS_FILE, defaultIntegrations());
   await ensureTenantIntegrations(tenantId, athleteUserId);
+  const globalRows = athleteUserId
+    ? await query(
+        `SELECT provider, credentials
+           FROM integrations
+          WHERE tenant_id = $1 AND athlete_user_id IS NULL`,
+        [tenantId]
+      )
+    : { rows: [] };
   const result = await query(
     `SELECT provider, enabled, connected, credentials, token, athlete, oauth_state
        FROM integrations
@@ -721,12 +925,16 @@ async function getIntegrations(tenantId, athleteUserId = null) {
     [tenantId, athleteUserId]
   );
   const defaults = defaultIntegrations();
+  for (const row of globalRows.rows) {
+    if (!defaults[row.provider]) continue;
+    defaults[row.provider].credentials = mergeCredentials(defaults[row.provider].credentials, row.credentials || {});
+  }
   for (const row of result.rows) {
     defaults[row.provider] = {
       ...defaults[row.provider],
       enabled: row.enabled,
       connected: row.connected,
-      credentials: { ...defaults[row.provider].credentials, ...(row.credentials || {}) },
+      credentials: mergeCredentials(defaults[row.provider].credentials, row.credentials || {}),
       token: row.token,
       athlete: row.athlete,
       oauthState: row.oauth_state
@@ -912,6 +1120,32 @@ function estimateLoad(activity) {
   return String(Math.max(1, Math.round(minutes * intensity)));
 }
 
+function normalizeScopes(scopeValue) {
+  return String(scopeValue || "")
+    .split(/[,\s]+/)
+    .map((scope) => scope.trim())
+    .filter(Boolean);
+}
+
+function hasStravaActivityScope(scopeValue) {
+  const scopes = normalizeScopes(scopeValue);
+  return STRAVA_REQUIRED_ACTIVITY_SCOPES.some((scope) => scopes.includes(scope));
+}
+
+function encodeStravaState(tenantSlug, athleteUserId, nonce) {
+  return Buffer.from(JSON.stringify({ tenant: tenantSlug, athlete: athleteUserId, nonce })).toString("base64url");
+}
+
+function decodeStravaState(value) {
+  try {
+    const parsed = JSON.parse(Buffer.from(String(value || ""), "base64url").toString("utf8"));
+    if (parsed && parsed.nonce) return parsed;
+  } catch {
+    // Older OAuth attempts used the raw nonce as the state value.
+  }
+  return { nonce: value || "" };
+}
+
 function mapStravaActivity(activity) {
   const date = new Date(activity.start_date_local || activity.start_date);
   return {
@@ -989,6 +1223,9 @@ async function syncStrava(tenantId, athleteUserId, days) {
   if (!integration.token?.access_token) {
     throw new Error(`Strava ainda não foi conectado para este atleta. Selecione o atleta correto ou clique em Conectar Strava novamente.`);
   }
+  if (!hasStravaActivityScope(integration.token.scope)) {
+    throw new Error("O token Strava deste atleta não possui activity:read/activity:read_all. Clique em Conectar Strava e aprove os escopos solicitados.");
+  }
   const now = Math.floor(Date.now() / 1000);
   const after = now - Number(days || 30) * 24 * 60 * 60;
   const activities = [];
@@ -1009,9 +1246,32 @@ async function syncStrava(tenantId, athleteUserId, days) {
   return activities;
 }
 
+async function testStravaConnection(tenantId, athleteUserId) {
+  const integrations = await getIntegrations(tenantId, athleteUserId);
+  const integration = integrations.strava;
+  if (!integration.enabled) throw new Error("Ative a fonte Strava antes de testar.");
+  if (!integration.credentials?.clientId || !integration.credentials?.clientSecret) {
+    throw new Error("Client ID e Client Secret do Strava não foram salvos para este atleta.");
+  }
+  if (!integration.token?.access_token) {
+    throw new Error("Este atleta ainda não concluiu o OAuth do Strava.");
+  }
+  if (!hasStravaActivityScope(integration.token.scope)) {
+    throw new Error("OAuth Strava conectado sem escopo de atividades. Reconecte aprovando activity:read ou activity:read_all.");
+  }
+  const athlete = await stravaFetchJson("/athlete", tenantId, athleteUserId, integration);
+  return {
+    ok: true,
+    athlete,
+    scope: integration.token.scope || "",
+    connected: true
+  };
+}
+
 async function handleStravaCallback(url, res) {
-  const tenantSlug = url.searchParams.get("tenant") || DEFAULT_TENANT_SLUG;
-  const athleteUserId = url.searchParams.get("athlete") || null;
+  const decodedState = decodeStravaState(url.searchParams.get("state"));
+  const tenantSlug = decodedState.tenant || url.searchParams.get("tenant") || DEFAULT_TENANT_SLUG;
+  const athleteUserId = decodedState.athlete || url.searchParams.get("athlete") || null;
   const tenant = await getTenant(tenantSlug);
   const error = url.searchParams.get("error");
   if (error) {
@@ -1020,11 +1280,11 @@ async function handleStravaCallback(url, res) {
   }
 
   const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state");
+  const nonce = decodedState.nonce;
   const integrations = await getIntegrations(tenant.id, athleteUserId);
   const integration = integrations.strava;
 
-  if (!code || !state || state !== integration.oauthState) {
+  if (!code || !nonce || nonce !== integration.oauthState) {
     redirect(res, "/#configuracao?strava=state_error");
     return;
   }
@@ -1045,6 +1305,10 @@ async function handleStravaCallback(url, res) {
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.message || `HTTP ${response.status}`);
+    const grantedScope = url.searchParams.get("scope") || payload.scope || "";
+    if (!hasStravaActivityScope(grantedScope)) {
+      throw new Error("O Strava autorizou apenas leitura basica. Refaca a conexao aprovando activity:read ou activity:read_all.");
+    }
 
     await saveIntegration(tenant.id, athleteUserId, "strava", {
       connected: true,
@@ -1052,7 +1316,7 @@ async function handleStravaCallback(url, res) {
         access_token: payload.access_token,
         refresh_token: payload.refresh_token,
         expires_at: payload.expires_at,
-        scope: payload.scope
+        scope: grantedScope
       },
       athlete: payload.athlete || null,
       oauthState: null
@@ -1168,6 +1432,34 @@ async function handleApi(req, res, url) {
       return;
     }
 
+    const athleteRoute = url.pathname.match(/^\/api\/athletes\/([^/]+)$/);
+    if (athleteRoute && req.method === "PUT") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
+      requireRole(user, ["admin", "manager", "coach"]);
+      const athleteUserId = decodeURIComponent(athleteRoute[1]);
+      if (!(await canAccessAthlete(tenant.id, user, athleteUserId))) {
+        throw httpError("Usuário sem permissão para editar este atleta.", 403);
+      }
+      const body = await readRequestBody(req);
+      const athlete = await updateAthlete(tenant.id, athleteUserId, body);
+      sendJson(res, 200, { athlete, athletes: await listAthletes(tenant.id, user) });
+      return;
+    }
+
+    if (athleteRoute && req.method === "DELETE") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
+      requireRole(user, ["admin", "manager", "coach"]);
+      const athleteUserId = decodeURIComponent(athleteRoute[1]);
+      if (!(await canAccessAthlete(tenant.id, user, athleteUserId))) {
+        throw httpError("Usuário sem permissão para excluir este atleta.", 403);
+      }
+      await deleteAthlete(tenant.id, athleteUserId, user);
+      sendJson(res, 200, { ok: true, athletes: await listAthletes(tenant.id, user) });
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/integrations") {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
@@ -1213,17 +1505,16 @@ async function handleApi(req, res, url) {
         sendJson(res, 400, { error: "Preencha Client ID, Client Secret e Redirect URI do Strava." });
         return;
       }
-      const state = crypto.randomBytes(16).toString("hex");
-      await saveIntegration(tenant.id, athleteUserId, "strava", { oauthState: state });
+      const nonce = crypto.randomBytes(16).toString("hex");
+      await saveIntegration(tenant.id, athleteUserId, "strava", { oauthState: nonce });
+      const state = encodeStravaState(tenant.slug, athleteUserId, nonce);
       const redirectUri = new URL(credentials.redirectUri);
-      redirectUri.searchParams.set("tenant", tenant.slug);
-      if (athleteUserId) redirectUri.searchParams.set("athlete", athleteUserId);
       const authUrl = new URL("https://www.strava.com/oauth/authorize");
       authUrl.searchParams.set("client_id", credentials.clientId);
       authUrl.searchParams.set("redirect_uri", redirectUri.toString());
       authUrl.searchParams.set("response_type", "code");
-      authUrl.searchParams.set("approval_prompt", "auto");
-      authUrl.searchParams.set("scope", credentials.scopes || "read,activity:read_all");
+      authUrl.searchParams.set("approval_prompt", "force");
+      authUrl.searchParams.set("scope", credentials.scopes || "read,activity:read,activity:read_all");
       authUrl.searchParams.set("state", state);
       redirect(res, authUrl.toString());
       return;
@@ -1231,6 +1522,13 @@ async function handleApi(req, res, url) {
 
     if (req.method === "GET" && url.pathname === "/api/strava/callback") {
       await handleStravaCallback(url, res);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/strava/test") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      sendJson(res, 200, await testStravaConnection(tenant.id, athleteUserId));
       return;
     }
 

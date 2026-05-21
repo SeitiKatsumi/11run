@@ -60,7 +60,7 @@
             <div class="hero-content">
               <img class="hero-logo" src="assets/logo-orange-white.png" alt="11RUN" />
               <p class="kicker">Perfil do atleta</p>
-              <h1>Gestão avançada de corrida, pronta para importar seu histórico real.</h1>
+              <h1>The world's smartest AI-powered training manager.</h1>
               <p>
                 Centralize Strava, Garmin Connect, COROS, Polar e Suunto em um calendário técnico,
                 com leituras de carga, consistência, intensidade e evolução.
@@ -180,7 +180,10 @@
                   <input name="password" type="password" autocomplete="new-password" />
                 </label>
               </div>
-              <button class="primary-action compact" type="submit">Salvar atleta</button>
+              <div class="form-actions">
+                <button class="primary-action compact" id="athleteSubmitButton" type="submit">Salvar atleta</button>
+                <button class="secondary-action compact" id="cancelAthleteEdit" type="button" hidden>Cancelar edição</button>
+              </div>
               <p id="athleteMessage" class="form-message" aria-live="polite"></p>
             </form>
 

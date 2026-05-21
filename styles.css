@@ -346,6 +346,12 @@ h1 {
   font-weight: 650;
 }
 
+.hero h1 {
+  max-width: 540px;
+  font-size: clamp(26px, 3.5vw, 44px);
+  line-height: 1.08;
+}
+
 h2,
 h3 {
   color: var(--heading);
@@ -388,6 +394,17 @@ h3 {
   padding: 0 18px;
   background: rgba(255, 255, 255, 0.08);
   border-color: var(--line);
+}
+
+.danger-action {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 61, 85, 0.48);
+  border-radius: var(--radius);
+  color: #ffb3bd;
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(255, 61, 85, 0.1);
 }
 
 .compact {
@@ -744,6 +761,12 @@ select {
   font-weight: 650;
 }
 
+.provider-warning {
+  margin-top: 10px !important;
+  color: #ffb3bd !important;
+  font-weight: 650;
+}
+
 .provider-state a,
 .detail-link {
   color: var(--orange);
@@ -794,6 +817,13 @@ select {
   margin-top: 14px;
 }
 
+.form-actions,
+.athlete-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .athlete-list {
   display: grid;
   gap: 12px;
@@ -804,6 +834,14 @@ select {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.04);
+}
+
+.athlete-list-item.is-selected {
+  border-color: var(--line-strong);
+}
+
+.athlete-item-actions {
+  margin-top: 12px;
 }
 
 .athlete-list-item strong {
@@ -1003,8 +1041,8 @@ dialog::backdrop {
     margin-bottom: 18px;
   }
 
-  h1 {
-    font-size: clamp(38px, 12vw, 62px);
+  .hero h1 {
+    font-size: clamp(28px, 8vw, 38px);
     line-height: 1;
   }
 
