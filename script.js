@@ -150,6 +150,46 @@ function visibleActivities() {
   return [...state.activities].sort((a, b) => String(a.date).localeCompare(String(b.date)));
 }
 
+function parseDistanceKm(distance) {
+  const match = String(distance || "").replace(",", ".").match(/[\d.]+/);
+  return match ? Number(match[0]) : 0;
+}
+
+function activitiesSince(days) {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - days + 1);
+  return visibleActivities().filter((activity) => {
+    const date = new Date(`${activity.date}T00:00:00`);
+    return date >= start;
+  });
+}
+
+function formatKm(value) {
+  if (!value) return "--";
+  return `${value.toFixed(value >= 10 ? 1 : 2)} km`;
+}
+
+function renderHeroMetrics() {
+  const target = document.querySelector("#heroMetrics");
+  if (!target) return;
+
+  const last30 = activitiesSince(30);
+  const last7 = activitiesSince(7);
+  const km30 = last30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const km7 = last7.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const averageWeeklyKm = km30 / 4.285;
+  const trend = averageWeeklyKm ? Math.round((km7 / averageWeeklyKm) * 100) : 0;
+  const status = !last30.length ? "Sem dados" : trend > 135 ? "Atenção" : trend < 55 ? "Baixa carga" : "Estável";
+  const statusDetail = !last30.length ? "importe atividades" : `${trend}% da média recente`;
+
+  target.innerHTML = `
+    <div><span>30 dias</span><strong>${escapeHtml(formatKm(km30))}</strong><small>${last30.length} sessões</small></div>
+    <div><span>Semana</span><strong>${escapeHtml(formatKm(km7))}</strong><small>${last7.length} sessões</small></div>
+    <div><span>Status</span><strong>${escapeHtml(status)}</strong><small>${escapeHtml(statusDetail)}</small></div>
+  `;
+}
+
 function renderActivity(activity) {
   return `
     <button class="activity" data-activity-id="${escapeHtml(activity.id)}" data-source="${escapeHtml(activity.source)}">
@@ -381,6 +421,7 @@ async function runSync() {
     });
     state.activities = payload.activities || [];
     renderCalendar();
+    renderHeroMetrics();
     setLog([
       `Importadas/atualizadas: ${payload.imported} atividades reais.`,
       ...(payload.warnings || []),
@@ -444,6 +485,7 @@ async function boot() {
   renderAthleteSelector();
   renderAthleteIdentity();
   renderCalendar();
+  renderHeroMetrics();
 
   const status = new URLSearchParams(location.hash.split("?")[1] || "");
   if (status.get("strava") === "connected") setLog(["Strava conectado. Clique em Importar e atualizar para puxar as atividades reais."]);
@@ -511,6 +553,7 @@ document.querySelector("#athleteSelector").addEventListener("change", async (eve
     state.activities = activities;
     renderProviders();
     renderCalendar();
+    renderHeroMetrics();
     const athlete = getActiveAthlete();
     setLog([`Atleta selecionado: ${athlete?.name || "nenhum"}. Integrações e calendário atualizados.`]);
   } catch (error) {
