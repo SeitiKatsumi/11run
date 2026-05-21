@@ -1015,7 +1015,7 @@ function activityRowToApi(row) {
   return {
     id: `${row.provider}-${row.provider_activity_id}`,
     providerId: row.provider_activity_id,
-    date: String(row.activity_date).slice(0, 10),
+    date: formatDateOnly(row.activity_date),
     title: row.title,
     source: row.provider,
     type: row.type || "",
@@ -1026,6 +1026,16 @@ function activityRowToApi(row) {
     load: row.load || "",
     externalUrl: row.external_url || ""
   };
+}
+
+function formatDateOnly(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+  return String(value || "").slice(0, 10);
 }
 
 async function listActivities(tenantId, athleteUserId = null) {
@@ -1169,6 +1179,20 @@ function mapStravaActivity(activity) {
   };
 }
 
+async function enrichStravaActivities(tenantId, athleteUserId, integration, activities) {
+  const enriched = [];
+  for (const activity of activities) {
+    try {
+      const detail = await stravaFetchJson(`/activities/${activity.providerId}?include_all_efforts=false`, tenantId, athleteUserId, integration);
+      enriched.push(mapStravaActivity({ ...activity.raw, ...detail }));
+    } catch (error) {
+      console.warn(`Não foi possível buscar detalhe da atividade Strava ${activity.providerId}: ${error.message}`);
+      enriched.push(activity);
+    }
+  }
+  return enriched;
+}
+
 async function getValidStravaToken(tenantId, athleteUserId, integration) {
   if (!integration.token?.access_token) {
     throw new Error("Strava ainda não foi conectado. Salve as credenciais e clique em Conectar Strava.");
@@ -1242,8 +1266,9 @@ async function syncStrava(tenantId, athleteUserId, days) {
     if (batch.length < 100) break;
   }
 
-  await upsertActivities(tenantId, athleteUserId, activities);
-  return activities;
+  const enriched = await enrichStravaActivities(tenantId, athleteUserId, integration, activities);
+  await upsertActivities(tenantId, athleteUserId, enriched);
+  return enriched;
 }
 
 async function testStravaConnection(tenantId, athleteUserId) {

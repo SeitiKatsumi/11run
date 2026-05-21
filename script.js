@@ -189,6 +189,31 @@ function visibleActivities() {
   return [...state.activities].sort((a, b) => String(a.date).localeCompare(String(b.date)));
 }
 
+function activityDate(activity) {
+  const date = new Date(`${activity.date}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function hasActivitiesInCurrentRange() {
+  const activities = visibleActivities();
+  if (!activities.length) return false;
+  if (state.calendarView === "month") {
+    return activities.some((activity) => {
+      const date = activityDate(activity);
+      return date && date.getFullYear() === state.cursor.getFullYear() && date.getMonth() === state.cursor.getMonth();
+    });
+  }
+  if (state.calendarView === "week") {
+    const start = startOfWeek(state.cursor);
+    const end = addDays(start, 6);
+    return activities.some((activity) => {
+      const date = activityDate(activity);
+      return date && date >= start && date <= end;
+    });
+  }
+  return activities.some((activity) => activity.date === dateKey(state.cursor));
+}
+
 function parseDistanceKm(distance) {
   const match = String(distance || "").replace(",", ".").match(/[\d.]+/);
   return match ? Number(match[0]) : 0;
@@ -289,6 +314,7 @@ function renderDayCell(date, muted = false) {
 function renderCalendar() {
   const cursor = state.cursor;
   calendar.className = `calendar calendar-${state.calendarView}`;
+  const activities = visibleActivities();
 
   if (state.calendarView === "month") {
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
@@ -300,7 +326,9 @@ function renderCalendar() {
     }
     calendar.innerHTML = weekdayNames.map((day) => `<div class="weekday">${day}</div>`).join("") + cells.join("");
     document.querySelector("#calendarEyebrow").textContent = `${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}`;
-    document.querySelector("#calendarTitle").textContent = "Bloco de performance";
+    document.querySelector("#calendarTitle").textContent = activities.length && !hasActivitiesInCurrentRange()
+      ? `${activities.length} atividades importadas fora deste mês`
+      : "Bloco de performance";
   }
 
   if (state.calendarView === "week") {
@@ -310,13 +338,17 @@ function renderCalendar() {
     const end = addDays(start, 6);
     calendar.innerHTML = weekdayNames.map((day) => `<div class="weekday">${day}</div>`).join("") + cells.join("");
     document.querySelector("#calendarEyebrow").textContent = `${start.getDate()}-${end.getDate()} ${monthNames[end.getMonth()]} ${end.getFullYear()}`;
-    document.querySelector("#calendarTitle").textContent = "Microciclo semanal";
+    document.querySelector("#calendarTitle").textContent = activities.length && !hasActivitiesInCurrentRange()
+      ? `${activities.length} atividades importadas fora desta semana`
+      : "Microciclo semanal";
   }
 
   if (state.calendarView === "day") {
     calendar.innerHTML = renderDayCell(cursor);
     document.querySelector("#calendarEyebrow").textContent = `${cursor.getDate()} ${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}`;
-    document.querySelector("#calendarTitle").textContent = "Detalhe do dia";
+    document.querySelector("#calendarTitle").textContent = activities.length && !hasActivitiesInCurrentRange()
+      ? `${activities.length} atividades importadas em outras datas`
+      : "Detalhe do dia";
   }
 }
 
@@ -582,7 +614,10 @@ async function runSync() {
     renderHeroMetrics();
     renderTrainingInsights();
     setLog([
-      `Importadas/atualizadas: ${payload.imported} atividades reais.`,
+      payload.imported
+        ? `Importadas/atualizadas: ${payload.imported} atividades reais.`
+        : `Nenhuma atividade nova retornada pelas fontes no intervalo de ${days} dias.`,
+      state.activities.length ? `Total no banco para este atleta: ${state.activities.length}.` : "Nenhuma atividade salva para este atleta.",
       ...(payload.warnings || []),
       "Calendário atualizado."
     ]);
