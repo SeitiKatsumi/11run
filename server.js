@@ -962,6 +962,9 @@ async function stravaFetchJson(pathname, tenantId, athleteUserId, integration) {
 async function syncStrava(tenantId, athleteUserId, days) {
   const integrations = await getIntegrations(tenantId, athleteUserId);
   const integration = integrations.strava;
+  if (!integration.token?.access_token) {
+    throw new Error(`Strava ainda não foi conectado para este atleta. Selecione o atleta correto ou clique em Conectar Strava novamente.`);
+  }
   const now = Math.floor(Date.now() / 1000);
   const after = now - Number(days || 30) * 24 * 60 * 60;
   const activities = [];
@@ -1030,7 +1033,8 @@ async function handleStravaCallback(url, res) {
       athlete: payload.athlete || null,
       oauthState: null
     });
-    redirect(res, "/#configuracao?strava=connected");
+    const athleteParam = athleteUserId ? `&athlete=${encodeURIComponent(athleteUserId)}` : "";
+    redirect(res, `/#configuracao?strava=connected${athleteParam}`);
   } catch (exchangeError) {
     redirect(res, `/#configuracao?strava=error&message=${encodeURIComponent(exchangeError.message)}`);
   }

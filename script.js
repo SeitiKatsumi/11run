@@ -270,7 +270,9 @@ function renderProviders() {
   list.innerHTML = Object.entries(providerDefinitions).map(([key, definition]) => {
     const integration = state.integrations[key] || {};
     const credentials = integration.credentials || {};
-    const connected = integration.connected ? "Conectado" : "Não conectado";
+    const hasStoredToken = integration.token?.access_token === "stored" || integration.token?.refresh_token === "stored";
+    const isConnected = Boolean(integration.connected || hasStoredToken);
+    const connected = isConnected ? "Conectado" : "Não conectado";
     const fields = definition.fields.map(([field, label, type = "text"]) => `
       <label class="credential-field">
         <span>${escapeHtml(label)}</span>
@@ -303,7 +305,7 @@ function renderProviders() {
             </label>
           </div>
           <p>${escapeHtml(definition.strategy)}</p>
-          <p class="provider-state">${connected} - <a href="${definition.docs}" target="_blank" rel="noreferrer">docs oficiais</a></p>
+          <p class="provider-state">${connected} para ${escapeHtml(getActiveAthlete()?.name || "o atleta selecionado")} - <a href="${definition.docs}" target="_blank" rel="noreferrer">docs oficiais</a></p>
           ${athlete}
           <div class="credential-grid">${fields}</div>
           ${stravaActions}
@@ -466,6 +468,12 @@ async function saveAthlete(event) {
 
 async function boot() {
   try {
+    const initialHash = location.hash.replace("#", "").split("?")[0];
+    const status = new URLSearchParams(location.hash.split("?")[1] || "");
+    if (status.get("athlete")) {
+      state.selectedAthleteId = status.get("athlete");
+      localStorage.setItem("selectedAthleteId", state.selectedAthleteId);
+    }
     const session = await api("/api/me");
     state.currentUser = session.user;
     if (!state.currentUser) {
@@ -486,7 +494,6 @@ async function boot() {
     return;
   }
 
-  const initialHash = location.hash.replace("#", "").split("?")[0];
   if (initialHash === "treinamentos") setView("training");
   if (initialHash === "atleta") setView("athlete");
   if (initialHash === "configuracao") setView("settings");
@@ -497,7 +504,6 @@ async function boot() {
   renderCalendar();
   renderHeroMetrics();
 
-  const status = new URLSearchParams(location.hash.split("?")[1] || "");
   if (status.get("strava") === "connected") setLog(["Strava conectado. Clique em Importar e atualizar para puxar as atividades reais."]);
   if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorização."}`], true);
 }
