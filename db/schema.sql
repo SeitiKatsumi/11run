@@ -82,12 +82,12 @@ CREATE TABLE IF NOT EXISTS activities (
   UNIQUE (tenant_id, provider, provider_activity_id)
 );
 
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS team_id UUID REFERENCES teams(id) ON DELETE SET NULL;
+ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS coach_user_id UUID REFERENCES users(id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role);
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_team ON athlete_profiles(team_id);
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_coach ON athlete_profiles(coach_user_id);
 CREATE INDEX IF NOT EXISTS idx_activities_tenant_date ON activities(tenant_id, activity_date);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
-
-ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
-ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS team_id UUID REFERENCES teams(id) ON DELETE SET NULL;
-ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS coach_user_id UUID REFERENCES users(id) ON DELETE SET NULL;
