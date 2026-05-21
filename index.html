@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>11RUN | Treinamento atlético com IA</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="rail" aria-label="Menu principal">
+        <a class="brand" href="#home" data-view-link="home" aria-label="11RUN início">
+          <img src="assets/logo-orange-white.png" alt="11RUN" />
+        </a>
+        <nav>
+          <a href="#home" class="is-active" data-view-link="home"><span class="nav-icon">H</span>Home</a>
+          <a href="#treinamentos" data-view-link="training"><span class="nav-icon">T</span>Treinamentos</a>
+          <a href="#atleta" data-view-link="athlete"><span class="nav-icon">A</span>Atleta</a>
+          <a href="#configuracao" data-view-link="settings"><span class="nav-icon">C</span>Configuração</a>
+        </nav>
+        <div class="athlete-chip">
+          <span>Atleta</span>
+          <strong>Marina Apex</strong>
+        </div>
+      </aside>
+
+      <main>
+        <section class="view home-view is-visible" data-view="home">
+          <div class="hero">
+            <img class="hero-bg" src="assets/hero-runner.png" alt="Corredora futurista em cidade tecnológica" />
+            <div class="hero-shade"></div>
+            <div class="hero-content">
+              <img class="hero-logo" src="assets/logo-orange-white.png" alt="11RUN" />
+              <p class="kicker">Perfil do atleta</p>
+              <h1>Gestão avançada de corrida, pronta para importar seu histórico real.</h1>
+              <p>
+                Centralize Strava, Garmin Connect, COROS, Polar e Suunto em um calendário técnico,
+                com leituras de carga, consistência, intensidade e evolução.
+              </p>
+              <div class="hero-actions">
+                <button class="primary-action" data-view-button="training">Abrir calendário</button>
+                <button class="secondary-action" data-view-button="athlete">Cadastrar atleta</button>
+              </div>
+            </div>
+            <div class="hero-metrics" aria-label="Resumo do atleta">
+              <div><span>CTL</span><strong>71</strong><small>carga crônica</small></div>
+              <div><span>Semana</span><strong>62.4 km</strong><small>5 sessões</small></div>
+              <div><span>Pronto</span><strong>88%</strong><small>score IA</small></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" data-view="training">
+          <header class="page-header">
+            <div>
+              <p class="kicker">Treinamentos</p>
+              <h2>Calendário de atividades</h2>
+            </div>
+            <div class="toolbar">
+              <div class="segmented" role="tablist" aria-label="Visualização do calendário">
+                <button class="is-active" data-calendar-view="month">Mês</button>
+                <button data-calendar-view="week">Semana</button>
+                <button data-calendar-view="day">Dia</button>
+              </div>
+              <button class="icon-button" data-period-shift="-1" aria-label="Período anterior">&lt;</button>
+              <button class="icon-button" data-period-shift="1" aria-label="Próximo período">&gt;</button>
+            </div>
+          </header>
+
+          <section class="training-grid">
+            <div class="panel calendar-panel">
+              <div class="calendar-top">
+                <div>
+                  <span id="calendarEyebrow">Maio 2026</span>
+                  <h3 id="calendarTitle">Bloco de performance</h3>
+                </div>
+                <button class="secondary-action compact" data-import-demo>Atualizar atividades</button>
+              </div>
+              <div id="calendar" class="calendar calendar-month" aria-live="polite"></div>
+            </div>
+
+            <aside class="panel insights-panel">
+              <div class="athlete-card">
+                <img src="assets/logo-orange.png" alt="" />
+                <div>
+                  <span>Atleta ativo</span>
+                  <strong>Marina Apex</strong>
+                  <p>Maratona alvo em 12 semanas</p>
+                </div>
+              </div>
+              <div class="insight-list">
+                <article><span>Distribuição</span><strong>82 / 14 / 4</strong><p>Leve, moderado e intenso nos últimos 30 dias.</p></article>
+                <article><span>Risco</span><strong>Baixo</strong><p>Sem salto brusco de carga semanal.</p></article>
+                <article><span>Próxima ação</span><strong>Ritmo controlado</strong><p>Priorizar eficiência antes do próximo longo.</p></article>
+              </div>
+            </aside>
+          </section>
+        </section>
+
+        <section class="view" data-view="athlete">
+          <header class="page-header">
+            <div>
+              <p class="kicker">Atleta</p>
+              <h2>Cadastro do atleta</h2>
+            </div>
+            <div class="toolbar">
+              <button class="secondary-action compact" data-view-button="settings">Configurar integrações</button>
+            </div>
+          </header>
+
+          <section class="athlete-grid">
+            <form class="panel athlete-form" id="athleteForm">
+              <div class="section-title">
+                <span>Perfil multi-tenant</span>
+                <h3>Dados principais</h3>
+              </div>
+              <div class="form-grid">
+                <label class="credential-field">
+                  <span>Nome</span>
+                  <input name="name" autocomplete="name" required />
+                </label>
+                <label class="credential-field">
+                  <span>E-mail</span>
+                  <input name="email" type="email" autocomplete="email" required />
+                </label>
+                <label class="credential-field">
+                  <span>Idade</span>
+                  <input name="age" type="number" min="1" max="120" />
+                </label>
+                <label class="credential-field">
+                  <span>Peso (kg)</span>
+                  <input name="weightKg" type="number" min="1" step="0.1" />
+                </label>
+                <label class="credential-field">
+                  <span>Altura (cm)</span>
+                  <input name="heightCm" type="number" min="1" step="0.1" />
+                </label>
+                <label class="credential-field">
+                  <span>WhatsApp</span>
+                  <input name="whatsapp" autocomplete="tel" />
+                </label>
+              </div>
+              <button class="primary-action compact" type="submit">Salvar atleta</button>
+            </form>
+
+            <aside class="panel athlete-list-panel">
+              <div class="section-title">
+                <span>Usuários atletas</span>
+                <h3>Cadastros</h3>
+              </div>
+              <div id="athleteList" class="athlete-list"></div>
+            </aside>
+          </section>
+        </section>
+
+        <section class="view" data-view="settings">
+          <header class="page-header">
+            <div>
+              <p class="kicker">Configuração</p>
+              <h2>Importação de plataformas</h2>
+            </div>
+            <div class="toolbar">
+              <label class="select-label">
+                Intervalo
+                <select id="importWindow">
+                  <option value="7">Últimos 7 dias</option>
+                  <option value="30" selected>Últimos 30 dias</option>
+                  <option value="60">Últimos 60 dias</option>
+                  <option value="90">Últimos 90 dias</option>
+                  <option value="120">Últimos 120 dias</option>
+                </select>
+              </label>
+              <button class="primary-action compact" id="syncSelected">Importar e atualizar</button>
+            </div>
+          </header>
+
+          <section class="settings-grid">
+            <div class="panel import-panel">
+              <div class="section-title">
+                <span>Fontes conectáveis</span>
+                <h3>Estratégia técnica por plataforma</h3>
+              </div>
+              <div id="providerList" class="provider-list"></div>
+            </div>
+
+            <aside class="panel import-log">
+              <div class="section-title">
+                <span>Pipeline</span>
+                <h3>Status da sincronização</h3>
+              </div>
+              <ol id="syncLog">
+                <li>Selecione as fontes e um intervalo para iniciar.</li>
+              </ol>
+            </aside>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="activityDialog">
+      <form method="dialog">
+        <button class="close-button" aria-label="Fechar">x</button>
+      </form>
+      <div id="activityDetail"></div>
+    </dialog>
+
+    <script src="script.js"></script>
+  </body>
+</html>

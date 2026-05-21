@@ -1,0 +1,25 @@
+{
+  "darkBackground": {
+    "primary": "logo-onzerun-orange-white-transparent.png",
+    "compact": "logo-onze-orange-transparent.png",
+    "pro": "logo-onzerun-pro-orange-white-transparent.png"
+  },
+  "lightBackground": {
+    "primary": "logo-onzerun-orange-transparent.png",
+    "black": "logo-onzerun-black-transparent.png",
+    "compact": "logo-onze-orange-transparent.png",
+    "pro": "logo-onzerun-pro-orange-transparent.png"
+  },
+  "originals": [
+    "logo-01-orange-full-original.png",
+    "logo-02-orange-compact-original.png",
+    "logo-03-onze-pro-orange-original.png",
+    "logo-04-onzerun-pro-black-original.png",
+    "logo-05-onzerun-pro-orange-black-original.png",
+    "logo-06-onzerun-pro-orange-original.png",
+    "logo-07-onze-orange-original.png",
+    "logo-08-onzerun-orange-black-original.png",
+    "logo-09-onzerun-black-original.png",
+    "logo-10-onzerun-orange-original.png"
+  ]
+}
