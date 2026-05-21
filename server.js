@@ -491,6 +491,18 @@ async function getSessionUser(req, tenantId) {
   return formatUser(result.rows[0]);
 }
 
+async function ensureUserAthleteProfile(tenantId, user) {
+  if (!pool || !user) return;
+  if (user.role !== "admin" && user.role !== "athlete") return;
+  await query(
+    `INSERT INTO athlete_profiles (user_id)
+     VALUES ($1)
+     ON CONFLICT (user_id) DO NOTHING`,
+    [user.id]
+  );
+  await ensureTenantIntegrations(tenantId, user.id);
+}
+
 async function createSession(tenantId, userId) {
   const token = crypto.randomBytes(32).toString("hex");
   await query(
@@ -1122,6 +1134,7 @@ async function handleApi(req, res, url) {
     if (req.method === "GET" && url.pathname === "/api/athletes") {
       const { tenant, user } = await contextFromReq(req);
       requireUser(user);
+      await ensureUserAthleteProfile(tenant.id, user);
       sendJson(res, 200, await listAthletes(tenant.id, user));
       return;
     }

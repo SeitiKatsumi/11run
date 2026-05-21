@@ -267,6 +267,7 @@ function openActivity(activityId) {
 
 function renderProviders() {
   const list = document.querySelector("#providerList");
+  if (!list) return;
   list.innerHTML = Object.entries(providerDefinitions).map(([key, definition]) => {
     const integration = state.integrations[key] || {};
     const credentials = integration.credentials || {};
@@ -348,6 +349,23 @@ function syncSelectedAthlete() {
   if (!state.athletes.length) state.selectedAthleteId = "";
   if (state.selectedAthleteId) localStorage.setItem("selectedAthleteId", state.selectedAthleteId);
   else localStorage.removeItem("selectedAthleteId");
+}
+
+function ensureCurrentUserAthleteFallback() {
+  if (!state.currentUser || state.athletes.length || state.currentUser.role !== "admin") return;
+  state.athletes = [{
+    id: state.currentUser.id,
+    tenantId: state.currentUser.tenantId,
+    role: state.currentUser.role,
+    name: state.currentUser.name,
+    email: state.currentUser.email,
+    whatsapp: state.currentUser.whatsapp || "",
+    teamName: "",
+    coachName: "",
+    age: "",
+    weightKg: "",
+    heightCm: ""
+  }];
 }
 
 function renderAthleteSelector() {
@@ -481,14 +499,26 @@ async function boot() {
       return;
     }
     showApp();
-    state.athletes = await api("/api/athletes");
+    try {
+      state.athletes = await api("/api/athletes");
+    } catch (error) {
+      state.athletes = [];
+      setLog([`Erro ao carregar atletas: ${error.message}`], true);
+    }
+    ensureCurrentUserAthleteFallback();
     syncSelectedAthlete();
-    const [integrations, activities] = await Promise.all([
-      api("/api/integrations"),
-      api("/api/activities")
-    ]);
-    state.integrations = integrations;
-    state.activities = activities;
+    try {
+      state.integrations = await api("/api/integrations");
+    } catch (error) {
+      state.integrations = {};
+      setLog([`Erro ao carregar integrações: ${error.message}`], true);
+    }
+    try {
+      state.activities = await api("/api/activities");
+    } catch (error) {
+      state.activities = [];
+      setLog([`Erro ao carregar atividades: ${error.message}`], true);
+    }
   } catch (error) {
     showLogin(error.message === "Login obrigatório." ? "" : error.message);
     return;
