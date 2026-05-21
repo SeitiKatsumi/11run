@@ -190,6 +190,43 @@ function renderHeroMetrics() {
   `;
 }
 
+function renderTrainingInsights() {
+  const target = document.querySelector("#trainingInsights");
+  if (!target) return;
+
+  const last30 = activitiesSince(30);
+  const last7 = activitiesSince(7);
+  if (!last30.length) {
+    target.innerHTML = `
+      <article><span>Distribuição</span><strong>Sem dados</strong><p>Importe atividades reais do atleta selecionado.</p></article>
+      <article><span>Risco</span><strong>Sem dados</strong><p>A avaliação depende do histórico importado.</p></article>
+      <article><span>Próxima ação</span><strong>Conectar fonte</strong><p>Conecte Strava ou outra plataforma antes de gerar recomendações.</p></article>
+    `;
+    return;
+  }
+
+  const easy = last30.filter((activity) => Number(activity.load || 0) < 60).length;
+  const moderate = last30.filter((activity) => Number(activity.load || 0) >= 60 && Number(activity.load || 0) < 120).length;
+  const hard = last30.filter((activity) => Number(activity.load || 0) >= 120).length;
+  const km30 = last30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const km7 = last7.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const weeklyAverage = km30 / 4.285;
+  const ratio = weeklyAverage ? km7 / weeklyAverage : 0;
+  const risk = ratio > 1.35 ? "Alto" : ratio < 0.55 ? "Baixa carga" : "Controlado";
+  const action = risk === "Alto" ? "Reduzir carga" : risk === "Baixa carga" ? "Retomar volume" : "Manter progressão";
+  const detail = risk === "Alto"
+    ? "A semana atual está acima da média recente."
+    : risk === "Baixa carga"
+      ? "A semana atual está abaixo da média recente."
+      : "A semana está compatível com o histórico recente.";
+
+  target.innerHTML = `
+    <article><span>Distribuição</span><strong>${easy} / ${moderate} / ${hard}</strong><p>Leve, moderado e intenso nos últimos 30 dias.</p></article>
+    <article><span>Risco</span><strong>${escapeHtml(risk)}</strong><p>${escapeHtml(detail)}</p></article>
+    <article><span>Próxima ação</span><strong>${escapeHtml(action)}</strong><p>Baseado em ${last30.length} atividades importadas.</p></article>
+  `;
+}
+
 function renderActivity(activity) {
   return `
     <button class="activity" data-activity-id="${escapeHtml(activity.id)}" data-source="${escapeHtml(activity.source)}">
@@ -449,6 +486,7 @@ async function runSync() {
     state.activities = payload.activities || [];
     renderCalendar();
     renderHeroMetrics();
+    renderTrainingInsights();
     setLog([
       `Importadas/atualizadas: ${payload.imported} atividades reais.`,
       ...(payload.warnings || []),
@@ -533,6 +571,7 @@ async function boot() {
   renderAthleteIdentity();
   renderCalendar();
   renderHeroMetrics();
+  renderTrainingInsights();
 
   if (status.get("strava") === "connected") setLog(["Strava conectado. Clique em Importar e atualizar para puxar as atividades reais."]);
   if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorização."}`], true);
@@ -600,6 +639,7 @@ document.querySelector("#athleteSelector").addEventListener("change", async (eve
     renderProviders();
     renderCalendar();
     renderHeroMetrics();
+    renderTrainingInsights();
     const athlete = getActiveAthlete();
     setLog([`Atleta selecionado: ${athlete?.name || "nenhum"}. Integrações e calendário atualizados.`]);
   } catch (error) {
