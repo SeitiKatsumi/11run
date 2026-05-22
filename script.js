@@ -296,9 +296,10 @@ function renderTrainingInsights() {
     return;
   }
 
-  const easy = last30.filter((activity) => Number(activity.load || 0) < 60).length;
-  const moderate = last30.filter((activity) => Number(activity.load || 0) >= 60 && Number(activity.load || 0) < 120).length;
-  const hard = last30.filter((activity) => Number(activity.load || 0) >= 120).length;
+  const activityScore = (activity) => Number(activity.analysis?.aggressionScore || activity.load || 0);
+  const easy = last30.filter((activity) => activityScore(activity) < 45).length;
+  const moderate = last30.filter((activity) => activityScore(activity) >= 45 && activityScore(activity) < 75).length;
+  const hard = last30.filter((activity) => activityScore(activity) >= 75).length;
   const km30 = last30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
   const km7 = last7.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
   const weeklyAverage = km30 / 4.285;
@@ -319,10 +320,15 @@ function renderTrainingInsights() {
 }
 
 function renderActivity(activity) {
+  const analysis = activity.analysis || {};
+  const analysisLine = analysis.tss
+    ? `<em>${escapeHtml(analysis.standard || "11TSS Advance")} ${escapeHtml(analysis.tss)} - agressao ${escapeHtml(analysis.aggressionScore || "--")} - ${escapeHtml(analysis.characteristic || "")}</em>`
+    : "";
   return `
     <button class="activity" data-activity-id="${escapeHtml(activity.id)}" data-source="${escapeHtml(activity.source)}">
       <strong>${escapeHtml(activity.title)}</strong>
       <span>${escapeHtml(activity.source)} - ${escapeHtml(activity.distance)} - ${escapeHtml(activity.description)}</span>
+      ${analysisLine}
     </button>
   `;
 }
@@ -383,7 +389,22 @@ function renderCalendar() {
 function openActivity(activityId) {
   const activity = visibleActivities().find((item) => String(item.id) === String(activityId));
   if (!activity) return;
+  const analysis = activity.analysis || {};
   const external = activity.externalUrl ? `<a class="detail-link" href="${escapeHtml(activity.externalUrl)}" target="_blank" rel="noreferrer">Abrir atividade original</a>` : "";
+  const analysisPanel = analysis.tss ? `
+    <div class="analysis-panel">
+      <span class="kicker">${escapeHtml(analysis.standard || "11TSS Advance")}</span>
+      <h4>${escapeHtml(analysis.characteristic || "Caracteristica do treino")}</h4>
+      <p>${escapeHtml(analysis.note || "")}</p>
+      <div class="detail-grid analysis-grid">
+        <div><span class="metric-label">TSS estimado</span><strong>${escapeHtml(analysis.tss)}</strong></div>
+        <div><span class="metric-label">Agressao</span><strong>${escapeHtml(analysis.aggressionScore)}</strong></div>
+        <div><span class="metric-label">Variacao de ritmo</span><strong>${escapeHtml(analysis.splitVariability || "--")}</strong></div>
+        <div><span class="metric-label">Pace mais forte</span><strong>${escapeHtml(analysis.fastestPace || "--")}</strong></div>
+      </div>
+      <p class="analysis-caption">Esforco relativo Strava: ${escapeHtml(analysis.relativeEffort || "--")} - IF por FC: ${escapeHtml(analysis.intensityFactor || "--")} - Splits: ${escapeHtml(analysis.splitCount || 0)}</p>
+    </div>
+  ` : "";
   detail.innerHTML = `
     <div class="detail">
       <span class="kicker">${escapeHtml(activity.source)} - ${escapeHtml(activity.type)}</span>
@@ -395,6 +416,7 @@ function openActivity(activityId) {
         <div><span class="metric-label">Pace</span><strong>${escapeHtml(activity.pace)}</strong></div>
         <div><span class="metric-label">Carga</span><strong>${escapeHtml(activity.load)}</strong></div>
       </div>
+      ${analysisPanel}
       ${external}
     </div>
   `;

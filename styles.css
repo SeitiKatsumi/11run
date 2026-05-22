@@ -611,6 +611,17 @@ dialog {
   line-height: 1.25;
 }
 
+.activity em {
+  display: block;
+  margin-top: 6px;
+  color: #f2b199;
+  font-size: 10px;
+  line-height: 1.25;
+  font-style: normal;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .activity[data-source="Garmin"] {
   border-left-color: var(--cyan);
 }
@@ -1027,6 +1038,31 @@ dialog::backdrop {
   margin-top: 6px;
   color: var(--heading);
   font-weight: 650;
+}
+
+.analysis-panel {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(255, 75, 11, 0.38);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, rgba(255, 75, 11, 0.12), rgba(255, 255, 255, 0.035));
+}
+
+.analysis-panel h4 {
+  margin: 6px 0 6px;
+  color: var(--heading);
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.analysis-grid {
+  margin-top: 12px;
+}
+
+.analysis-caption {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 @media (max-width: 1080px) {

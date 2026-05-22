@@ -1012,6 +1012,8 @@ async function saveIntegration(tenantId, athleteUserId, provider, patch) {
 }
 
 function activityRowToApi(row) {
+  const raw = parseJsonObject(row.raw);
+  const analysis = calculateRunAnalysis(raw, row);
   return {
     id: `${row.provider}-${row.provider_activity_id}`,
     providerId: row.provider_activity_id,
@@ -1024,7 +1026,139 @@ function activityRowToApi(row) {
     duration: row.duration || "",
     pace: row.pace || "",
     load: row.load || "",
-    externalUrl: row.external_url || ""
+    externalUrl: row.external_url || "",
+    analysis
+  };
+}
+
+function parseJsonObject(value) {
+  if (!value) return {};
+  if (typeof value === "object") return value;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function safeNumber(...values) {
+  for (const value of values) {
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
+  return 0;
+}
+
+function clamp(number, min, max) {
+  return Math.min(max, Math.max(min, number));
+}
+
+function splitRunSignals(activity) {
+  const streamSpeeds = activity.streams?.velocity_smooth?.data;
+  if (Array.isArray(streamSpeeds) && streamSpeeds.length >= 8) {
+    const speeds = streamSpeeds
+      .map((speed) => safeNumber(speed))
+      .filter((speed) => speed > 0);
+    const mean = speeds.reduce((sum, speed) => sum + speed, 0) / speeds.length;
+    const variance = speeds.reduce((sum, speed) => sum + ((speed - mean) ** 2), 0) / speeds.length;
+    const fastest = Math.max(...speeds);
+    return {
+      splitCount: speeds.length,
+      variability: mean ? Math.sqrt(variance) / mean : 0,
+      fastestRatio: mean ? fastest / mean : 1,
+      fastestPace: formatPace(1000, 1000 / fastest)
+    };
+  }
+
+  const splits = Array.isArray(activity.splits_metric) ? activity.splits_metric : [];
+  const speeds = splits
+    .map((split) => safeNumber(split.average_speed) || (safeNumber(split.distance) / safeNumber(split.moving_time)))
+    .filter((speed) => Number.isFinite(speed) && speed > 0);
+
+  if (speeds.length < 2) {
+    return { splitCount: speeds.length, variability: 0, fastestRatio: 1, fastestPace: "" };
+  }
+
+  const mean = speeds.reduce((sum, speed) => sum + speed, 0) / speeds.length;
+  const variance = speeds.reduce((sum, speed) => sum + ((speed - mean) ** 2), 0) / speeds.length;
+  const fastest = Math.max(...speeds);
+  return {
+    splitCount: speeds.length,
+    variability: mean ? Math.sqrt(variance) / mean : 0,
+    fastestRatio: mean ? fastest / mean : 1,
+    fastestPace: formatPace(1000, 1000 / fastest)
+  };
+}
+
+function classifyRunAnalysis({ durationMinutes, distanceKm, elevationPerKm, variability, fastestRatio, hrIntensity, aggressionScore }) {
+  if (distanceKm >= 14 || durationMinutes >= 75) {
+    if (fastestRatio >= 1.25 || variability >= 0.16) return "Longo com variacao forte";
+    return "Longo de resistencia";
+  }
+  if (elevationPerKm >= 18) return "Subida e forca especifica";
+  if (fastestRatio >= 1.35 || variability >= 0.22) return "Intervalado / picos intensos";
+  if (hrIntensity >= 0.92 || aggressionScore >= 85) return "Tempo / limiar";
+  if (durationMinutes <= 45 && aggressionScore <= 45) return "Regenerativo / leve";
+  return "Rodagem controlada";
+}
+
+function calculateRunAnalysis(activity = {}, row = {}) {
+  const type = String(activity.sport_type || activity.type || row.type || "Run");
+  const isRun = /run/i.test(type);
+  const movingTime = safeNumber(activity.moving_time, activity.elapsed_time);
+  const distanceMeters = safeNumber(activity.distance);
+  const durationMinutes = movingTime ? movingTime / 60 : 0;
+  const durationHours = durationMinutes / 60;
+  const distanceKm = distanceMeters ? distanceMeters / 1000 : 0;
+  const elevationGain = safeNumber(activity.total_elevation_gain);
+  const elevationPerKm = distanceKm ? elevationGain / distanceKm : 0;
+  const avgHr = safeNumber(activity.average_heartrate);
+  const maxHr = safeNumber(activity.max_heartrate);
+  const relativeEffort = safeNumber(activity.suffer_score, activity.relative_effort);
+  const thresholdHr = safeNumber(process.env.RUN_THRESHOLD_HR, process.env.DEFAULT_THRESHOLD_HR, 170);
+  const { splitCount, variability, fastestRatio, fastestPace } = splitRunSignals(activity);
+
+  const hrIntensity = avgHr ? clamp(avgHr / thresholdHr, 0.45, 1.28) : 0;
+  const hrTss = durationHours && hrIntensity ? durationHours * (hrIntensity ** 2) * 100 : 0;
+  const durationTss = durationHours ? durationHours * 62 : 0;
+  const stravaTss = relativeEffort ? relativeEffort * 1.08 : 0;
+  const spikeBonus = clamp(((fastestRatio - 1.12) * 38) + (variability * 72), 0, 42);
+  const elevationBonus = clamp(elevationPerKm * 0.16, 0, 18);
+  const maxHrBonus = maxHr && thresholdHr ? clamp(((maxHr / thresholdHr) - 1) * 45, 0, 24) : 0;
+  const baseTss = Math.max(hrTss, stravaTss, durationTss);
+  const tss = Math.round(clamp(baseTss + spikeBonus + elevationBonus + maxHrBonus, 1, 320));
+  const aggressionScore = Math.round(clamp(
+    (tss * 0.72) + (spikeBonus * 1.2) + (relativeEffort ? relativeEffort * 0.18 : 0) + elevationBonus,
+    1,
+    100
+  ));
+  const characteristic = classifyRunAnalysis({
+    durationMinutes,
+    distanceKm,
+    elevationPerKm,
+    variability,
+    fastestRatio,
+    hrIntensity,
+    aggressionScore
+  });
+
+  return {
+    standard: "11TSS Advance",
+    isRun,
+    tss,
+    aggressionScore,
+    characteristic,
+    intensityFactor: hrIntensity ? hrIntensity.toFixed(2) : "",
+    relativeEffort: relativeEffort ? Math.round(relativeEffort) : "",
+    splitCount,
+    splitVariability: `${Math.round(variability * 100)}%`,
+    fastestRatio: fastestRatio ? fastestRatio.toFixed(2) : "",
+    fastestPace,
+    elevationPerKm: distanceKm ? `${Math.round(elevationPerKm)} m/km` : "",
+    note: isRun
+      ? "Estimativa proprietaria para corrida baseada em Strava, FC, duracao, elevacao e variacao dos splits."
+      : "Atividade fora do escopo principal de corrida."
   };
 }
 
@@ -1053,7 +1187,8 @@ async function listActivities(tenantId, athleteUserId = null) {
             duration,
             pace,
             load,
-            external_url
+            external_url,
+            raw
        FROM activities
       WHERE tenant_id = $1
         ${athleteUserId ? "AND athlete_user_id = $2" : ""}
@@ -1146,9 +1281,8 @@ function formatPace(meters, seconds) {
 }
 
 function estimateLoad(activity) {
-  const minutes = Number(activity.moving_time || activity.elapsed_time || 0) / 60;
-  const intensity = activity.average_heartrate ? Number(activity.average_heartrate) / 150 : 1;
-  return String(Math.max(1, Math.round(minutes * intensity)));
+  const analysis = calculateRunAnalysis(activity);
+  return String(analysis.aggressionScore || Math.max(1, Math.round(Number(activity.moving_time || activity.elapsed_time || 0) / 60)));
 }
 
 function normalizeScopes(scopeValue) {
@@ -1179,6 +1313,7 @@ function decodeStravaState(value) {
 
 function mapStravaActivity(activity) {
   const date = new Date(activity.start_date_local || activity.start_date);
+  const analysis = calculateRunAnalysis(activity);
   return {
     id: `strava-${activity.id}`,
     providerId: String(activity.id),
@@ -1193,10 +1328,11 @@ function mapStravaActivity(activity) {
     ].filter(Boolean).join(" | ") || "Atividade importada do Strava.",
     distance: formatDistance(activity.distance),
     duration: formatDuration(activity.moving_time || activity.elapsed_time),
-    load: estimateLoad(activity),
+    load: String(analysis.aggressionScore),
     pace: formatPace(activity.distance, activity.moving_time || activity.elapsed_time),
     externalUrl: `https://www.strava.com/activities/${activity.id}`,
-    raw: activity
+    raw: activity,
+    analysis
   };
 }
 
@@ -1294,7 +1430,10 @@ async function enrichStravaActivityDetails(tenantId, athleteUserId, limit = 8) {
       WHERE tenant_id = $1
         AND athlete_user_id = $2
         AND provider = 'Strava'
-        AND COALESCE(raw->>'resource_state', '') <> '3'`,
+        AND (
+          COALESCE(raw->>'resource_state', '') <> '3'
+          OR raw->'streams' IS NULL
+        )`,
     [tenantId, athleteUserId]
   );
   const remaining = Number(remainingBefore.rows[0]?.total || 0);
@@ -1308,7 +1447,10 @@ async function enrichStravaActivityDetails(tenantId, athleteUserId, limit = 8) {
       WHERE tenant_id = $1
         AND athlete_user_id = $2
         AND provider = 'Strava'
-        AND COALESCE(raw->>'resource_state', '') <> '3'
+        AND (
+          COALESCE(raw->>'resource_state', '') <> '3'
+          OR raw->'streams' IS NULL
+        )
       ORDER BY activity_date DESC
       LIMIT $3`,
     [tenantId, athleteUserId, Math.max(1, Math.min(Number(limit) || 8, 12))]
@@ -1318,6 +1460,13 @@ async function enrichStravaActivityDetails(tenantId, athleteUserId, limit = 8) {
   for (const row of rows.rows) {
     try {
       const detail = await stravaFetchJson(`/activities/${row.provider_activity_id}?include_all_efforts=false`, tenantId, athleteUserId, integration);
+      if (/run/i.test(String(detail.sport_type || detail.type || ""))) {
+        try {
+          detail.streams = await stravaFetchJson(`/activities/${row.provider_activity_id}/streams?keys=time,distance,velocity_smooth,heartrate&key_by_type=true`, tenantId, athleteUserId, integration);
+        } catch (streamError) {
+          console.warn(`Nao foi possivel buscar streams Strava ${row.provider_activity_id}: ${streamError.message}`);
+        }
+      }
       detailed.push(mapStravaActivity(detail));
     } catch (error) {
       console.warn(`Não foi possível detalhar atividade Strava ${row.provider_activity_id}: ${error.message}`);
@@ -1331,7 +1480,10 @@ async function enrichStravaActivityDetails(tenantId, athleteUserId, limit = 8) {
       WHERE tenant_id = $1
         AND athlete_user_id = $2
         AND provider = 'Strava'
-        AND COALESCE(raw->>'resource_state', '') <> '3'`,
+        AND (
+          COALESCE(raw->>'resource_state', '') <> '3'
+          OR raw->'streams' IS NULL
+        )`,
     [tenantId, athleteUserId]
   );
   return {
