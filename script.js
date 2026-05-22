@@ -225,11 +225,11 @@ function periodRange(view = state.calendarView, cursor = state.cursor) {
   const base = new Date(cursor);
   if (view === "week") {
     const start = startOfWeek(base);
-    return { start, end: addDays(start, 6), days: 7, label: "Semana" };
+    return { start, end: addDays(start, 6), days: 7, unit: "day", label: "Semana" };
   }
   if (view === "day") {
     const start = addDays(base, -13);
-    return { start, end: base, days: 14, label: "Ultimos 14 dias" };
+    return { start, end: base, days: 14, unit: "day", label: "Ultimos 14 dias" };
   }
   if (view === "quarter") {
     const quarterStartMonth = Math.floor(base.getMonth() / 3) * 3;
@@ -238,7 +238,8 @@ function periodRange(view = state.calendarView, cursor = state.cursor) {
     return {
       start,
       end,
-      days: Math.round((end - start) / 86400000) + 1,
+      days: Math.ceil((Math.round((end - start) / 86400000) + 1) / 7),
+      unit: "week",
       label: `Trimestre ${Math.floor(quarterStartMonth / 3) + 1}/${base.getFullYear()}`
     };
   }
@@ -249,13 +250,14 @@ function periodRange(view = state.calendarView, cursor = state.cursor) {
     return {
       start,
       end,
-      days: Math.round((end - start) / 86400000) + 1,
+      days: Math.ceil((Math.round((end - start) / 86400000) + 1) / 7),
+      unit: "week",
       label: `Semestre ${semesterStartMonth === 0 ? 1 : 2}/${base.getFullYear()}`
     };
   }
   const start = new Date(base.getFullYear(), base.getMonth(), 1);
   const end = new Date(base.getFullYear(), base.getMonth() + 1, 0);
-  return { start, end, days: end.getDate(), label: `${monthNames[base.getMonth()]} ${base.getFullYear()}` };
+  return { start, end, days: end.getDate(), unit: "day", label: `${monthNames[base.getMonth()]} ${base.getFullYear()}` };
 }
 
 function hasActivitiesInCurrentRange() {
@@ -374,19 +376,29 @@ function chartRange() {
 function aggregatePerformanceSeries() {
   const range = chartRange();
   const series = Array.from({ length: range.days }, (_, index) => {
-    const date = addDays(range.start, index);
+    const date = range.unit === "week" ? addDays(range.start, index * 7) : addDays(range.start, index);
+    const end = range.unit === "week" ? new Date(Math.min(addDays(date, 6).getTime(), range.end.getTime())) : date;
     return {
       date,
+      end,
       key: dateKey(date),
-      label: state.calendarView === "month" ? String(date.getDate()).padStart(2, "0") : `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`,
+      label: range.unit === "week"
+        ? `S${String(index + 1).padStart(2, "0")}`
+        : state.calendarView === "month"
+          ? String(date.getDate()).padStart(2, "0")
+          : `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`,
       volume: 0,
       tss: 0,
       count: 0
     };
   });
-  const byKey = new Map(series.map((item) => [item.key, item]));
   visibleActivities().forEach((activity) => {
-    const item = byKey.get(activity.date);
+    const date = activityDate(activity);
+    if (!date || date < range.start || date > range.end) return;
+    const index = range.unit === "week"
+      ? Math.floor((date - range.start) / 604800000)
+      : Math.round((date - range.start) / 86400000);
+    const item = series[index];
     if (!item) return;
     item.volume += parseDistanceKm(activity.distance);
     item.tss += activityTss(activity);
@@ -403,7 +415,7 @@ function renderPerformanceChart() {
   const target = document.querySelector("#performanceChart");
   if (!target) return;
 
-  const { series, label } = aggregatePerformanceSeries();
+  const { series, label, unit } = aggregatePerformanceSeries();
   const width = 920;
   const height = 132;
   const padding = { top: 16, right: 30, bottom: 26, left: 38 };
@@ -429,10 +441,9 @@ function renderPerformanceChart() {
     return `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" />`;
   }).join("");
   const labels = series
-    .filter((_, index) => index === 0 || index === Math.floor(series.length / 2) || index === series.length - 1)
-    .map((item, index, items) => {
+    .map((item, index) => {
       const originalIndex = series.indexOf(item);
-      const anchor = index === 0 ? "start" : index === items.length - 1 ? "end" : "middle";
+      const anchor = index === 0 ? "start" : index === series.length - 1 ? "end" : "middle";
       return `<text x="${xFor(originalIndex)}" y="${height - 12}" text-anchor="${anchor}">${escapeHtml(item.label)}</text>`;
     }).join("");
   const points = series.filter((item) => item.count).map((item, index) => {
@@ -440,7 +451,10 @@ function renderPerformanceChart() {
     return `<circle cx="${xFor(originalIndex)}" cy="${yTss(item.tss)}" r="1.5"><title>${escapeHtml(item.label)} - ${item.volume.toFixed(1)} km - 11TSS ${Math.round(item.tss)}</title></circle>`;
   }).join("");
   const todayKey = dateKey(new Date());
-  const todayIndex = series.findIndex((item) => item.key === todayKey);
+  const today = new Date();
+  const todayIndex = unit === "week"
+    ? series.findIndex((item) => today >= item.date && today <= item.end)
+    : series.findIndex((item) => item.key === todayKey);
   const todayMarker = todayIndex >= 0
     ? `<g class="today-marker">
         <line x1="${xFor(todayIndex)}" y1="${padding.top}" x2="${xFor(todayIndex)}" y2="${padding.top + chartHeight}" />

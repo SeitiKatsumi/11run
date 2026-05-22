@@ -176,13 +176,14 @@ nav a {
   min-height: 44px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 0;
+  padding: 10px 18px;
   color: var(--muted);
   text-decoration: none;
   border: 1px solid transparent;
   border-radius: var(--radius);
-  font-weight: 650;
+  font-size: 13px;
+  font-weight: 560;
   text-transform: uppercase;
 }
 
@@ -191,14 +192,6 @@ nav a.is-active {
   color: var(--heading);
   border-color: var(--line-strong);
   background: linear-gradient(90deg, rgba(255, 75, 11, 0.22), rgba(255, 255, 255, 0.04));
-}
-
-.nav-icon {
-  width: 24px;
-  height: 24px;
-  display: inline-grid;
-  place-items: center;
-  color: var(--orange);
 }
 
 .shell.rail-collapsed {
@@ -230,6 +223,7 @@ nav a.is-active {
 .shell.rail-collapsed nav a {
   justify-content: center;
   padding: 10px;
+  min-height: 38px;
 }
 
 .athlete-chip {
@@ -250,7 +244,7 @@ nav a.is-active {
   text-transform: uppercase;
   letter-spacing: 0;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 560;
 }
 
 .athlete-chip strong {
@@ -478,6 +472,8 @@ dialog {
   margin: 4px 0 0;
   font-size: clamp(32px, 5vw, 64px);
   line-height: 0.98;
+  color: #e6e3dc;
+  font-weight: 560;
 }
 
 .segmented {
@@ -494,10 +490,12 @@ dialog {
   padding: 0 12px;
   background: transparent;
   color: var(--muted);
+  font-weight: 560;
+  text-transform: uppercase;
 }
 
 .segmented button.is-active {
-  color: var(--heading);
+  color: #f0ece5;
   background: rgba(255, 75, 11, 0.92);
 }
 
@@ -554,9 +552,9 @@ dialog {
 
 .chart-heading h3 {
   margin: 6px 0 0;
-  color: var(--heading);
-  font-size: 22px;
-  font-weight: 650;
+  color: #dedbd4;
+  font-size: 20px;
+  font-weight: 540;
 }
 
 .chart-legend {
@@ -565,7 +563,7 @@ dialog {
   align-items: center;
   color: var(--muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 560;
   text-transform: uppercase;
 }
 
@@ -614,16 +612,16 @@ dialog {
   display: block;
   color: var(--muted);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 560;
   text-transform: uppercase;
 }
 
 .chart-stats strong {
   display: block;
   margin-top: 5px;
-  color: var(--heading);
-  font-size: 18px;
-  font-weight: 650;
+  color: #dedbd4;
+  font-size: 16px;
+  font-weight: 540;
 }
 
 .performance-chart svg {
@@ -664,8 +662,12 @@ dialog {
 
 .performance-chart text {
   fill: var(--muted);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 8.5px;
+  font-weight: 520;
+}
+
+.chart-labels text {
+  fill: rgba(230, 228, 222, 0.62);
 }
 
 .tss-points circle {
@@ -714,16 +716,16 @@ dialog {
   display: block;
   color: var(--orange);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 560;
   text-transform: uppercase;
 }
 
 .period-month-head strong {
   display: block;
   margin-top: 4px;
-  color: var(--heading);
+  color: #dedbd4;
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 540;
 }
 
 .period-month-stats {
@@ -764,6 +766,8 @@ dialog {
 .section-title h3 {
   margin: 6px 0 0;
   font-size: 22px;
+  color: #dedbd4;
+  font-weight: 540;
 }
 
 .calendar {
