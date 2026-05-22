@@ -674,6 +674,19 @@ dialog {
   stroke-width: 0.65;
 }
 
+.today-marker line {
+  stroke: rgba(248, 243, 232, 0.42);
+  stroke-width: 0.8;
+  stroke-dasharray: 3 5;
+}
+
+.today-marker text {
+  fill: rgba(248, 243, 232, 0.68);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .calendar-period {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }

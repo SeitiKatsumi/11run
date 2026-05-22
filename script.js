@@ -439,6 +439,14 @@ function renderPerformanceChart() {
     const originalIndex = series.indexOf(item);
     return `<circle cx="${xFor(originalIndex)}" cy="${yTss(item.tss)}" r="1.5"><title>${escapeHtml(item.label)} - ${item.volume.toFixed(1)} km - 11TSS ${Math.round(item.tss)}</title></circle>`;
   }).join("");
+  const todayKey = dateKey(new Date());
+  const todayIndex = series.findIndex((item) => item.key === todayKey);
+  const todayMarker = todayIndex >= 0
+    ? `<g class="today-marker">
+        <line x1="${xFor(todayIndex)}" y1="${padding.top}" x2="${xFor(todayIndex)}" y2="${padding.top + chartHeight}" />
+        <text x="${xFor(todayIndex) + 6}" y="${padding.top + 11}">Hoje</text>
+      </g>`
+    : "";
 
   target.innerHTML = `
     <div class="chart-stats">
@@ -465,6 +473,7 @@ function renderPerformanceChart() {
       ${hasData ? `<path class="volume-area" d="${volumeArea}" />` : ""}
       ${hasData ? `<path class="volume-line" d="${linePath(volumePoints)}" />` : ""}
       ${hasData ? `<path class="tss-line" d="${linePath(tssPoints)}" />` : ""}
+      ${todayMarker}
       <g class="tss-points">${points}</g>
       <text x="${padding.left}" y="16">km</text>
       <text x="${width - padding.right}" y="16" text-anchor="end">11TSS</text>
