@@ -35,6 +35,10 @@ CREATE TABLE IF NOT EXISTS athlete_profiles (
   age INTEGER CHECK (age IS NULL OR age BETWEEN 1 AND 120),
   weight_kg NUMERIC(5,2) CHECK (weight_kg IS NULL OR weight_kg > 0),
   height_cm NUMERIC(5,2) CHECK (height_cm IS NULL OR height_cm > 0),
+  focus_distance_m INTEGER,
+  target_time_seconds INTEGER,
+  target_date DATE,
+  best_time_seconds INTEGER,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -85,6 +89,10 @@ CREATE TABLE IF NOT EXISTS activities (
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS team_id UUID REFERENCES teams(id) ON DELETE SET NULL;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS coach_user_id UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS focus_distance_m INTEGER;
+ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS target_time_seconds INTEGER;
+ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS target_date DATE;
+ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS best_time_seconds INTEGER;
 
 CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role);
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_team ON athlete_profiles(team_id);

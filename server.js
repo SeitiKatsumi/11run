@@ -27,6 +27,7 @@ const SESSION_COOKIE = "onzerun_session";
 const APP_VERSION = process.env.APP_VERSION || process.env.CAPROVER_GIT_COMMIT_SHA || "local";
 const SECRET_MASK = "********";
 const STRAVA_REQUIRED_ACTIVITY_SCOPES = ["activity:read", "activity:read_all"];
+const FOCUS_DISTANCES = new Set([800, 1500, 3000, 5000, 10000, 15000, 21000, 42000]);
 
 const pool = DATABASE_URL && Pool
   ? new Pool({
@@ -515,8 +516,27 @@ function formatAthlete(row) {
     age: row.age == null ? "" : Number(row.age),
     weightKg: row.weight_kg == null ? "" : Number(row.weight_kg),
     heightCm: row.height_cm == null ? "" : Number(row.height_cm),
+    focusDistanceM: row.focus_distance_m == null ? "" : Number(row.focus_distance_m),
+    targetTimeSeconds: row.target_time_seconds == null ? "" : Number(row.target_time_seconds),
+    targetTime: row.target_time_seconds == null ? "" : formatDuration(row.target_time_seconds),
+    targetDate: row.target_date ? formatDateOnly(row.target_date) : "",
+    bestTimeSeconds: row.best_time_seconds == null ? "" : Number(row.best_time_seconds),
+    bestTime: row.best_time_seconds == null ? "" : formatDuration(row.best_time_seconds),
     createdAt: row.created_at
   };
+}
+
+function parseTimeToSeconds(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  if (/^\d+(\.\d+)?$/.test(text)) return Math.max(1, Math.round(Number(text)));
+  const parts = text.split(":").map((part) => Number(part));
+  if (parts.some((part) => !Number.isFinite(part) || part < 0)) {
+    throw new Error("Informe o tempo no formato mm:ss ou hh:mm:ss.");
+  }
+  if (parts.length === 2) return Math.max(1, Math.round((parts[0] * 60) + parts[1]));
+  if (parts.length === 3) return Math.max(1, Math.round((parts[0] * 3600) + (parts[1] * 60) + parts[2]));
+  throw new Error("Informe o tempo no formato mm:ss ou hh:mm:ss.");
 }
 
 function formatUser(row) {
@@ -606,6 +626,7 @@ async function listAthletes(tenantId, user = null) {
   const result = await query(
     `SELECT u.id, u.tenant_id, u.role, u.name, u.email, u.whatsapp, u.created_at,
             ap.age, ap.weight_kg, ap.height_cm, ap.team_id, ap.coach_user_id,
+            ap.focus_distance_m, ap.target_time_seconds, ap.target_date, ap.best_time_seconds,
             t.name AS team_name,
             c.name AS coach_name,
             c.email AS coach_email
@@ -638,14 +659,35 @@ function validateAthlete(input) {
   const coachName = String(input.coachName || "").trim();
   const coachEmail = String(input.coachEmail || "").trim().toLowerCase();
   const password = String(input.password || "").trim();
+  const focusDistanceM = input.focusDistanceM === "" || input.focusDistanceM == null ? null : Number(input.focusDistanceM);
+  const targetTimeSeconds = parseTimeToSeconds(input.targetTime || input.targetTimeSeconds);
+  const bestTimeSeconds = parseTimeToSeconds(input.bestTime || input.bestTimeSeconds);
+  const targetDate = String(input.targetDate || "").trim();
 
   if (!name) throw new Error("Informe o nome do atleta.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Informe um e-mail válido.");
   if (age != null && (!Number.isFinite(age) || age < 1 || age > 120)) throw new Error("Informe uma idade válida.");
   if (weightKg != null && (!Number.isFinite(weightKg) || weightKg <= 0)) throw new Error("Informe um peso válido.");
   if (heightCm != null && (!Number.isFinite(heightCm) || heightCm <= 0)) throw new Error("Informe uma altura válida.");
+  if (focusDistanceM != null && !FOCUS_DISTANCES.has(focusDistanceM)) throw new Error("Selecione uma prova foco válida.");
+  if (targetDate && Number.isNaN(new Date(`${targetDate}T00:00:00`).getTime())) throw new Error("Informe uma data alvo válida.");
 
-  return { name, email, whatsapp, age, weightKg, heightCm, teamName, coachName, coachEmail, password };
+  return {
+    name,
+    email,
+    whatsapp,
+    age,
+    weightKg,
+    heightCm,
+    teamName,
+    coachName,
+    coachEmail,
+    password,
+    focusDistanceM,
+    targetTimeSeconds,
+    targetDate: targetDate || null,
+    bestTimeSeconds
+  };
 }
 
 async function ensureTeam(tenantId, name) {
@@ -751,16 +793,34 @@ async function createAthlete(tenantId, input) {
     );
     const user = userResult.rows[0];
     await client.query(
-      `INSERT INTO athlete_profiles (user_id, team_id, coach_user_id, age, weight_kg, height_cm)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO athlete_profiles (
+         user_id, team_id, coach_user_id, age, weight_kg, height_cm,
+         focus_distance_m, target_time_seconds, target_date, best_time_seconds
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT (user_id)
        DO UPDATE SET team_id = EXCLUDED.team_id,
                      coach_user_id = EXCLUDED.coach_user_id,
                      age = EXCLUDED.age,
                      weight_kg = EXCLUDED.weight_kg,
                      height_cm = EXCLUDED.height_cm,
+                     focus_distance_m = EXCLUDED.focus_distance_m,
+                     target_time_seconds = EXCLUDED.target_time_seconds,
+                     target_date = EXCLUDED.target_date,
+                     best_time_seconds = EXCLUDED.best_time_seconds,
                      updated_at = now()`,
-      [user.id, teamId, coachId, athlete.age, athlete.weightKg, athlete.heightCm]
+      [
+        user.id,
+        teamId,
+        coachId,
+        athlete.age,
+        athlete.weightKg,
+        athlete.heightCm,
+        athlete.focusDistanceM,
+        athlete.targetTimeSeconds,
+        athlete.targetDate,
+        athlete.bestTimeSeconds
+      ]
     );
     await client.query("COMMIT");
     await ensureTenantIntegrations(tenantId, user.id);
@@ -856,9 +916,24 @@ async function updateAthlete(tenantId, athleteUserId, input) {
               age = $3,
               weight_kg = $4,
               height_cm = $5,
+              focus_distance_m = $6,
+              target_time_seconds = $7,
+              target_date = $8,
+              best_time_seconds = $9,
               updated_at = now()
-        WHERE user_id = $6`,
-      [teamId, coachId, athlete.age, athlete.weightKg, athlete.heightCm, athleteUserId]
+        WHERE user_id = $10`,
+      [
+        teamId,
+        coachId,
+        athlete.age,
+        athlete.weightKg,
+        athlete.heightCm,
+        athlete.focusDistanceM,
+        athlete.targetTimeSeconds,
+        athlete.targetDate,
+        athlete.bestTimeSeconds,
+        athleteUserId
+      ]
     );
     await client.query("COMMIT");
     await ensureTenantIntegrations(tenantId, athleteUserId);
@@ -1014,6 +1089,17 @@ async function saveIntegration(tenantId, athleteUserId, provider, patch) {
 function activityRowToApi(row) {
   const raw = parseJsonObject(row.raw);
   const analysis = calculateRunAnalysis(raw, row);
+  const movingTimeSeconds = safeNumber(raw.moving_time, raw.elapsed_time);
+  const distanceMeters = safeNumber(raw.distance);
+  const bestEfforts = Array.isArray(raw.best_efforts)
+    ? raw.best_efforts.map((effort) => ({
+        name: effort.name || "",
+        distanceMeters: safeNumber(effort.distance),
+        elapsedTimeSeconds: safeNumber(effort.elapsed_time, effort.moving_time),
+        movingTimeSeconds: safeNumber(effort.moving_time, effort.elapsed_time),
+        startDate: effort.start_date || raw.start_date || ""
+      })).filter((effort) => effort.distanceMeters && effort.elapsedTimeSeconds)
+    : [];
   return {
     id: `${row.provider}-${row.provider_activity_id}`,
     providerId: row.provider_activity_id,
@@ -1027,6 +1113,11 @@ function activityRowToApi(row) {
     pace: row.pace || "",
     load: row.load || "",
     externalUrl: row.external_url || "",
+    distanceMeters,
+    movingTimeSeconds,
+    elapsedTimeSeconds: safeNumber(raw.elapsed_time, raw.moving_time),
+    averageSpeed: safeNumber(raw.average_speed),
+    bestEfforts,
     analysis
   };
 }

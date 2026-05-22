@@ -519,6 +519,114 @@ dialog {
   padding: 18px;
 }
 
+.focus-projection-panel {
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(255, 75, 11, 0.22);
+  background:
+    linear-gradient(120deg, rgba(255, 75, 11, 0.13), rgba(255, 255, 255, 0.035) 42%, rgba(0, 0, 0, 0.08)),
+    var(--panel);
+}
+
+.focus-projection-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.focus-projection-head h3 {
+  margin: 5px 0 0;
+  color: #e6e2dc;
+  font-size: 20px;
+  font-weight: 540;
+  text-transform: uppercase;
+}
+
+.focus-projection-head > strong {
+  color: var(--orange);
+  font-size: clamp(26px, 4vw, 42px);
+  font-weight: 520;
+  line-height: 1;
+}
+
+.focus-projection-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.focus-projection-grid div,
+.focus-projection-empty {
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.focus-projection-grid span,
+.focus-projection-empty span {
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.focus-projection-grid strong,
+.focus-projection-empty strong {
+  display: block;
+  margin-top: 5px;
+  color: #e6e2dc;
+  font-size: 15px;
+  font-weight: 520;
+}
+
+.focus-projection-grid p,
+.focus-projection-empty p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.focus-history {
+  margin: -4px 0 16px;
+  padding: 12px;
+  border: 1px solid rgba(255, 75, 11, 0.18);
+  border-radius: var(--radius);
+  background: rgba(255, 75, 11, 0.045);
+}
+
+.focus-history span {
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.focus-history div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.focus-history strong {
+  color: #e6e2dc;
+  font-size: 14px;
+  font-weight: 520;
+}
+
+.focus-history small,
+.focus-history p {
+  display: block;
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .performance-chart-panel {
   margin-bottom: 18px;
   position: relative;
@@ -1056,7 +1164,8 @@ select {
   text-transform: uppercase;
 }
 
-.credential-field input {
+.credential-field input,
+.credential-field select {
   width: 100%;
   min-height: 38px;
   padding: 0 10px;
@@ -1309,6 +1418,10 @@ dialog::backdrop {
   .athlete-grid {
     grid-template-columns: 1fr;
   }
+
+  .focus-projection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
@@ -1529,6 +1642,15 @@ dialog::backdrop {
 
   .chart-stats {
     grid-template-columns: 1fr;
+  }
+
+  .focus-projection-head,
+  .focus-projection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .focus-projection-head {
+    align-items: start;
   }
 
   .performance-chart svg {

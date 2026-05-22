@@ -91,6 +91,16 @@ const providerDefinitions = {
 
 const weekdayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 const monthNames = ["Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const focusDistanceLabels = {
+  800: "800 m",
+  1500: "1500 m",
+  3000: "3000 m",
+  5000: "5000 m",
+  10000: "10000 m",
+  15000: "15 km",
+  21000: "21 km",
+  42000: "42 km"
+};
 
 const calendar = document.querySelector("#calendar");
 const dialog = document.querySelector("#activityDialog");
@@ -292,6 +302,39 @@ function parseDistanceKm(distance) {
   return match ? Number(match[0]) : 0;
 }
 
+function parseDurationSeconds(duration) {
+  const text = String(duration || "").trim();
+  if (!text || text === "--") return 0;
+  const parts = text.split(":").map((part) => Number(part));
+  if (parts.some((part) => !Number.isFinite(part))) return 0;
+  if (parts.length === 2) return (parts[0] * 60) + parts[1];
+  if (parts.length === 3) return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+  return 0;
+}
+
+function formatDurationSeconds(totalSeconds) {
+  const value = Math.max(0, Math.round(Number(totalSeconds || 0)));
+  if (!value) return "--";
+  const hours = Math.floor(value / 3600);
+  const minutes = Math.floor((value % 3600) / 60);
+  const seconds = value % 60;
+  if (hours) return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function activityDistanceMeters(activity) {
+  return Number(activity.distanceMeters || 0) || parseDistanceKm(activity.distance) * 1000;
+}
+
+function activityMovingSeconds(activity) {
+  return Number(activity.movingTimeSeconds || activity.elapsedTimeSeconds || 0) || parseDurationSeconds(activity.duration);
+}
+
+function isRunningActivity(activity) {
+  const type = String(activity.type || "").toLowerCase();
+  return !type || type.includes("run") || type.includes("corrida");
+}
+
 function activitiesSince(days) {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -305,6 +348,141 @@ function activitiesSince(days) {
 function formatKm(value) {
   if (!value) return "--";
   return `${value.toFixed(value >= 10 ? 1 : 2)} km`;
+}
+
+function projectTime(seconds, fromMeters, toMeters) {
+  if (!seconds || !fromMeters || !toMeters) return 0;
+  return seconds * Math.pow(toMeters / fromMeters, 1.06);
+}
+
+function collectFocusPerformances(athlete) {
+  const targetMeters = Number(athlete?.focusDistanceM || 0);
+  if (!targetMeters) return { targetMeters: 0, candidates: [], direct: [] };
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - 90);
+  const candidates = [];
+  const direct = [];
+
+  visibleActivities()
+    .filter((activity) => isRunningActivity(activity))
+    .filter((activity) => {
+      const date = activityDate(activity);
+      return date && date >= start;
+    })
+    .forEach((activity) => {
+      const date = activityDate(activity);
+      const efforts = Array.isArray(activity.bestEfforts) ? activity.bestEfforts : [];
+      efforts.forEach((effort) => {
+        const distanceMeters = Number(effort.distanceMeters || 0);
+        const seconds = Number(effort.movingTimeSeconds || effort.elapsedTimeSeconds || 0);
+        if (!distanceMeters || !seconds) return;
+        const ratio = distanceMeters / targetMeters;
+        const projectedSeconds = projectTime(seconds, distanceMeters, targetMeters);
+        const item = {
+          source: "best effort Strava",
+          activity,
+          date,
+          distanceMeters,
+          seconds,
+          projectedSeconds
+        };
+        if (Math.abs(ratio - 1) <= 0.05) direct.push(item);
+        if (ratio >= 0.35 && ratio <= 2.5) candidates.push(item);
+      });
+
+      const distanceMeters = activityDistanceMeters(activity);
+      const seconds = activityMovingSeconds(activity);
+      if (!distanceMeters || !seconds) return;
+      const ratio = distanceMeters / targetMeters;
+      const item = {
+        source: "atividade",
+        activity,
+        date,
+        distanceMeters,
+        seconds,
+        projectedSeconds: projectTime(seconds, distanceMeters, targetMeters)
+      };
+      if (Math.abs(ratio - 1) <= 0.08) direct.push(item);
+      if (ratio >= 0.35 && ratio <= 2.5) candidates.push(item);
+    });
+
+  candidates.sort((a, b) => a.projectedSeconds - b.projectedSeconds);
+  direct.sort((a, b) => a.seconds - b.seconds);
+  return { targetMeters, candidates, direct };
+}
+
+function renderFocusProjection() {
+  const target = document.querySelector("#focusProjection");
+  if (!target) return;
+  const athlete = getActiveAthlete();
+  const focusMeters = Number(athlete?.focusDistanceM || 0);
+  if (!athlete || !focusMeters) {
+    target.innerHTML = `
+      <div class="focus-projection-empty">
+        <span>Prova foco</span>
+        <strong>Defina a prova foco do atleta</strong>
+        <p>Informe distância, tempo alvo e data no cadastro para ativar a projeção.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const { candidates, direct } = collectFocusPerformances(athlete);
+  const manualBest = Number(athlete.bestTimeSeconds || 0);
+  const bestDirect = direct[0];
+  const bestCandidate = candidates[0];
+  const baselineSeconds = manualBest || bestDirect?.seconds || bestCandidate?.projectedSeconds || 0;
+  const projectedSeconds = bestCandidate?.projectedSeconds || baselineSeconds;
+  const targetSeconds = Number(athlete.targetTimeSeconds || 0);
+  const gapSeconds = targetSeconds && projectedSeconds ? Math.round(projectedSeconds - targetSeconds) : 0;
+  const gapLabel = !targetSeconds ? "sem alvo" : gapSeconds <= 0 ? `${formatDurationSeconds(Math.abs(gapSeconds))} abaixo do alvo` : `${formatDurationSeconds(gapSeconds)} acima do alvo`;
+  const bestRecentLabel = bestDirect
+    ? `${formatDurationSeconds(bestDirect.seconds)} em ${bestDirect.activity.title}`
+    : manualBest
+      ? `${formatDurationSeconds(manualBest)} informado manualmente`
+      : "sem marca recente";
+  const recentTimesLabel = direct.length
+    ? direct.slice(0, 3).map((item) => formatDurationSeconds(item.seconds)).join(" / ")
+    : "sem tempos importados";
+  const dateLabel = athlete.targetDate
+    ? new Date(`${athlete.targetDate}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+    : "data não definida";
+
+  target.innerHTML = `
+    <div class="focus-projection-head">
+      <div>
+        <p class="kicker">Projeção da prova foco</p>
+        <h3>${escapeHtml(focusDistanceLabels[focusMeters] || `${focusMeters} m`)}</h3>
+      </div>
+      <strong>${escapeHtml(projectedSeconds ? formatDurationSeconds(projectedSeconds) : "--")}</strong>
+    </div>
+    <div class="focus-projection-grid">
+      <div><span>Tempo alvo</span><strong>${escapeHtml(targetSeconds ? formatDurationSeconds(targetSeconds) : "--")}</strong><p>${escapeHtml(dateLabel)}</p></div>
+      <div><span>Diferença</span><strong>${escapeHtml(gapLabel)}</strong><p>comparado com a projeção atual</p></div>
+      <div><span>Melhor 90 dias</span><strong>${escapeHtml(bestRecentLabel)}</strong><p>${escapeHtml(`tempos: ${recentTimesLabel}`)}</p></div>
+      <div><span>Modelo</span><strong>Riegel + 11TSS</strong><p>corridas reais e best efforts do Strava</p></div>
+    </div>
+  `;
+}
+
+function renderAthleteFocusHistory() {
+  const target = document.querySelector("#athleteFocusHistory");
+  if (!target) return;
+  const athlete = getActiveAthlete();
+  if (!athlete?.focusDistanceM) {
+    target.innerHTML = `<span>Tempos importados</span><p>Selecione uma prova foco para comparar os tempos dos últimos 3 meses.</p>`;
+    return;
+  }
+  const { direct } = collectFocusPerformances(athlete);
+  const times = direct.slice(0, 3).map((item) => `
+    <strong>${escapeHtml(formatDurationSeconds(item.seconds))}</strong>
+    <small>${escapeHtml(item.activity.title)} · ${escapeHtml(item.date ? item.date.toLocaleDateString("pt-BR") : "")}</small>
+  `).join("");
+  target.innerHTML = `
+    <span>Tempos importados - últimos 3 meses</span>
+    <div>${times || "<p>Nenhuma atividade compatível encontrada para a distância foco.</p>"}</div>
+  `;
 }
 
 function renderHeroMetrics() {
@@ -609,6 +787,8 @@ function renderCalendar() {
   if (state.calendarView === "quarter" || state.calendarView === "semester") {
     renderPeriodCalendar();
   }
+  renderFocusProjection();
+  renderAthleteFocusHistory();
   renderPerformanceChart();
 }
 
@@ -715,6 +895,7 @@ function formatAthleteMeta(athlete) {
   const items = [];
   if (athlete.teamName) items.push(athlete.teamName);
   if (athlete.coachName) items.push(`Treinador: ${athlete.coachName}`);
+  if (athlete.focusDistanceM) items.push(`Foco: ${focusDistanceLabels[athlete.focusDistanceM] || `${athlete.focusDistanceM} m`}`);
   if (athlete.age) items.push(`${athlete.age} anos`);
   if (athlete.weightKg) items.push(`${athlete.weightKg} kg`);
   if (athlete.heightCm) items.push(`${athlete.heightCm} cm`);
@@ -730,6 +911,7 @@ function renderAthleteIdentity() {
   if (sidebarName) sidebarName.textContent = name;
   if (activeName) activeName.textContent = name;
   if (activeMeta) activeMeta.textContent = formatAthleteMeta(athlete);
+  renderAthleteFocusHistory();
 }
 
 function syncSelectedAthlete() {
@@ -767,6 +949,7 @@ function renderAthletes() {
       <p>${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
       <p>Equipe: ${escapeHtml(athlete.teamName || "não vinculada")}</p>
       <p>Treinador: ${escapeHtml(athlete.coachName || "não vinculado")}</p>
+      <p>Prova foco: ${escapeHtml(focusDistanceLabels[athlete.focusDistanceM] || "não definida")} ${athlete.targetTime ? `- alvo ${escapeHtml(athlete.targetTime)}` : ""}</p>
       <p>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</p>
       <div class="athlete-item-actions">
         <button class="secondary-action compact" type="button" data-edit-athlete="${escapeHtml(athlete.id)}">Editar</button>
@@ -851,6 +1034,10 @@ function editAthlete(athleteId) {
   form.elements.teamName.value = athlete.teamName || "";
   form.elements.coachName.value = athlete.coachName || "";
   form.elements.coachEmail.value = athlete.coachEmail || "";
+  form.elements.focusDistanceM.value = athlete.focusDistanceM || "";
+  form.elements.targetTime.value = athlete.targetTime || "";
+  form.elements.targetDate.value = athlete.targetDate || "";
+  form.elements.bestTime.value = athlete.bestTime || "";
   form.elements.password.value = "";
   const submit = document.querySelector("#athleteSubmitButton");
   const cancel = document.querySelector("#cancelAthleteEdit");
@@ -983,6 +1170,7 @@ async function saveAthlete(event) {
     renderAthletes();
     renderAthleteSelector();
     renderAthleteIdentity();
+    renderCalendar();
     resetAthleteForm(`Atleta ${payload.athlete.name} ${editingId ? "atualizado" : "cadastrado"} com sucesso.`);
     setLog([`Atleta ${payload.athlete.name} salvo com sucesso.`]);
   } catch (error) {
