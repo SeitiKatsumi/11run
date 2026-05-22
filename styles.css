@@ -635,7 +635,7 @@ dialog {
 }
 
 .chart-grid line {
-  stroke: rgba(255, 255, 255, 0.08);
+  stroke: rgba(255, 255, 255, 0.045);
   stroke-width: 1;
 }
 
@@ -648,16 +648,18 @@ dialog {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 4;
+  stroke-width: 2;
   filter: url(#chartGlow);
 }
 
 .volume-line {
   stroke: var(--orange);
+  stroke-opacity: 0.82;
 }
 
 .tss-line {
   stroke: #f8f3e8;
+  stroke-opacity: 0.74;
 }
 
 .performance-chart text {
@@ -667,9 +669,9 @@ dialog {
 }
 
 .tss-points circle {
-  fill: var(--orange);
-  stroke: #f8f3e8;
-  stroke-width: 2;
+  fill: rgba(255, 75, 11, 0.82);
+  stroke: rgba(248, 243, 232, 0.82);
+  stroke-width: 1.5;
 }
 
 .chart-empty {

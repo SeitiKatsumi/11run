@@ -417,11 +417,11 @@ function renderPerformanceChart() {
     <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Grafico de volume e 11TSS">
       <defs>
         <linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="#ff4b0b" stop-opacity="0.32" />
-          <stop offset="100%" stop-color="#ff4b0b" stop-opacity="0.02" />
+          <stop offset="0%" stop-color="#ff4b0b" stop-opacity="0.14" />
+          <stop offset="100%" stop-color="#ff4b0b" stop-opacity="0.01" />
         </linearGradient>
         <filter id="chartGlow">
-          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feGaussianBlur stdDeviation="1.4" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
