@@ -221,6 +221,43 @@ function activityDate(activity) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function periodRange(view = state.calendarView, cursor = state.cursor) {
+  const base = new Date(cursor);
+  if (view === "week") {
+    const start = startOfWeek(base);
+    return { start, end: addDays(start, 6), days: 7, label: "Semana" };
+  }
+  if (view === "day") {
+    const start = addDays(base, -13);
+    return { start, end: base, days: 14, label: "Ultimos 14 dias" };
+  }
+  if (view === "quarter") {
+    const quarterStartMonth = Math.floor(base.getMonth() / 3) * 3;
+    const start = new Date(base.getFullYear(), quarterStartMonth, 1);
+    const end = new Date(base.getFullYear(), quarterStartMonth + 3, 0);
+    return {
+      start,
+      end,
+      days: Math.round((end - start) / 86400000) + 1,
+      label: `Trimestre ${Math.floor(quarterStartMonth / 3) + 1}/${base.getFullYear()}`
+    };
+  }
+  if (view === "semester") {
+    const semesterStartMonth = base.getMonth() < 6 ? 0 : 6;
+    const start = new Date(base.getFullYear(), semesterStartMonth, 1);
+    const end = new Date(base.getFullYear(), semesterStartMonth + 6, 0);
+    return {
+      start,
+      end,
+      days: Math.round((end - start) / 86400000) + 1,
+      label: `Semestre ${semesterStartMonth === 0 ? 1 : 2}/${base.getFullYear()}`
+    };
+  }
+  const start = new Date(base.getFullYear(), base.getMonth(), 1);
+  const end = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+  return { start, end, days: end.getDate(), label: `${monthNames[base.getMonth()]} ${base.getFullYear()}` };
+}
+
 function hasActivitiesInCurrentRange() {
   const activities = visibleActivities();
   if (!activities.length) return false;
@@ -236,6 +273,13 @@ function hasActivitiesInCurrentRange() {
     return activities.some((activity) => {
       const date = activityDate(activity);
       return date && date >= start && date <= end;
+    });
+  }
+  if (state.calendarView === "quarter" || state.calendarView === "semester") {
+    const range = periodRange();
+    return activities.some((activity) => {
+      const date = activityDate(activity);
+      return date && date >= range.start && date <= range.end;
     });
   }
   return activities.some((activity) => activity.date === dateKey(state.cursor));
@@ -324,18 +368,7 @@ function activityTss(activity) {
 }
 
 function chartRange() {
-  const cursor = new Date(state.cursor);
-  if (state.calendarView === "week") {
-    const start = startOfWeek(cursor);
-    return { start, days: 7, label: "Semana" };
-  }
-  if (state.calendarView === "day") {
-    const start = addDays(cursor, -13);
-    return { start, days: 14, label: "Ultimos 14 dias" };
-  }
-  const start = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-  const days = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
-  return { start, days, label: `${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}` };
+  return periodRange();
 }
 
 function aggregatePerformanceSeries() {
@@ -372,8 +405,8 @@ function renderPerformanceChart() {
 
   const { series, label } = aggregatePerformanceSeries();
   const width = 920;
-  const height = 260;
-  const padding = { top: 22, right: 34, bottom: 38, left: 44 };
+  const height = 132;
+  const padding = { top: 16, right: 30, bottom: 26, left: 38 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
   const maxVolume = Math.max(1, ...series.map((item) => item.volume));
@@ -404,7 +437,7 @@ function renderPerformanceChart() {
     }).join("");
   const points = series.filter((item) => item.count).map((item, index) => {
     const originalIndex = series.indexOf(item);
-    return `<circle cx="${xFor(originalIndex)}" cy="${yTss(item.tss)}" r="2.4"><title>${escapeHtml(item.label)} - ${item.volume.toFixed(1)} km - 11TSS ${Math.round(item.tss)}</title></circle>`;
+    return `<circle cx="${xFor(originalIndex)}" cy="${yTss(item.tss)}" r="1.5"><title>${escapeHtml(item.label)} - ${item.volume.toFixed(1)} km - 11TSS ${Math.round(item.tss)}</title></circle>`;
   }).join("");
 
   target.innerHTML = `
@@ -467,9 +500,53 @@ function renderDayCell(date, muted = false) {
   `;
 }
 
+function renderPeriodMonth(monthDate) {
+  const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+  const activities = visibleActivities().filter((activity) => {
+    const date = activityDate(activity);
+    return date && date >= monthStart && date <= monthEnd;
+  });
+  const volume = activities.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss = activities.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const list = activities.length
+    ? activities.slice(0, 8).map(renderActivity).join("")
+    : `<p class="period-empty">Sem atividades importadas neste mes.</p>`;
+
+  return `
+    <section class="period-month">
+      <div class="period-month-head">
+        <div>
+          <span>${monthNames[monthDate.getMonth()]} ${monthDate.getFullYear()}</span>
+          <strong>${activities.length} sessoes</strong>
+        </div>
+        <div class="period-month-stats">
+          <span>${escapeHtml(formatKm(volume))}</span>
+          <span>${Math.round(tss)} 11TSS</span>
+        </div>
+      </div>
+      <div class="period-activities">${list}</div>
+    </section>
+  `;
+}
+
+function renderPeriodCalendar() {
+  const range = periodRange();
+  const months = [];
+  for (let date = new Date(range.start); date <= range.end; date.setMonth(date.getMonth() + 1)) {
+    months.push(new Date(date.getFullYear(), date.getMonth(), 1));
+  }
+  calendar.innerHTML = months.map(renderPeriodMonth).join("");
+  document.querySelector("#calendarEyebrow").textContent = range.label;
+  document.querySelector("#calendarTitle").textContent = hasActivitiesInCurrentRange()
+    ? "Resumo de performance"
+    : "Sem atividades neste periodo";
+}
+
 function renderCalendar() {
   const cursor = state.cursor;
-  calendar.className = `calendar calendar-${state.calendarView}`;
+  const calendarClass = state.calendarView === "quarter" || state.calendarView === "semester" ? "calendar-period" : `calendar-${state.calendarView}`;
+  calendar.className = `calendar ${calendarClass} calendar-${state.calendarView}`;
   const activities = visibleActivities();
 
   if (state.calendarView === "month") {
@@ -505,6 +582,9 @@ function renderCalendar() {
     document.querySelector("#calendarTitle").textContent = activities.length && !hasActivitiesInCurrentRange()
       ? `${activities.length} atividades importadas em outras datas`
       : "Detalhe do dia";
+  }
+  if (state.calendarView === "quarter" || state.calendarView === "semester") {
+    renderPeriodCalendar();
   }
   renderPerformanceChart();
 }
@@ -990,6 +1070,8 @@ document.querySelectorAll("[data-period-shift]").forEach((button) => {
     if (state.calendarView === "month") next.setMonth(next.getMonth() + direction);
     if (state.calendarView === "week") next.setDate(next.getDate() + direction * 7);
     if (state.calendarView === "day") next.setDate(next.getDate() + direction);
+    if (state.calendarView === "quarter") next.setMonth(next.getMonth() + direction * 3);
+    if (state.calendarView === "semester") next.setMonth(next.getMonth() + direction * 6);
     state.cursor = next;
     renderCalendar();
   });
