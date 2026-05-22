@@ -7,7 +7,8 @@ const state = {
   athletes: [],
   selectedAthleteId: localStorage.getItem("selectedAthleteId") || "",
   currentUser: null,
-  editingAthleteId: ""
+  editingAthleteId: "",
+  syncing: false
 };
 
 const APP_VERSION_FALLBACK = "local-ui";
@@ -128,7 +129,7 @@ function closeMobileMenu() {
 }
 
 async function api(path, options = {}) {
-  const scopedPaths = ["/api/integrations", "/api/activities", "/api/sync", "/api/strava/auth", "/api/strava/test"];
+  const scopedPaths = ["/api/integrations", "/api/activities", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich"];
   const shouldScopeAthlete = scopedPaths.some((prefix) => path.startsWith(prefix));
   const athleteHeaders = shouldScopeAthlete && state.selectedAthleteId ? { "X-Athlete-Id": state.selectedAthleteId } : {};
   const response = await fetch(path, {
@@ -160,7 +161,11 @@ function escapeHtml(value) {
 }
 
 function dateKey(date) {
-  return date.toISOString().slice(0, 10);
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function sameDay(a, b) {
@@ -185,12 +190,34 @@ function setView(view) {
   closeMobileMenu();
 }
 
+function normalizeDateKey(value) {
+  if (value instanceof Date) return dateKey(value);
+  const text = String(value || "").trim();
+  const isoDate = text.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (isoDate) return isoDate[1];
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? "" : dateKey(parsed);
+}
+
+function normalizeActivity(activity) {
+  return {
+    ...activity,
+    date: normalizeDateKey(activity.date)
+  };
+}
+
 function visibleActivities() {
-  return [...state.activities].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  return state.activities
+    .map(normalizeActivity)
+    .filter((activity) => activity.date)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
 }
 
 function activityDate(activity) {
-  const date = new Date(`${activity.date}T00:00:00`);
+  const normalized = normalizeDateKey(activity.date);
+  if (!normalized) return null;
+  const [year, month, day] = normalized.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
@@ -224,8 +251,8 @@ function activitiesSince(days) {
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - days + 1);
   return visibleActivities().filter((activity) => {
-    const date = new Date(`${activity.date}T00:00:00`);
-    return date >= start;
+    const date = activityDate(activity);
+    return date && date >= start;
   });
 }
 
@@ -302,7 +329,8 @@ function renderActivity(activity) {
 
 function renderDayCell(date, muted = false) {
   const today = new Date();
-  const dayActivities = visibleActivities().filter((activity) => activity.date === dateKey(date));
+  const key = dateKey(date);
+  const dayActivities = visibleActivities().filter((activity) => activity.date === key);
   return `
     <div class="day ${muted ? "is-muted" : ""} ${sameDay(date, today) ? "is-today" : ""}">
       <div class="day-number">${date.getDate().toString().padStart(2, "0")}</div>
@@ -506,6 +534,42 @@ function setLog(items, isError = false) {
   log.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
 }
 
+function setSyncLoading(active, title = "Importando atividades", text = "Atualizando dados do atleta.", progress = "") {
+  state.syncing = active;
+  const overlay = document.querySelector("#syncOverlay");
+  const titleTarget = document.querySelector("#syncLoaderTitle");
+  const textTarget = document.querySelector("#syncLoaderText");
+  const kickerTarget = document.querySelector("#syncLoaderKicker");
+  if (overlay) overlay.hidden = !active;
+  if (titleTarget) titleTarget.textContent = title;
+  if (textTarget) textTarget.textContent = text;
+  if (kickerTarget) kickerTarget.textContent = progress || "Sincronização";
+  document.querySelectorAll("#syncSelected, [data-import-demo]").forEach((button) => {
+    button.disabled = active;
+    button.classList.toggle("is-loading", active);
+  });
+}
+
+async function enrichStravaDescriptions() {
+  let updated = 0;
+  let remaining = Number.POSITIVE_INFINITY;
+  for (let batch = 1; batch <= 30 && remaining > 0; batch += 1) {
+    setSyncLoading(true, "Puxando descrições do Strava", `Lote ${batch}: buscando descrições completas sem travar o servidor.`, updated ? `${updated} descrições atualizadas` : "Detalhando atividades");
+    const payload = await api("/api/strava/enrich", {
+      method: "POST",
+      body: JSON.stringify({ limit: 8 })
+    });
+    updated += Number(payload.updated || 0);
+    remaining = Number(payload.remaining || 0);
+    state.activities = payload.activities || state.activities;
+    renderCalendar();
+    renderHeroMetrics();
+    renderTrainingInsights();
+    if (!payload.updated || !remaining) break;
+  }
+  return { updated, remaining: Number.isFinite(remaining) ? remaining : 0 };
+}
+
 function setAthleteMessage(message, isError = false) {
   const target = document.querySelector("#athleteMessage");
   if (!target) return;
@@ -596,6 +660,7 @@ async function saveProvider(provider) {
 }
 
 async function runSync() {
+  if (state.syncing) return;
   if (!state.selectedAthleteId) {
     setLog(["Cadastre e selecione um atleta antes de importar atividades."], true);
     return;
@@ -603,7 +668,9 @@ async function runSync() {
   const days = document.querySelector("#importWindow").value;
   const providers = [...document.querySelectorAll(".provider-form input[name='enabled']:checked")]
     .map((input) => input.closest(".provider-form").dataset.provider);
+  let detailResult = { updated: 0, remaining: 0 };
   try {
+    setSyncLoading(true, "Importando atividades", `Sincronizando últimos ${days} dias com as fontes ativas.`, "Conectando");
     setLog([`Sincronizando últimos ${days} dias...`]);
     const payload = await api("/api/sync", {
       method: "POST",
@@ -613,16 +680,23 @@ async function runSync() {
     renderCalendar();
     renderHeroMetrics();
     renderTrainingInsights();
+    if (providers.includes("strava") && state.activities.length) {
+      detailResult = await enrichStravaDescriptions();
+    }
     setLog([
       payload.imported
         ? `Importadas/atualizadas: ${payload.imported} atividades reais.`
         : `Nenhuma atividade nova retornada pelas fontes no intervalo de ${days} dias.`,
       state.activities.length ? `Total no banco para este atleta: ${state.activities.length}.` : "Nenhuma atividade salva para este atleta.",
+      detailResult.updated ? `Descrições completas atualizadas: ${detailResult.updated}.` : "Descrições já estavam atualizadas ou não retornaram detalhe adicional.",
+      detailResult.remaining ? `Descrições pendentes: ${detailResult.remaining}. Clique novamente para continuar.` : "Descrições sincronizadas em lotes.",
       ...(payload.warnings || []),
       "Calendário atualizado."
     ]);
   } catch (error) {
     setLog([error.message], true);
+  } finally {
+    setSyncLoading(false);
   }
 }
 

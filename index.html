@@ -248,6 +248,16 @@
       <div id="activityDetail"></div>
     </dialog>
 
+    <div id="syncOverlay" class="sync-overlay" hidden aria-live="polite" aria-busy="true">
+      <div class="sync-loader">
+        <div class="sync-orbit" aria-hidden="true"></div>
+        <span id="syncLoaderKicker">Sincronização</span>
+        <strong id="syncLoaderTitle">Importando atividades</strong>
+        <p id="syncLoaderText">Conectando ao Strava e atualizando o calendário.</p>
+        <div class="sync-progress" aria-hidden="true"><span></span></div>
+      </div>
+    </div>
+
     <script src="script.js"></script>
   </body>
 </html>

@@ -1015,7 +1015,7 @@ function activityRowToApi(row) {
   return {
     id: `${row.provider}-${row.provider_activity_id}`,
     providerId: row.provider_activity_id,
-    date: formatDateOnly(row.activity_date),
+    date: row.activity_date_key || formatDateOnly(row.activity_date),
     title: row.title,
     source: row.provider,
     type: row.type || "",
@@ -1042,7 +1042,18 @@ async function listActivities(tenantId, athleteUserId = null) {
   if (!pool) return readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
   const params = athleteUserId ? [tenantId, athleteUserId] : [tenantId];
   const result = await query(
-    `SELECT provider, provider_activity_id, activity_date, title, type, description, distance, duration, pace, load, external_url
+    `SELECT provider,
+            provider_activity_id,
+            activity_date,
+            to_char(activity_date, 'YYYY-MM-DD') AS activity_date_key,
+            title,
+            type,
+            description,
+            distance,
+            duration,
+            pace,
+            load,
+            external_url
        FROM activities
       WHERE tenant_id = $1
         ${athleteUserId ? "AND athlete_user_id = $2" : ""}
@@ -1074,13 +1085,23 @@ async function upsertActivities(tenantId, athleteUserId, importedActivities) {
                      activity_date = EXCLUDED.activity_date,
                      title = EXCLUDED.title,
                      type = EXCLUDED.type,
-                     description = EXCLUDED.description,
+                     description = CASE
+                       WHEN activities.raw->>'resource_state' = '3'
+                        AND COALESCE(EXCLUDED.raw->>'resource_state', '') <> '3'
+                       THEN activities.description
+                       ELSE EXCLUDED.description
+                     END,
                      distance = EXCLUDED.distance,
                      duration = EXCLUDED.duration,
                      pace = EXCLUDED.pace,
                      load = EXCLUDED.load,
                      external_url = EXCLUDED.external_url,
-                     raw = EXCLUDED.raw,
+                     raw = CASE
+                       WHEN activities.raw->>'resource_state' = '3'
+                        AND COALESCE(EXCLUDED.raw->>'resource_state', '') <> '3'
+                       THEN activities.raw
+                       ELSE EXCLUDED.raw
+                     END,
                      updated_at = now()`,
       [
         tenantId,
@@ -1179,20 +1200,6 @@ function mapStravaActivity(activity) {
   };
 }
 
-async function enrichStravaActivities(tenantId, athleteUserId, integration, activities) {
-  const enriched = [];
-  for (const activity of activities) {
-    try {
-      const detail = await stravaFetchJson(`/activities/${activity.providerId}?include_all_efforts=false`, tenantId, athleteUserId, integration);
-      enriched.push(mapStravaActivity({ ...activity.raw, ...detail }));
-    } catch (error) {
-      console.warn(`Não foi possível buscar detalhe da atividade Strava ${activity.providerId}: ${error.message}`);
-      enriched.push(activity);
-    }
-  }
-  return enriched;
-}
-
 async function getValidStravaToken(tenantId, athleteUserId, integration) {
   if (!integration.token?.access_token) {
     throw new Error("Strava ainda não foi conectado. Salve as credenciais e clique em Conectar Strava.");
@@ -1266,9 +1273,72 @@ async function syncStrava(tenantId, athleteUserId, days) {
     if (batch.length < 100) break;
   }
 
-  const enriched = await enrichStravaActivities(tenantId, athleteUserId, integration, activities);
-  await upsertActivities(tenantId, athleteUserId, enriched);
-  return enriched;
+  await upsertActivities(tenantId, athleteUserId, activities);
+  return activities;
+}
+
+async function enrichStravaActivityDetails(tenantId, athleteUserId, limit = 8) {
+  if (!pool) return { updated: 0, remaining: 0, activities: readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES) };
+  const integrations = await getIntegrations(tenantId, athleteUserId);
+  const integration = integrations.strava;
+  if (!integration.token?.access_token) {
+    throw new Error("Strava ainda não foi conectado para este atleta.");
+  }
+  if (!hasStravaActivityScope(integration.token.scope)) {
+    throw new Error("O token Strava deste atleta não possui activity:read/activity:read_all.");
+  }
+
+  const remainingBefore = await query(
+    `SELECT COUNT(*)::int AS total
+       FROM activities
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND provider = 'Strava'
+        AND COALESCE(raw->>'resource_state', '') <> '3'`,
+    [tenantId, athleteUserId]
+  );
+  const remaining = Number(remainingBefore.rows[0]?.total || 0);
+  if (!remaining) {
+    return { updated: 0, remaining: 0, activities: await listActivities(tenantId, athleteUserId) };
+  }
+
+  const rows = await query(
+    `SELECT provider_activity_id
+       FROM activities
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND provider = 'Strava'
+        AND COALESCE(raw->>'resource_state', '') <> '3'
+      ORDER BY activity_date DESC
+      LIMIT $3`,
+    [tenantId, athleteUserId, Math.max(1, Math.min(Number(limit) || 8, 12))]
+  );
+
+  const detailed = [];
+  for (const row of rows.rows) {
+    try {
+      const detail = await stravaFetchJson(`/activities/${row.provider_activity_id}?include_all_efforts=false`, tenantId, athleteUserId, integration);
+      detailed.push(mapStravaActivity(detail));
+    } catch (error) {
+      console.warn(`Não foi possível detalhar atividade Strava ${row.provider_activity_id}: ${error.message}`);
+    }
+  }
+  if (detailed.length) await upsertActivities(tenantId, athleteUserId, detailed);
+
+  const remainingAfter = await query(
+    `SELECT COUNT(*)::int AS total
+       FROM activities
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND provider = 'Strava'
+        AND COALESCE(raw->>'resource_state', '') <> '3'`,
+    [tenantId, athleteUserId]
+  );
+  return {
+    updated: detailed.length,
+    remaining: Number(remainingAfter.rows[0]?.total || 0),
+    activities: await listActivities(tenantId, athleteUserId)
+  };
 }
 
 async function testStravaConnection(tenantId, athleteUserId) {
@@ -1554,6 +1624,14 @@ async function handleApi(req, res, url) {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
       sendJson(res, 200, await testStravaConnection(tenant.id, athleteUserId));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/strava/enrich") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      sendJson(res, 200, await enrichStravaActivityDetails(tenant.id, athleteUserId, body.limit || 8));
       return;
     }
 
