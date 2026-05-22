@@ -404,7 +404,7 @@ function renderPerformanceChart() {
     }).join("");
   const points = series.filter((item) => item.count).map((item, index) => {
     const originalIndex = series.indexOf(item);
-    return `<circle cx="${xFor(originalIndex)}" cy="${yTss(item.tss)}" r="4"><title>${escapeHtml(item.label)} - ${item.volume.toFixed(1)} km - 11TSS ${Math.round(item.tss)}</title></circle>`;
+    return `<circle cx="${xFor(originalIndex)}" cy="${yTss(item.tss)}" r="2.4"><title>${escapeHtml(item.label)} - ${item.volume.toFixed(1)} km - 11TSS ${Math.round(item.tss)}</title></circle>`;
   }).join("");
 
   target.innerHTML = `
@@ -417,11 +417,11 @@ function renderPerformanceChart() {
     <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Grafico de volume e 11TSS">
       <defs>
         <linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="#ff4b0b" stop-opacity="0.14" />
-          <stop offset="100%" stop-color="#ff4b0b" stop-opacity="0.01" />
+          <stop offset="0%" stop-color="#ff4b0b" stop-opacity="0.07" />
+          <stop offset="100%" stop-color="#ff4b0b" stop-opacity="0" />
         </linearGradient>
         <filter id="chartGlow">
-          <feGaussianBlur stdDeviation="1.4" result="blur" />
+          <feGaussianBlur stdDeviation="0.65" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />

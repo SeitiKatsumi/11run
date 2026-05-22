@@ -576,20 +576,20 @@ dialog {
 }
 
 .chart-legend i {
-  width: 24px;
-  height: 3px;
+  width: 28px;
+  height: 1px;
   border-radius: 99px;
   display: inline-block;
 }
 
 .legend-volume {
-  background: var(--orange);
-  box-shadow: 0 0 14px rgba(255, 75, 11, 0.8);
+  background: rgba(255, 75, 11, 0.86);
+  box-shadow: 0 0 8px rgba(255, 75, 11, 0.32);
 }
 
 .legend-tss {
-  background: #f8f3e8;
-  box-shadow: 0 0 14px rgba(248, 243, 232, 0.45);
+  background: rgba(248, 243, 232, 0.78);
+  box-shadow: 0 0 8px rgba(248, 243, 232, 0.18);
 }
 
 .performance-chart {
@@ -629,13 +629,13 @@ dialog {
 .performance-chart svg {
   width: 100%;
   min-height: 220px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.045);
   border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(0, 0, 0, 0.12));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(0, 0, 0, 0.1));
 }
 
 .chart-grid line {
-  stroke: rgba(255, 255, 255, 0.045);
+  stroke: rgba(255, 255, 255, 0.028);
   stroke-width: 1;
 }
 
@@ -648,18 +648,18 @@ dialog {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 2;
+  stroke-width: 1.15;
   filter: url(#chartGlow);
 }
 
 .volume-line {
   stroke: var(--orange);
-  stroke-opacity: 0.82;
+  stroke-opacity: 0.76;
 }
 
 .tss-line {
   stroke: #f8f3e8;
-  stroke-opacity: 0.74;
+  stroke-opacity: 0.64;
 }
 
 .performance-chart text {
@@ -669,9 +669,9 @@ dialog {
 }
 
 .tss-points circle {
-  fill: rgba(255, 75, 11, 0.82);
-  stroke: rgba(248, 243, 232, 0.82);
-  stroke-width: 1.5;
+  fill: rgba(255, 75, 11, 0.72);
+  stroke: rgba(248, 243, 232, 0.7);
+  stroke-width: 1;
 }
 
 .chart-empty {
