@@ -319,6 +319,128 @@ function renderTrainingInsights() {
   `;
 }
 
+function activityTss(activity) {
+  return Number(activity.analysis?.tss || activity.load || 0);
+}
+
+function chartRange() {
+  const cursor = new Date(state.cursor);
+  if (state.calendarView === "week") {
+    const start = startOfWeek(cursor);
+    return { start, days: 7, label: "Semana" };
+  }
+  if (state.calendarView === "day") {
+    const start = addDays(cursor, -13);
+    return { start, days: 14, label: "Ultimos 14 dias" };
+  }
+  const start = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+  const days = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
+  return { start, days, label: `${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}` };
+}
+
+function aggregatePerformanceSeries() {
+  const range = chartRange();
+  const series = Array.from({ length: range.days }, (_, index) => {
+    const date = addDays(range.start, index);
+    return {
+      date,
+      key: dateKey(date),
+      label: state.calendarView === "month" ? String(date.getDate()).padStart(2, "0") : `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`,
+      volume: 0,
+      tss: 0,
+      count: 0
+    };
+  });
+  const byKey = new Map(series.map((item) => [item.key, item]));
+  visibleActivities().forEach((activity) => {
+    const item = byKey.get(activity.date);
+    if (!item) return;
+    item.volume += parseDistanceKm(activity.distance);
+    item.tss += activityTss(activity);
+    item.count += 1;
+  });
+  return { ...range, series };
+}
+
+function linePath(points) {
+  return points.map((point, index) => `${index ? "L" : "M"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
+}
+
+function renderPerformanceChart() {
+  const target = document.querySelector("#performanceChart");
+  if (!target) return;
+
+  const { series, label } = aggregatePerformanceSeries();
+  const width = 920;
+  const height = 260;
+  const padding = { top: 22, right: 34, bottom: 38, left: 44 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const maxVolume = Math.max(1, ...series.map((item) => item.volume));
+  const maxTss = Math.max(1, ...series.map((item) => item.tss));
+  const totalVolume = series.reduce((sum, item) => sum + item.volume, 0);
+  const totalTss = series.reduce((sum, item) => sum + item.tss, 0);
+  const totalSessions = series.reduce((sum, item) => sum + item.count, 0);
+  const hasData = totalSessions > 0;
+  const denominator = Math.max(series.length - 1, 1);
+  const xFor = (index) => padding.left + (index / denominator) * chartWidth;
+  const yVolume = (value) => padding.top + chartHeight - (value / maxVolume) * chartHeight;
+  const yTss = (value) => padding.top + chartHeight - (value / maxTss) * chartHeight;
+  const volumePoints = series.map((item, index) => ({ x: xFor(index), y: yVolume(item.volume) }));
+  const tssPoints = series.map((item, index) => ({ x: xFor(index), y: yTss(item.tss) }));
+  const volumeArea = hasData
+    ? `${linePath(volumePoints)} L ${volumePoints[volumePoints.length - 1].x.toFixed(1)} ${padding.top + chartHeight} L ${volumePoints[0].x.toFixed(1)} ${padding.top + chartHeight} Z`
+    : "";
+  const grid = [0, 0.25, 0.5, 0.75, 1].map((step) => {
+    const y = padding.top + chartHeight - (step * chartHeight);
+    return `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" />`;
+  }).join("");
+  const labels = series
+    .filter((_, index) => index === 0 || index === Math.floor(series.length / 2) || index === series.length - 1)
+    .map((item, index, items) => {
+      const originalIndex = series.indexOf(item);
+      const anchor = index === 0 ? "start" : index === items.length - 1 ? "end" : "middle";
+      return `<text x="${xFor(originalIndex)}" y="${height - 12}" text-anchor="${anchor}">${escapeHtml(item.label)}</text>`;
+    }).join("");
+  const points = series.filter((item) => item.count).map((item, index) => {
+    const originalIndex = series.indexOf(item);
+    return `<circle cx="${xFor(originalIndex)}" cy="${yTss(item.tss)}" r="4"><title>${escapeHtml(item.label)} - ${item.volume.toFixed(1)} km - 11TSS ${Math.round(item.tss)}</title></circle>`;
+  }).join("");
+
+  target.innerHTML = `
+    <div class="chart-stats">
+      <div><span>Periodo</span><strong>${escapeHtml(label)}</strong></div>
+      <div><span>Volume</span><strong>${escapeHtml(formatKm(totalVolume))}</strong></div>
+      <div><span>11TSS</span><strong>${Math.round(totalTss)}</strong></div>
+      <div><span>Sessoes</span><strong>${totalSessions}</strong></div>
+    </div>
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Grafico de volume e 11TSS">
+      <defs>
+        <linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#ff4b0b" stop-opacity="0.32" />
+          <stop offset="100%" stop-color="#ff4b0b" stop-opacity="0.02" />
+        </linearGradient>
+        <filter id="chartGlow">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <g class="chart-grid">${grid}</g>
+      ${hasData ? `<path class="volume-area" d="${volumeArea}" />` : ""}
+      ${hasData ? `<path class="volume-line" d="${linePath(volumePoints)}" />` : ""}
+      ${hasData ? `<path class="tss-line" d="${linePath(tssPoints)}" />` : ""}
+      <g class="tss-points">${points}</g>
+      <text x="${padding.left}" y="16">km</text>
+      <text x="${width - padding.right}" y="16" text-anchor="end">11TSS</text>
+      <g class="chart-labels">${labels}</g>
+    </svg>
+    ${hasData ? "" : `<p class="chart-empty">Importe atividades do Strava para visualizar a evolucao de volume e 11TSS.</p>`}
+  `;
+}
+
 function renderActivity(activity) {
   const analysis = activity.analysis || {};
   const analysisLine = analysis.tss
@@ -384,6 +506,7 @@ function renderCalendar() {
       ? `${activities.length} atividades importadas em outras datas`
       : "Detalhe do dia";
   }
+  renderPerformanceChart();
 }
 
 function openActivity(activityId) {
