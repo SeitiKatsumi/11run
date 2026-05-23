@@ -1047,6 +1047,14 @@ dialog {
   margin-bottom: 16px;
 }
 
+.calendar-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .calendar-top h3,
 .section-title h3 {
   margin: 6px 0 0;
@@ -1863,6 +1871,13 @@ dialog::backdrop {
   .chart-heading,
   .provider-heading {
     display: block;
+  }
+
+  .calendar-tools {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: stretch;
   }
 
   .chart-legend {

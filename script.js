@@ -211,6 +211,12 @@ function setView(view) {
   closeMobileMenu();
 }
 
+function syncCalendarViewButtons() {
+  document.querySelectorAll("[data-calendar-view]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.calendarView === state.calendarView);
+  });
+}
+
 function normalizeDateKey(value) {
   if (value instanceof Date) return dateKey(value);
   const text = String(value || "").trim();
@@ -915,6 +921,7 @@ function renderPeriodCalendar() {
 }
 
 function renderCalendar() {
+  syncCalendarViewButtons();
   const cursor = state.cursor;
   const calendarClass = state.calendarView === "quarter" || state.calendarView === "semester" ?"calendar-period" : `calendar-${state.calendarView}`;
   calendar.className = `calendar ${calendarClass} calendar-${state.calendarView}`;
@@ -1540,7 +1547,7 @@ document.querySelectorAll("[data-view-button]").forEach((button) => {
 document.querySelectorAll("[data-calendar-view]").forEach((button) => {
   button.addEventListener("click", () => {
     state.calendarView = button.dataset.calendarView;
-    document.querySelectorAll("[data-calendar-view]").forEach((item) => item.classList.toggle("is-active", item === button));
+    syncCalendarViewButtons();
     renderCalendar();
   });
 });
