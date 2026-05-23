@@ -490,8 +490,16 @@ function collect3000Tests(athlete) {
     .map((test) => ({
       date: test.date ?new Date(`${test.date}T00:00:00`) : null,
       seconds: Number(test.timeSeconds),
-      source: test.notes || "teste manual"
+      source: `MANUAL: ${test.notes || "teste 3000"}`
     }));
+  const flaggedActivities = visibleActivities()
+    .filter((activity) => isRunningActivity(activity) && activity.is3000Test)
+    .map((activity) => ({
+      date: activityDate(activity),
+      seconds: parseDurationSeconds(activity.duration),
+      source: `FLAG: ${activity.title}`
+    }))
+    .filter((test) => test.seconds);
   const fromActivities = visibleActivities()
     .filter((activity) => isRunningActivity(activity))
     .flatMap((activity) => {
@@ -501,11 +509,22 @@ function collect3000Tests(athlete) {
         .map((effort) => ({
           date: activityDate(activity),
           seconds: Number(effort.movingTimeSeconds || effort.elapsedTimeSeconds || 0),
-          source: activity.title
+          source: `AUTO: ${activity.title}`
         }));
     })
     .filter((test) => test.seconds);
-  return [...fromManual, ...fromActivities].sort((a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0)).slice(0, 3);
+  const ranked = [...flaggedActivities, ...fromManual, ...fromActivities]
+    .sort((a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0));
+  const selected = [];
+  const dedupe = new Set();
+  for (const item of ranked) {
+    const key = `${item.date ?dateKey(item.date) : "nd"}-${Math.round(Number(item.seconds || 0))}`;
+    if (dedupe.has(key)) continue;
+    dedupe.add(key);
+    selected.push(item);
+    if (selected.length >= 3) break;
+  }
+  return selected;
 }
 
 function buildFocusModel(athlete) {
@@ -520,7 +539,7 @@ function buildFocusModel(athlete) {
   const projectedFromActivity = bestCandidate?.projectedSeconds || directBest?.seconds || 0;
   const projectedFromTest = tests3000[0]?.seconds && focusMeters ?projectTime(tests3000[0].seconds, 3000, focusMeters) : 0;
   const currentSeconds = Math.round(projectedFromActivity && projectedFromTest
-    ?(projectedFromActivity * 0.62) + (projectedFromTest * 0.38)
+    ?(projectedFromActivity * 0.35) + (projectedFromTest * 0.65)
     : projectedFromActivity || projectedFromTest || manualBest || 0);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -624,17 +643,17 @@ function renderAthleteFocusHistory() {
   if (!target) return;
   const athlete = getActiveAthlete();
   if (!athlete?.focusDistanceM) {
-    target.innerHTML = `<span>Tempos importados</span><p>Selecione uma prova foco para comparar os tempos dos últimos 3 meses.</p>`;
+    target.innerHTML = `<span>Testes de 3000 m</span><p>Selecione uma prova foco para comparar os testes recentes.</p>`;
     return;
   }
-  const { direct } = collectFocusPerformances(athlete);
-  const times = direct.slice(0, 3).map((item) => `
+  const tests = collect3000Tests(athlete);
+  const times = tests.map((item) => `
     <strong>${escapeHtml(formatDurationSeconds(item.seconds))}</strong>
-    <small>${escapeHtml(item.activity.title)} · ${escapeHtml(item.date ?item.date.toLocaleDateString("pt-BR") : "")}</small>
+    <small>${escapeHtml(item.source || "teste")} · ${escapeHtml(item.date ?item.date.toLocaleDateString("pt-BR") : "")}</small>
   `).join("");
   target.innerHTML = `
-    <span>Tempos importados - últimos 3 meses</span>
-    <div>${times || "<p>Nenhuma atividade compatível encontrada para a distância foco.</p>"}</div>
+    <span>Últimos 3 testes de 3000 m (flag/manual/auto)</span>
+    <div>${times || "<p>Nenhum teste de 3000 m disponível.</p>"}</div>
   `;
 }
 
@@ -989,6 +1008,11 @@ function openActivity(activityId) {
       <p class="analysis-caption">Esforco relativo Strava: ${escapeHtml(analysis.relativeEffort || "--")} - IF por FC: ${escapeHtml(analysis.intensityFactor || "--")} - Splits: ${escapeHtml(analysis.splitCount || 0)}</p>
     </div>
   ` : "";
+  const testFlagButton = `
+    <button class="secondary-action compact" type="button" data-flag-3000-activity="${escapeHtml(activity.id)}" data-flag-enabled="${activity.is3000Test ?"0" : "1"}">
+      ${activity.is3000Test ?"Remover dos testes 3000 m" : "Marcar como teste 3000 m"}
+    </button>
+  `;
   detail.innerHTML = `
     <div class="detail">
       <span class="kicker">${escapeHtml(activity.source)} - ${escapeHtml(activity.type)}</span>
@@ -1001,10 +1025,24 @@ function openActivity(activityId) {
         <div><span class="metric-label">Carga</span><strong>${escapeHtml(activity.load)}</strong></div>
       </div>
       ${analysisPanel}
+      <div class="provider-actions">${testFlagButton}</div>
       ${external}
     </div>
   `;
   dialog.showModal();
+}
+
+async function setActivity3000Flag(activityId, enabled) {
+  const payload = await api("/api/activities/flag-3000-test", {
+    method: "POST",
+    body: JSON.stringify({ activityId, enabled })
+  });
+  state.activities = payload.activities || [];
+  renderCalendar();
+  renderAthleteFocusHistory();
+  renderFocusRoadmap();
+  openActivity(activityId);
+  setLog([enabled ?"Atividade marcada como teste de 3000 m." :"Atividade removida dos testes de 3000 m."]);
 }
 
 function renderProviders() {
@@ -1639,6 +1677,11 @@ document.addEventListener("click", async (event) => {
   }
   if (event.target.closest("[data-refresh-ai]")) {
     await refreshAiProjection();
+    return;
+  }
+  const testFlagButton = event.target.closest("[data-flag-3000-activity]");
+  if (testFlagButton) {
+    await setActivity3000Flag(testFlagButton.dataset.flag3000Activity, testFlagButton.dataset.flagEnabled === "1");
   }
 });
 

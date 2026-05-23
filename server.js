@@ -1221,7 +1221,8 @@ function activityRowToApi(row) {
     elapsedTimeSeconds: safeNumber(raw.elapsed_time, raw.moving_time),
     averageSpeed: safeNumber(raw.average_speed),
     bestEfforts,
-    analysis
+    analysis,
+    is3000Test: Boolean(raw?.flags?.is3000Test)
   };
 }
 
@@ -1367,7 +1368,12 @@ function formatDateOnly(value) {
 }
 
 async function listActivities(tenantId, athleteUserId = null) {
-  if (!pool) return readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
+  if (!pool) {
+    return readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES).map((activity) => ({
+      ...activity,
+      is3000Test: Boolean(activity?.is3000Test || activity?.raw?.flags?.is3000Test)
+    }));
+  }
   const params = athleteUserId ?[tenantId, athleteUserId] : [tenantId];
   const result = await query(
     `SELECT provider,
@@ -1392,11 +1398,79 @@ async function listActivities(tenantId, athleteUserId = null) {
   return result.rows.map(activityRowToApi);
 }
 
+async function flagActivityAs3000Test(tenantId, athleteUserId, activityId, enabled) {
+  const cleanActivityId = String(activityId || "").trim();
+  if (!cleanActivityId) throw httpError("Atividade inválida.", 400);
+  const cleanEnabled = Boolean(enabled);
+
+  if (!pool) {
+    const activities = readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
+    const index = activities.findIndex((item) => String(item.id) === cleanActivityId);
+    if (index < 0) throw httpError("Atividade não encontrada para este atleta.", 404);
+    const item = activities[index];
+    if (athleteUserId && String(item.athleteUserId || "") !== String(athleteUserId)) {
+      throw httpError("Atividade não encontrada para este atleta.", 404);
+    }
+    activities[index] = {
+      ...item,
+      is3000Test: cleanEnabled,
+      raw: {
+        ...(item.raw || {}),
+        flags: {
+          ...((item.raw || {}).flags || {}),
+          is3000Test: cleanEnabled
+        }
+      }
+    };
+    writeJson(ACTIVITIES_FILE, activities);
+    return listActivities(tenantId, athleteUserId);
+  }
+
+  const separator = cleanActivityId.indexOf("-");
+  if (separator < 0) throw httpError("Identificador de atividade inválido.", 400);
+  const provider = cleanActivityId.slice(0, separator);
+  const providerActivityId = cleanActivityId.slice(separator + 1);
+  if (!provider || !providerActivityId) throw httpError("Identificador de atividade inválido.", 400);
+
+  const updated = await query(
+    `UPDATE activities
+        SET raw = jsonb_set(
+                  COALESCE(raw, '{}'::jsonb),
+                  '{flags,is3000Test}',
+                  to_jsonb($5::boolean),
+                  true
+                ),
+            updated_at = now()
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND provider = $3
+        AND provider_activity_id = $4
+      RETURNING provider_activity_id`,
+    [tenantId, athleteUserId, provider, providerActivityId, cleanEnabled]
+  );
+  if (!updated.rows[0]) throw httpError("Atividade não encontrada para este atleta.", 404);
+  return listActivities(tenantId, athleteUserId);
+}
+
 async function upsertActivities(tenantId, athleteUserId, importedActivities) {
   if (!pool) {
     const existing = readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
     const byId = new Map(existing.map((activity) => [String(activity.id), activity]));
-    for (const activity of importedActivities) byId.set(String(activity.id), activity);
+    for (const activity of importedActivities) {
+      const current = byId.get(String(activity.id));
+      const is3000Test = Boolean(current?.is3000Test || current?.raw?.flags?.is3000Test);
+      byId.set(String(activity.id), {
+        ...activity,
+        is3000Test,
+        raw: {
+          ...(activity.raw || {}),
+          flags: {
+            ...((activity.raw || {}).flags || {}),
+            ...(is3000Test ?{ is3000Test: true } : {})
+          }
+        }
+      });
+    }
     const next = [...byId.values()].sort((a, b) => String(a.date).localeCompare(String(b.date)));
     writeJson(ACTIVITIES_FILE, next);
     return next;
@@ -1429,7 +1503,12 @@ async function upsertActivities(tenantId, athleteUserId, importedActivities) {
                        WHEN activities.raw->>'resource_state' = '3'
                         AND COALESCE(EXCLUDED.raw->>'resource_state', '') <> '3'
                        THEN activities.raw
-                       ELSE EXCLUDED.raw
+                       ELSE jsonb_set(
+                         EXCLUDED.raw,
+                         '{flags}',
+                         COALESCE(activities.raw->'flags', '{}'::jsonb) || COALESCE(EXCLUDED.raw->'flags', '{}'::jsonb),
+                         true
+                       )
                      END,
                      updated_at = now()`,
       [
@@ -1986,6 +2065,18 @@ async function handleApi(req, res, url) {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
       sendJson(res, 200, await listActivities(tenant.id, athleteUserId));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/activities/flag-3000-test") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      if (!athleteUserId || !(await canAccessAthlete(tenant.id, user, athleteUserId))) {
+        throw httpError("Usuario sem permissao para alterar esta atividade.", 403);
+      }
+      const body = await readRequestBody(req);
+      const activities = await flagActivityAs3000Test(tenant.id, athleteUserId, body.activityId, body.enabled);
+      sendJson(res, 200, { ok: true, activities });
       return;
     }
 
