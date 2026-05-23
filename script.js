@@ -191,16 +191,18 @@ function mountCollapsibleSection(panel, key, label) {
     control = document.createElement("div");
     control.className = "panel-collapse-control";
     control.innerHTML = `
-      <span class="kicker">${escapeHtml(label)}</span>
-      <button class="secondary-action compact" type="button" data-toggle-panel="${escapeHtml(key)}">Abrir</button>
+      <button class="panel-toggle-text" type="button" data-toggle-panel="${escapeHtml(key)}" aria-label="Alternar painel ${escapeHtml(label)}">
+        <span class="kicker">${escapeHtml(label)}</span>
+      </button>
+      <button class="secondary-action compact" type="button" data-toggle-panel="${escapeHtml(key)}">Expandir painel</button>
     `;
     panel.insertBefore(control, panel.firstChild);
   }
   const collapsed = isPanelCollapsed(key);
   panel.classList.toggle("is-collapsed", collapsed);
   content.hidden = collapsed;
-  const button = control.querySelector(`[data-toggle-panel="${key}"]`);
-  if (button) button.textContent = collapsed ?"Abrir" : "Fechar";
+  const button = control.querySelector(`.secondary-action[data-toggle-panel="${key}"]`);
+  if (button) button.textContent = collapsed ?"Expandir painel" : "Ocultar painel";
 }
 
 async function api(path, options = {}) {
@@ -1101,16 +1103,22 @@ function openActivity(activityId) {
 }
 
 async function setActivity3000Flag(activityId, enabled) {
-  const payload = await api("/api/activities/flag-3000-test", {
-    method: "POST",
-    body: JSON.stringify({ activityId, enabled })
-  });
-  state.activities = payload.activities || [];
-  renderCalendar();
-  renderAthleteFocusHistory();
-  renderFocusRoadmap();
-  openActivity(activityId);
-  setLog([enabled ?"Atividade marcada como teste de 3000 m." :"Atividade removida dos testes de 3000 m."]);
+  try {
+    const payload = await api("/api/activities/flag-3000-test", {
+      method: "POST",
+      body: JSON.stringify({ activityId, enabled })
+    });
+    state.activities = payload.activities || [];
+    renderCalendar();
+    renderAthleteFocusHistory();
+    renderFocusRoadmap();
+    openActivity(activityId);
+    setLog([enabled ?"Atividade marcada como teste de 3000 m." :"Atividade removida dos testes de 3000 m."]);
+    setAthleteMessage(enabled ?"Teste de 3000 m vinculado à atividade." :"Teste de 3000 m removido da atividade.");
+  } catch (error) {
+    setLog([error.message || "Não foi possível atualizar o teste de 3000 m."], true);
+    window.alert(error.message || "Não foi possível atualizar o teste de 3000 m.");
+  }
 }
 
 function renderProviders() {
@@ -1318,6 +1326,7 @@ function resetAthleteForm(message = "") {
   const form = document.querySelector("#athleteForm");
   if (!form) return;
   form.reset();
+  renderHistoryTimelineEditor([]);
   state.editingAthleteId = "";
   const submit = document.querySelector("#athleteSubmitButton");
   const cancel = document.querySelector("#cancelAthleteEdit");
@@ -1326,8 +1335,52 @@ function resetAthleteForm(message = "") {
   if (message) setAthleteMessage(message);
 }
 
+function historyTimelineRowTemplate(entry = {}) {
+  return `
+    <article class="history-entry-row">
+      <label class="credential-field">
+        <span>Início</span>
+        <input type="date" data-history-start value="${escapeHtml(entry.startDate || "")}" />
+      </label>
+      <label class="credential-field">
+        <span>Fim</span>
+        <input type="date" data-history-end value="${escapeHtml(entry.endDate || "")}" />
+      </label>
+      <label class="credential-field">
+        <span>Título / evento</span>
+        <input data-history-title value="${escapeHtml(entry.title || "")}" placeholder="Ex.: Parado por lesão, retorno progressivo, bloco de base..." />
+      </label>
+      <label class="credential-field">
+        <span>Descrição / contexto</span>
+        <input data-history-description value="${escapeHtml(entry.description || "")}" placeholder="Detalhes relevantes para análise futura da IA." />
+      </label>
+      <button class="danger-action compact" type="button" data-remove-history-entry>Remover</button>
+    </article>
+  `;
+}
+
+function renderHistoryTimelineEditor(entries = []) {
+  const target = document.querySelector("#historyTimelineList");
+  if (!target) return;
+  const cleanEntries = Array.isArray(entries) ?entries : [];
+  target.innerHTML = cleanEntries.length
+    ?cleanEntries.map((entry) => historyTimelineRowTemplate(entry)).join("")
+    : historyTimelineRowTemplate({});
+}
+
+function readHistoryTimelineForm(form) {
+  const rows = [...form.querySelectorAll(".history-entry-row")];
+  return rows.map((row) => ({
+    startDate: row.querySelector("[data-history-start]")?.value || "",
+    endDate: row.querySelector("[data-history-end]")?.value || "",
+    title: row.querySelector("[data-history-title]")?.value || "",
+    description: row.querySelector("[data-history-description]")?.value || ""
+  }));
+}
+
 function readAthleteForm(form) {
   const body = Object.fromEntries(new FormData(form).entries());
+  body.historyTimeline = readHistoryTimelineForm(form);
   body.tests3000 = [1, 2, 3].map((index) => ({
     date: body[`test3000Date${index}`],
     time: body[`test3000Time${index}`],
@@ -1362,6 +1415,7 @@ function editAthlete(athleteId) {
   form.elements.bestTime.value = athlete.bestTime || "";
   if (form.elements.role) form.elements.role.value = athlete.role || "athlete";
   if (form.elements.historyNotes) form.elements.historyNotes.value = athlete.historyNotes || "";
+  renderHistoryTimelineEditor(athlete.historyTimeline || []);
   const tests = Array.isArray(athlete.tests3000) ?athlete.tests3000 : [];
   [1, 2, 3].forEach((index) => {
     const test = tests[index - 1] || {};
@@ -1754,9 +1808,29 @@ document.addEventListener("click", async (event) => {
     await refreshAiProjection();
     return;
   }
+  if (event.target.closest("#addHistoryEntry")) {
+    const list = document.querySelector("#historyTimelineList");
+    if (list) list.insertAdjacentHTML("beforeend", historyTimelineRowTemplate({}));
+    return;
+  }
+  if (event.target.closest("[data-remove-history-entry]")) {
+    const row = event.target.closest(".history-entry-row");
+    const list = document.querySelector("#historyTimelineList");
+    if (row) row.remove();
+    if (list && !list.querySelector(".history-entry-row")) {
+      list.innerHTML = historyTimelineRowTemplate({});
+    }
+    return;
+  }
   const testFlagButton = event.target.closest("[data-flag-3000-activity]");
   if (testFlagButton) {
-    await setActivity3000Flag(testFlagButton.dataset.flag3000Activity, testFlagButton.dataset.flagEnabled === "1");
+    const activityId = testFlagButton.getAttribute("data-flag-3000-activity") || testFlagButton.dataset.flag3000Activity;
+    const enabled = (testFlagButton.getAttribute("data-flag-enabled") || testFlagButton.dataset.flagEnabled) === "1";
+    if (!activityId) {
+      setLog(["Não foi possível identificar a atividade para marcar o teste de 3000 m."], true);
+      return;
+    }
+    await setActivity3000Flag(activityId, enabled);
   }
 });
 
@@ -1767,4 +1841,5 @@ document.querySelector("#aiSettingsForm")?.addEventListener("submit", saveAiSett
 document.querySelector("#cancelAthleteEdit")?.addEventListener("click", () => resetAthleteForm("Edição cancelada."));
 
 loadAppVersion();
+renderHistoryTimelineEditor([]);
 boot();

@@ -564,6 +564,9 @@ function formatAthlete(row) {
   const tests3000 = Array.isArray(row.tests_3000)
     ?row.tests_3000
     : parseJsonObject(row.tests_3000);
+  const historyTimeline = Array.isArray(row.history_timeline)
+    ?row.history_timeline
+    : parseJsonObject(row.history_timeline);
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -586,6 +589,12 @@ function formatAthlete(row) {
     bestTimeSeconds: row.best_time_seconds == null ?"" : Number(row.best_time_seconds),
     bestTime: row.best_time_seconds == null ?"" : formatDuration(row.best_time_seconds),
     historyNotes: row.history_notes || "",
+    historyTimeline: Array.isArray(historyTimeline) ?historyTimeline.map((entry) => ({
+      startDate: entry.startDate || "",
+      endDate: entry.endDate || "",
+      title: entry.title || "",
+      description: entry.description || ""
+    })) : [],
     tests3000: Array.isArray(tests3000) ?tests3000.map((test) => ({
       date: test.date || "",
       timeSeconds: test.timeSeconds == null ?"" : Number(test.timeSeconds),
@@ -607,6 +616,30 @@ function validateTests3000(value) {
     if (!seconds) throw new Error("Informe o tempo de cada teste de 3000 m.");
     return { date, timeSeconds: seconds, notes };
   }).filter(Boolean);
+}
+
+function validateHistoryTimeline(value) {
+  const input = Array.isArray(value) ?value : [];
+  return input
+    .slice(0, 30)
+    .map((item) => {
+      const startDate = String(item.startDate || "").trim();
+      const endDate = String(item.endDate || "").trim();
+      const title = String(item.title || "").trim().slice(0, 120);
+      const description = String(item.description || "").trim().slice(0, 1200);
+      if (!startDate && !endDate && !title && !description) return null;
+      if (!startDate || Number.isNaN(new Date(`${startDate}T00:00:00`).getTime())) {
+        throw new Error("Informe a data de início em cada item do histórico.");
+      }
+      if (endDate && Number.isNaN(new Date(`${endDate}T00:00:00`).getTime())) {
+        throw new Error("Informe uma data de fim válida no histórico.");
+      }
+      if (endDate && endDate < startDate) {
+        throw new Error("A data de fim não pode ser menor que a data de início.");
+      }
+      return { startDate, endDate, title, description };
+    })
+    .filter(Boolean);
 }
 
 function parseTimeToSeconds(value) {
@@ -710,7 +743,7 @@ async function listAthletes(tenantId, user = null) {
     `SELECT u.id, u.tenant_id, u.role, u.name, u.email, u.whatsapp, u.created_at,
             ap.age, ap.weight_kg, ap.height_cm, ap.team_id, ap.coach_user_id,
             ap.focus_distance_m, ap.target_time_seconds, ap.target_date, ap.best_time_seconds,
-            ap.history_notes, ap.tests_3000,
+            ap.history_notes, ap.history_timeline, ap.tests_3000,
             t.name AS team_name,
             c.name AS coach_name,
             c.email AS coach_email
@@ -748,6 +781,7 @@ function validateAthlete(input, actorUser = null) {
   const bestTimeSeconds = parseTimeToSeconds(input.bestTime || input.bestTimeSeconds);
   const targetDate = String(input.targetDate || "").trim();
   const historyNotes = String(input.historyNotes || "").trim().slice(0, 4000);
+  const historyTimeline = validateHistoryTimeline(input.historyTimeline);
   const tests3000 = validateTests3000(input.tests3000);
   const requestedRole = String(input.role || "athlete").trim();
   const role = actorUser?.role === "admin" && USER_ROLES.has(requestedRole) ?requestedRole : "athlete";
@@ -776,6 +810,7 @@ function validateAthlete(input, actorUser = null) {
     targetDate: targetDate || null,
     bestTimeSeconds,
     historyNotes,
+    historyTimeline,
     tests3000,
     role
   };
@@ -888,9 +923,9 @@ async function createAthlete(tenantId, input, actorUser = null) {
       `INSERT INTO athlete_profiles (
          user_id, team_id, coach_user_id, age, weight_kg, height_cm,
          focus_distance_m, target_time_seconds, target_date, best_time_seconds,
-         history_notes, tests_3000
+         history_notes, history_timeline, tests_3000
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        ON CONFLICT (user_id)
        DO UPDATE SET team_id = EXCLUDED.team_id,
                      coach_user_id = EXCLUDED.coach_user_id,
@@ -902,6 +937,7 @@ async function createAthlete(tenantId, input, actorUser = null) {
                      target_date = EXCLUDED.target_date,
                      best_time_seconds = EXCLUDED.best_time_seconds,
                      history_notes = EXCLUDED.history_notes,
+                     history_timeline = EXCLUDED.history_timeline,
                      tests_3000 = EXCLUDED.tests_3000,
                      updated_at = now()`,
       [
@@ -916,6 +952,7 @@ async function createAthlete(tenantId, input, actorUser = null) {
         athlete.targetDate,
         athlete.bestTimeSeconds,
         athlete.historyNotes,
+        JSON.stringify(athlete.historyTimeline),
         JSON.stringify(athlete.tests3000)
       ]
     );
@@ -1020,9 +1057,10 @@ async function updateAthlete(tenantId, athleteUserId, input, actorUser = null) {
               target_date = $8,
               best_time_seconds = $9,
               history_notes = $10,
-              tests_3000 = $11,
+              history_timeline = $11,
+              tests_3000 = $12,
               updated_at = now()
-        WHERE user_id = $12`,
+        WHERE user_id = $13`,
       [
         teamId,
         coachId,
@@ -1034,6 +1072,7 @@ async function updateAthlete(tenantId, athleteUserId, input, actorUser = null) {
         athlete.targetDate,
         athlete.bestTimeSeconds,
         athlete.historyNotes,
+        JSON.stringify(athlete.historyTimeline),
         JSON.stringify(athlete.tests3000),
         athleteUserId
       ]
@@ -1450,6 +1489,31 @@ async function flagActivityAs3000Test(tenantId, athleteUserId, activityId, enabl
   );
   if (!updated.rows[0]) throw httpError("Atividade não encontrada para este atleta.", 404);
   return listActivities(tenantId, athleteUserId);
+}
+
+async function resolveAthleteIdFromActivity(tenantId, activityId) {
+  const cleanActivityId = String(activityId || "").trim();
+  if (!cleanActivityId) return "";
+  if (!pool) {
+    const activities = readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
+    const found = activities.find((item) => String(item.id) === cleanActivityId);
+    return String(found?.athleteUserId || "");
+  }
+  const separator = cleanActivityId.indexOf("-");
+  if (separator < 0) return "";
+  const provider = cleanActivityId.slice(0, separator);
+  const providerActivityId = cleanActivityId.slice(separator + 1);
+  if (!provider || !providerActivityId) return "";
+  const result = await query(
+    `SELECT athlete_user_id
+       FROM activities
+      WHERE tenant_id = $1
+        AND provider = $2
+        AND provider_activity_id = $3
+      LIMIT 1`,
+    [tenantId, provider, providerActivityId]
+  );
+  return String(result.rows[0]?.athlete_user_id || "");
 }
 
 async function upsertActivities(tenantId, athleteUserId, importedActivities) {
@@ -2071,11 +2135,12 @@ async function handleApi(req, res, url) {
     if (req.method === "POST" && url.pathname === "/api/activities/flag-3000-test") {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
-      if (!athleteUserId || !(await canAccessAthlete(tenant.id, user, athleteUserId))) {
+      const body = await readRequestBody(req);
+      const targetAthleteId = athleteUserId || await resolveAthleteIdFromActivity(tenant.id, body.activityId);
+      if (!targetAthleteId || !(await canAccessAthlete(tenant.id, user, targetAthleteId))) {
         throw httpError("Usuario sem permissao para alterar esta atividade.", 403);
       }
-      const body = await readRequestBody(req);
-      const activities = await flagActivityAs3000Test(tenant.id, athleteUserId, body.activityId, body.enabled);
+      const activities = await flagActivityAs3000Test(tenant.id, targetAthleteId, body.activityId, body.enabled);
       sendJson(res, 200, { ok: true, activities });
       return;
     }

@@ -567,6 +567,20 @@ dialog {
   margin-bottom: 10px;
 }
 
+.panel-toggle-text {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.panel-toggle-text .kicker {
+  pointer-events: none;
+}
+
 .performance-chart-panel.is-collapsed {
   margin-bottom: 12px;
 }
@@ -1288,6 +1302,39 @@ dialog {
   gap: 10px;
 }
 
+.history-field {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.history-field legend {
+  padding: 0 6px;
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.history-timeline-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.history-entry-row {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 0.8fr 0.8fr minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  gap: 8px;
+  align-items: end;
+  background: rgba(255, 255, 255, 0.02);
+}
+
 .wide-field {
   grid-column: 1 / -1;
 }
@@ -1704,7 +1751,8 @@ dialog::backdrop {
   }
 
   .ai-settings-form,
-  .tests-grid {
+  .tests-grid,
+  .history-entry-row {
     grid-template-columns: 1fr;
   }
 }
@@ -1874,10 +1922,10 @@ dialog::backdrop {
 
   .toolbar {
     margin-top: 14px;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px;
-    align-items: center;
   }
 
   .toolbar .calendar-view-switch,
@@ -1888,6 +1936,7 @@ dialog::backdrop {
     overflow-y: hidden;
     gap: 6px;
     width: 100%;
+    max-width: 100%;
     scrollbar-width: none;
   }
 
@@ -1907,6 +1956,8 @@ dialog::backdrop {
   .calendar-tools .period-nav {
     display: inline-flex;
     gap: 8px;
+    justify-content: flex-end;
+    align-self: flex-end;
   }
 
   .toolbar .period-nav .icon-button,
@@ -1925,15 +1976,13 @@ dialog::backdrop {
 
   .calendar-tools {
     margin-top: 12px;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px;
-    align-items: center;
-    justify-items: initial;
   }
 
   .calendar-tools [data-import-demo] {
-    grid-column: 1 / -1;
     width: 100%;
   }
 
@@ -2013,7 +2062,6 @@ dialog::backdrop {
   }
 
   .toolbar {
-    grid-template-columns: 1fr;
     gap: 6px;
   }
 
@@ -2029,7 +2077,6 @@ dialog::backdrop {
   }
 
   .calendar-tools {
-    grid-template-columns: 1fr;
     gap: 6px;
   }
 

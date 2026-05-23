@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS athlete_profiles (
   target_date DATE,
   best_time_seconds INTEGER,
   history_notes TEXT,
+  history_timeline JSONB NOT NULL DEFAULT '[]',
   tests_3000 JSONB NOT NULL DEFAULT '[]',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -104,6 +105,7 @@ ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS target_time_seconds INTEGE
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS target_date DATE;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS best_time_seconds INTEGER;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS history_notes TEXT;
+ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS history_timeline JSONB NOT NULL DEFAULT '[]';
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS tests_3000 JSONB NOT NULL DEFAULT '[]';
 
 CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role);
