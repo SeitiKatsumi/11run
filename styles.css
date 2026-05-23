@@ -108,7 +108,7 @@ button {
 .menu-toggle {
   position: fixed;
   top: 14px;
-  left: 254px;
+  left: 194px;
   z-index: 40;
   width: 42px;
   height: 42px;
@@ -207,7 +207,8 @@ nav a.is-active {
 }
 
 .shell.rail-collapsed .menu-toggle {
-  left: 96px;
+  left: 22px;
+  top: 104px;
 }
 
 .shell.rail-collapsed .menu-toggle::before {
@@ -536,7 +537,7 @@ dialog {
 
 .admin-management-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
 }
 
@@ -550,6 +551,10 @@ dialog {
 .admin-mode-switch {
   width: fit-content;
   max-width: 100%;
+}
+
+.wide-field {
+  grid-column: 1 / -1;
 }
 
 .training-grid-wide {
@@ -821,6 +826,132 @@ dialog {
 
 .roadmap-actions {
   margin-top: 12px;
+}
+
+.goals-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.goal-form,
+.goal-list-panel,
+.goal-results-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.goal-list {
+  display: grid;
+  gap: 12px;
+}
+
+.goal-card {
+  padding: 14px;
+  border: 1px solid rgba(255, 75, 11, 0.22);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(120deg, rgba(255, 75, 11, 0.09), rgba(255, 255, 255, 0.025) 42%, rgba(0, 0, 0, 0.08)),
+    rgba(18, 18, 20, 0.86);
+}
+
+.goal-card-result {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.goal-card-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.goal-card-head span,
+.goal-metrics span {
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.goal-card-head h4 {
+  margin: 5px 0 0;
+  color: #e8e4dd;
+  font-size: 18px;
+  font-weight: 520;
+}
+
+.goal-card-head p,
+.goal-analysis,
+.goal-notes {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.goal-card-head > strong {
+  color: var(--orange);
+  font-size: 28px;
+  font-weight: 460;
+}
+
+.goal-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.goal-metrics div {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.goal-metrics strong {
+  display: block;
+  margin-top: 5px;
+  color: #e7e3dc;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.goal-route {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius);
+}
+
+.goal-route svg {
+  display: block;
+  width: 100%;
+  height: 70px;
+}
+
+.goal-route line {
+  stroke: rgba(255, 255, 255, 0.14);
+  stroke-width: 1;
+}
+
+.goal-route path {
+  fill: none;
+  stroke: rgba(255, 75, 11, 0.74);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 6;
+}
+
+.goal-route circle {
+  fill: var(--orange);
+}
+
+.empty-state {
+  padding: 14px;
+  color: var(--muted);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius);
 }
 
 .performance-chart-panel {
@@ -1506,6 +1637,10 @@ select {
   align-items: stretch !important;
 }
 
+.credential-field:not(:has(input)):not(:has(select)):not(:has(textarea)) {
+  display: none !important;
+}
+
 .credential-field span {
   color: var(--muted);
   font-size: 11px;
@@ -1541,6 +1676,72 @@ select {
 .athlete-list {
   display: grid;
   gap: 12px;
+}
+
+.athlete-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.athlete-list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.athlete-list-row.is-selected {
+  border-color: var(--line-strong);
+}
+
+.athlete-row-main {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 0.8fr 1fr 1fr 1fr;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.athlete-row-main strong {
+  color: var(--heading);
+  font-weight: 560;
+}
+
+.athlete-row-main span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.athlete-row-details {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.athlete-row-details p {
+  margin: 0;
+}
+
+.athlete-row-details strong {
+  color: var(--heading);
+  font-weight: 560;
 }
 
 .athlete-list-item {
@@ -1765,6 +1966,7 @@ dialog::backdrop {
   .training-grid,
   .settings-grid,
   .athlete-grid,
+  .goals-grid,
   .admin-management-grid {
     grid-template-columns: 1fr;
   }
@@ -1773,14 +1975,22 @@ dialog::backdrop {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .roadmap-grid {
+  .roadmap-grid,
+  .goal-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .ai-settings-form,
   .tests-grid,
   .activity-test-picker,
-  .history-entry-row {
+  .history-entry-row,
+  .athlete-filter-grid,
+  .athlete-row-main,
+  .athlete-row-details {
+    grid-template-columns: 1fr;
+  }
+
+  .athlete-list-row {
     grid-template-columns: 1fr;
   }
 }
@@ -1789,6 +1999,7 @@ dialog::backdrop {
   .menu-toggle,
   .shell.rail-collapsed .menu-toggle {
     left: 14px;
+    top: 14px;
   }
 
   .menu-toggle::before,
@@ -2077,7 +2288,9 @@ dialog::backdrop {
   .focus-projection-head,
   .focus-projection-grid,
   .roadmap-head,
-  .roadmap-grid {
+  .roadmap-grid,
+  .goal-card-head,
+  .goal-metrics {
     grid-template-columns: 1fr;
   }
 

@@ -16,6 +16,7 @@ const DATA_DIR = path.join(ROOT, "data");
 const INTEGRATIONS_FILE = path.join(DATA_DIR, "integrations.json");
 const ACTIVITIES_FILE = path.join(DATA_DIR, "activities.json");
 const ATHLETES_FILE = path.join(DATA_DIR, "athletes.json");
+const GOALS_FILE = path.join(DATA_DIR, "goals.json");
 const SCHEMA_FILE = path.join(ROOT, "db", "schema.sql");
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://127.0.0.1:${PORT}`).replace(/\/$/, "");
 const DEFAULT_TENANT_SLUG = process.env.DEFAULT_TENANT_SLUG || "default";
@@ -571,6 +572,13 @@ function formatAthlete(row) {
     id: row.id,
     tenantId: row.tenant_id,
     role: row.role,
+    roleLabel: {
+      admin: "Super admin",
+      manager: "Equipe",
+      coach: "Treinador",
+      athlete: "Atleta"
+    }[row.role] || row.role,
+    profileData: parseJsonObject(row.profile_data),
     name: row.name,
     email: row.email,
     whatsapp: row.whatsapp || "",
@@ -740,7 +748,7 @@ async function listAthletes(tenantId, user = null) {
     filters.push(`t.manager_user_id = $${params.length}`);
   }
   const result = await query(
-    `SELECT u.id, u.tenant_id, u.role, u.name, u.email, u.whatsapp, u.created_at,
+      `SELECT u.id, u.tenant_id, u.role, u.name, u.email, u.whatsapp, u.profile_data, u.created_at,
             ap.age, ap.weight_kg, ap.height_cm, ap.team_id, ap.coach_user_id,
             ap.focus_distance_m, ap.target_time_seconds, ap.target_date, ap.best_time_seconds,
             ap.history_notes, ap.history_timeline, ap.tests_3000,
@@ -780,7 +788,7 @@ async function listDirectory(tenantId, user = null) {
   }
   const [teamResult, coachResult] = await Promise.all([
     query(
-      `SELECT id, name
+      `SELECT id, name, profile_data
          FROM teams
         WHERE ${teamFilters.join(" AND ")}
         ORDER BY name ASC`,
@@ -801,18 +809,27 @@ async function listDirectory(tenantId, user = null) {
 async function createTeam(tenantId, input, user) {
   const name = String(input.name || "").trim();
   if (!name) throw httpError("Informe o nome da equipe.", 400);
+  const profileData = {
+    email: String(input.email || "").trim().toLowerCase(),
+    whatsapp: String(input.whatsapp || "").trim(),
+    location: String(input.location || "").trim(),
+    managerName: String(input.managerName || "").trim(),
+    website: String(input.website || "").trim(),
+    institutionalNotes: String(input.institutionalNotes || "").trim()
+  };
   if (!pool) {
-    return { id: crypto.randomUUID(), name };
+    return { id: crypto.randomUUID(), name, profileData };
   }
   const managerUserId = user?.role === "manager" ?user.id : null;
   const result = await query(
-    `INSERT INTO teams (tenant_id, name, manager_user_id)
-     VALUES ($1, $2, $3)
+    `INSERT INTO teams (tenant_id, name, manager_user_id, profile_data)
+     VALUES ($1, $2, $3, $4)
      ON CONFLICT (tenant_id, name)
      DO UPDATE SET name = EXCLUDED.name,
-                   manager_user_id = COALESCE(teams.manager_user_id, EXCLUDED.manager_user_id)
-     RETURNING id, name`,
-    [tenantId, name, managerUserId]
+                   manager_user_id = COALESCE(teams.manager_user_id, EXCLUDED.manager_user_id),
+                   profile_data = EXCLUDED.profile_data
+     RETURNING id, name, profile_data`,
+    [tenantId, name, managerUserId, JSON.stringify(profileData)]
   );
   return result.rows[0];
 }
@@ -842,6 +859,7 @@ function validateAthlete(input, actorUser = null) {
   const historyNotes = String(input.historyNotes || "").trim().slice(0, 4000);
   const historyTimeline = validateHistoryTimeline(input.historyTimeline);
   const tests3000 = validateTests3000(input.tests3000);
+  const profileData = parseJsonObject(input.profileData);
   const requestedRole = String(input.role || "athlete").trim();
   const role = actorUser?.role === "admin" && USER_ROLES.has(requestedRole) ?requestedRole : "athlete";
 
@@ -871,6 +889,7 @@ function validateAthlete(input, actorUser = null) {
     historyNotes,
     historyTimeline,
     tests3000,
+    profileData,
     role
   };
 }
@@ -919,6 +938,7 @@ async function createAthlete(tenantId, input, actorUser = null) {
       teamName: athlete.teamName || "",
       coachName: athlete.coachName || "",
       coachEmail: athlete.coachEmail || "",
+      profileData: athlete.profileData || {},
       createdAt: new Date().toISOString()
     };
     athletes.unshift(record);
@@ -967,15 +987,16 @@ async function createAthlete(tenantId, input, actorUser = null) {
     }
     const passwordHash = athlete.password ?hashPassword(athlete.password) : null;
     const userResult = await client.query(
-      `INSERT INTO users (tenant_id, role, name, email, whatsapp, password_hash)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO users (tenant_id, role, name, email, whatsapp, password_hash, profile_data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (tenant_id, email)
        DO UPDATE SET name = EXCLUDED.name,
                      whatsapp = EXCLUDED.whatsapp,
                      role = EXCLUDED.role,
-                     password_hash = COALESCE(EXCLUDED.password_hash, users.password_hash)
+                     password_hash = COALESCE(EXCLUDED.password_hash, users.password_hash),
+                     profile_data = EXCLUDED.profile_data
        RETURNING *`,
-      [tenantId, athlete.role, athlete.name, athlete.email, athlete.whatsapp, passwordHash]
+      [tenantId, athlete.role, athlete.name, athlete.email, athlete.whatsapp, passwordHash, JSON.stringify(athlete.profileData)]
     );
     const user = userResult.rows[0];
     await client.query(
@@ -1040,7 +1061,8 @@ async function updateAthlete(tenantId, athleteUserId, input, actorUser = null) {
       role: athlete.role || athletes[index].role,
       teamName: athlete.teamName || "",
       coachName: athlete.coachName || "",
-      coachEmail: athlete.coachEmail || ""
+      coachEmail: athlete.coachEmail || "",
+      profileData: athlete.profileData || {}
     };
     writeJson(ATHLETES_FILE, athletes);
     return athletes[index];
@@ -1100,9 +1122,10 @@ async function updateAthlete(tenantId, athleteUserId, input, actorUser = null) {
               email = $2,
               whatsapp = $3,
               role = CASE WHEN $4 THEN $5 ELSE role END,
-              password_hash = COALESCE($6, password_hash)
-        WHERE tenant_id = $7 AND id = $8`,
-      [athlete.name, athlete.email, athlete.whatsapp, actorUser?.role === "admin", athlete.role, passwordHash, tenantId, athleteUserId]
+              password_hash = COALESCE($6, password_hash),
+              profile_data = $7
+        WHERE tenant_id = $8 AND id = $9`,
+      [athlete.name, athlete.email, athlete.whatsapp, actorUser?.role === "admin", athlete.role, passwordHash, JSON.stringify(athlete.profileData), tenantId, athleteUserId]
     );
     await client.query(
       `UPDATE athlete_profiles
@@ -1181,6 +1204,105 @@ async function deleteAthlete(tenantId, athleteUserId, actorUser) {
   } finally {
     client.release();
   }
+}
+
+function formatGoal(row) {
+  return {
+    id: row.id,
+    athleteUserId: row.athlete_user_id || row.athleteUserId,
+    title: row.title || "",
+    distanceM: Number(row.distance_m || row.distanceM || 0),
+    targetTimeSeconds: Number(row.target_time_seconds || row.targetTimeSeconds || 0),
+    targetTime: formatDuration(row.target_time_seconds || row.targetTimeSeconds || 0),
+    raceDate: row.race_date ? String(row.race_date).slice(0, 10) : row.raceDate || "",
+    notes: row.notes || "",
+    actualTimeSeconds: row.actual_time_seconds || row.actualTimeSeconds || null,
+    actualTime: row.actual_time_seconds || row.actualTimeSeconds ? formatDuration(row.actual_time_seconds || row.actualTimeSeconds) : "",
+    resultNotes: row.result_notes || row.resultNotes || "",
+    createdAt: row.created_at || row.createdAt || "",
+    updatedAt: row.updated_at || row.updatedAt || ""
+  };
+}
+
+function validateGoal(input) {
+  const distanceM = Number(input.distanceM || input.distance_m || 0);
+  const targetTimeSeconds = parseTimeToSeconds(input.targetTime || input.target_time || input.targetTimeSeconds);
+  const raceDate = String(input.raceDate || input.race_date || "").trim();
+  const title = String(input.title || "").trim();
+  if (!title) throw httpError("Informe o nome do objetivo.", 400);
+  if (!distanceM) throw httpError("Selecione a prova do objetivo.", 400);
+  if (!targetTimeSeconds) throw httpError("Informe um tempo alvo valido.", 400);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raceDate)) throw httpError("Informe a data da prova.", 400);
+  return {
+    title,
+    distanceM,
+    targetTimeSeconds,
+    raceDate,
+    notes: String(input.notes || "").trim(),
+    actualTimeSeconds: parseTimeToSeconds(input.actualTime || input.actualTimeSeconds) || null,
+    resultNotes: String(input.resultNotes || "").trim()
+  };
+}
+
+async function listGoals(tenantId, athleteUserId) {
+  if (!athleteUserId) return [];
+  if (!pool) {
+    return readJson(GOALS_FILE, [])
+      .filter((goal) => String(goal.tenantId) === String(tenantId) && String(goal.athleteUserId) === String(athleteUserId))
+      .map(formatGoal)
+      .sort((a, b) => String(a.raceDate).localeCompare(String(b.raceDate)));
+  }
+  const result = await query(
+    `SELECT *
+       FROM athlete_goals
+      WHERE tenant_id = $1 AND athlete_user_id = $2
+      ORDER BY race_date ASC, created_at ASC`,
+    [tenantId, athleteUserId]
+  );
+  return result.rows.map(formatGoal);
+}
+
+async function createGoal(tenantId, athleteUserId, input) {
+  if (!athleteUserId) throw httpError("Selecione um atleta antes de criar objetivos.", 400);
+  const goal = validateGoal(input);
+  if (!pool) {
+    const goals = readJson(GOALS_FILE, []);
+    const record = {
+      id: crypto.randomUUID(),
+      tenantId,
+      athleteUserId,
+      title: goal.title,
+      distanceM: goal.distanceM,
+      targetTimeSeconds: goal.targetTimeSeconds,
+      raceDate: goal.raceDate,
+      notes: goal.notes,
+      actualTimeSeconds: goal.actualTimeSeconds,
+      resultNotes: goal.resultNotes,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    goals.push(record);
+    writeJson(GOALS_FILE, goals);
+    return formatGoal(record);
+  }
+  const result = await query(
+    `INSERT INTO athlete_goals
+      (tenant_id, athlete_user_id, title, distance_m, target_time_seconds, race_date, notes, actual_time_seconds, result_notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     RETURNING *`,
+    [
+      tenantId,
+      athleteUserId,
+      goal.title,
+      goal.distanceM,
+      goal.targetTimeSeconds,
+      goal.raceDate,
+      goal.notes,
+      goal.actualTimeSeconds,
+      goal.resultNotes
+    ]
+  );
+  return formatGoal(result.rows[0]);
 }
 
 async function getIntegrations(tenantId, athleteUserId = null) {
@@ -2206,6 +2328,22 @@ async function handleApi(req, res, url) {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
       sendJson(res, 200, await listActivities(tenant.id, athleteUserId));
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/goals") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      sendJson(res, 200, await listGoals(tenant.id, athleteUserId));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/goals") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      const goal = await createGoal(tenant.id, athleteUserId, body);
+      sendJson(res, 201, { goal, goals: await listGoals(tenant.id, athleteUserId) });
       return;
     }
 

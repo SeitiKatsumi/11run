@@ -3,6 +3,7 @@
   calendarView: "month",
   cursor: new Date(),
   activities: [],
+  goals: [],
   integrations: {},
   directory: { teams: [], coaches: [] },
   athletes: [],
@@ -12,6 +13,7 @@
   aiProjection: null,
   editingAthleteId: "",
   adminMode: "athlete",
+  expandedAdminUserId: "",
   syncing: false,
   collapsedPanels: (() => {
     const defaults = {
@@ -208,7 +210,7 @@ function mountCollapsibleSection(panel, key, label) {
 }
 
 async function api(path, options = {}) {
-  const scopedPaths = ["/api/integrations", "/api/activities", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich", "/api/ai/projection"];
+  const scopedPaths = ["/api/integrations", "/api/activities", "/api/goals", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich", "/api/ai/projection"];
   const shouldScopeAthlete = scopedPaths.some((prefix) => path.startsWith(prefix));
   const athleteHeaders = shouldScopeAthlete && state.selectedAthleteId ?{ "X-Athlete-Id": state.selectedAthleteId } : {};
   const response = await fetch(path, {
@@ -267,7 +269,7 @@ function setView(view) {
   document.querySelectorAll("[data-view]").forEach((section) => section.classList.toggle("is-visible", section.dataset.view === view));
   document.querySelectorAll("[data-view-link]").forEach((link) => link.classList.toggle("is-active", link.dataset.viewLink === view));
   if (view === "athlete") editCurrentUserProfile();
-  location.hash = view === "training" ?"treinamentos" : view === "athlete" ?"dashboard" : view === "settings" ?"configuracoes" : "home";
+  location.hash = view === "training" ?"treinamentos" : view === "goals" ?"objetivos" : view === "athlete" ?"dashboard" : view === "settings" ?"configuracoes" : "home";
   closeMobileMenu();
 }
 
@@ -702,14 +704,152 @@ function renderFocusRoadmap() {
   mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva até a prova");
 }
 
+function goalAsAthlete(goal) {
+  const athlete = getActiveAthlete() || {};
+  return {
+    ...athlete,
+    focusDistanceM: goal.distanceM,
+    targetTimeSeconds: goal.targetTimeSeconds,
+    targetTime: goal.targetTime,
+    targetDate: goal.raceDate,
+    bestTimeSeconds: 0
+  };
+}
+
+function isPastGoal(goal) {
+  const raceDate = goal.raceDate ?new Date(`${goal.raceDate}T00:00:00`) : null;
+  if (!raceDate || Number.isNaN(raceDate.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return raceDate < today;
+}
+
+function goalDateLabel(goal) {
+  if (!goal.raceDate) return "data nao definida";
+  return new Date(`${goal.raceDate}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function goalResultPerformance(goal) {
+  const targetMeters = Number(goal.distanceM || 0);
+  if (!goal.raceDate || !targetMeters) return null;
+  const raceKey = normalizeDateKey(goal.raceDate);
+  const candidates = [];
+  visibleActivities()
+    .filter((activity) => normalizeDateKey(activity.date) === raceKey && isRunningActivity(activity))
+    .forEach((activity) => {
+      const efforts = Array.isArray(activity.bestEfforts) ?activity.bestEfforts : [];
+      efforts.forEach((effort) => {
+        const distanceMeters = Number(effort.distanceMeters || 0);
+        const seconds = Number(effort.movingTimeSeconds || effort.elapsedTimeSeconds || 0);
+        if (distanceMeters && seconds && Math.abs(distanceMeters / targetMeters - 1) <= 0.06) {
+          candidates.push({ seconds, title: activity.title, source: "best effort Strava" });
+        }
+      });
+      const distanceMeters = activityDistanceMeters(activity);
+      const seconds = activityMovingSeconds(activity);
+      if (distanceMeters && seconds && Math.abs(distanceMeters / targetMeters - 1) <= 0.08) {
+        candidates.push({ seconds, title: activity.title, source: "atividade importada" });
+      }
+    });
+  return candidates.sort((a, b) => a.seconds - b.seconds)[0] || null;
+}
+
+function renderGoalCard(goal, resultMode = false) {
+  const model = buildFocusModel(goalAsAthlete(goal));
+  const detectedResult = resultMode ?goalResultPerformance(goal) : null;
+  const actualSeconds = Number(goal.actualTimeSeconds || 0) || detectedResult?.seconds || 0;
+  const referenceSeconds = actualSeconds || model.currentSeconds;
+  const targetSeconds = Number(goal.targetTimeSeconds || 0);
+  const gap = targetSeconds && referenceSeconds ?Math.round(referenceSeconds - targetSeconds) : 0;
+  const gapLabel = !targetSeconds || !referenceSeconds
+    ?"sem comparativo"
+    : gap <= 0
+      ?`${formatDurationSeconds(Math.abs(gap))} abaixo do objetivo`
+      : `${formatDurationSeconds(gap)} acima do objetivo`;
+  const analysis = resultMode
+    ?actualSeconds
+      ?`Resultado ${detectedResult ?`detectado em ${detectedResult.title}` : "registrado"}: ${gapLabel}.`
+      : "Data da prova vencida. Registre o resultado para gerar a analise versus objetivo."
+    : `${model.status || "Dados insuficientes"} - ${model.probability || 0}% de probabilidade.`;
+  return `
+    <article class="goal-card ${resultMode ?"goal-card-result" : ""}">
+      <div class="goal-card-head">
+        <div>
+          <span>${escapeHtml(focusDistanceLabels[goal.distanceM] || `${goal.distanceM} m`)}</span>
+          <h4>${escapeHtml(goal.title)}</h4>
+          <p>${escapeHtml(goalDateLabel(goal))}</p>
+        </div>
+        <strong>${escapeHtml(formatDurationSeconds(resultMode && actualSeconds ?actualSeconds : model.currentSeconds))}</strong>
+      </div>
+      <div class="goal-metrics">
+        <div><span>Tempo alvo</span><strong>${escapeHtml(formatDurationSeconds(targetSeconds))}</strong></div>
+        <div><span>Diferença</span><strong>${escapeHtml(gapLabel)}</strong></div>
+        <div><span>Probabilidade</span><strong>${model.probability || "--"}%</strong></div>
+        <div><span>Ganho necessário</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong></div>
+      </div>
+      <div class="goal-route">
+        <svg viewBox="0 0 560 70" role="img" aria-label="Rota preditiva do objetivo">
+          <line x1="18" y1="46" x2="542" y2="46"></line>
+          <path d="M 18 22 C 150 26, 280 38, 542 46"></path>
+          <circle cx="18" cy="22" r="3"></circle>
+          <circle cx="542" cy="46" r="3"></circle>
+        </svg>
+      </div>
+      <p class="goal-analysis">${escapeHtml(analysis)}</p>
+      ${goal.notes ?`<p class="goal-notes">${escapeHtml(goal.notes)}</p>` : ""}
+    </article>
+  `;
+}
+
+function renderGoals() {
+  const activeTarget = document.querySelector("#goalList");
+  const resultTarget = document.querySelector("#goalResults");
+  if (!activeTarget || !resultTarget) return;
+  const goals = Array.isArray(state.goals) ?state.goals : [];
+  const active = goals.filter((goal) => !isPastGoal(goal));
+  const results = goals.filter(isPastGoal).reverse();
+  activeTarget.innerHTML = active.length
+    ?active.map((goal) => renderGoalCard(goal)).join("")
+    : `<div class="empty-state">Nenhum objetivo ativo. Adicione uma prova foco para gerar a rota preditiva.</div>`;
+  resultTarget.innerHTML = results.length
+    ?results.map((goal) => renderGoalCard(goal, true)).join("")
+    : `<div class="empty-state">Objetivos vencidos aparecerão aqui com a análise do resultado versus meta.</div>`;
+}
+
+function setGoalMessage(message, error = false) {
+  const target = document.querySelector("#goalMessage");
+  if (!target) return;
+  target.textContent = message;
+  target.classList.toggle("is-error", error);
+}
+
+async function saveGoal(event) {
+  event.preventDefault();
+  if (!state.selectedAthleteId) {
+    setGoalMessage("Selecione um atleta antes de criar objetivos.", true);
+    return;
+  }
+  const form = event.currentTarget;
+  const body = Object.fromEntries(new FormData(form).entries());
+  try {
+    setGoalMessage("Salvando objetivo...");
+    const payload = await api("/api/goals", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    state.goals = payload.goals || [];
+    form.reset();
+    renderGoals();
+    setGoalMessage("Objetivo salvo.");
+  } catch (error) {
+    setGoalMessage(error.message || "Nao foi possivel salvar o objetivo.", true);
+  }
+}
+
 function renderAthleteFocusHistory() {
   const target = document.querySelector("#athleteFocusHistory");
   if (!target) return;
   const athlete = getActiveAthlete();
-  if (!athlete?.focusDistanceM) {
-    target.innerHTML = `<span>Testes de 3000 m</span><p>Selecione uma prova foco para comparar os testes recentes.</p>`;
-    return;
-  }
   const tests = collect3000Tests(athlete);
   const times = tests.map((item) => `
     <strong>${escapeHtml(formatDurationSeconds(item.seconds))}</strong>
@@ -1083,6 +1223,7 @@ function renderCalendar() {
   renderAthleteFocusHistory();
   renderPerformanceChart();
   render3000ActivityPicker();
+  renderGoals();
 }
 
 function openActivity(activityId) {
@@ -1139,6 +1280,7 @@ async function setActivity3000Flag(activityId, enabled) {
     renderAthleteFocusHistory();
     render3000ActivityPicker();
     renderFocusRoadmap();
+    renderGoals();
     if (dialog.open) openActivity(activityId);
     setLog([enabled ?"Atividade marcada como teste de 3000 m." :"Atividade removida dos testes de 3000 m."]);
     setAthleteMessage(enabled ?"Teste de 3000 m vinculado à atividade." :"Teste de 3000 m removido da atividade.");
@@ -1214,7 +1356,6 @@ function formatAthleteMeta(athlete) {
   const items = [];
   if (athlete.teamName) items.push(athlete.teamName);
   if (athlete.coachName) items.push(`Treinador: ${athlete.coachName}`);
-  if (athlete.focusDistanceM) items.push(`Foco: ${focusDistanceLabels[athlete.focusDistanceM] || `${athlete.focusDistanceM} m`}`);
   if (athlete.age) items.push(`${athlete.age} anos`);
   if (athlete.weightKg) items.push(`${athlete.weightKg} kg`);
   if (athlete.heightCm) items.push(`${athlete.heightCm} cm`);
@@ -1267,12 +1408,14 @@ async function editCurrentUserProfile() {
   editAthlete(currentAthlete.id, { profileMode: true });
   if (!changedAthlete) return;
   try {
-    const [integrations, activities] = await Promise.all([
+    const [integrations, activities, goals] = await Promise.all([
       api("/api/integrations"),
-      api("/api/activities")
+      api("/api/activities"),
+      api("/api/goals")
     ]);
     state.integrations = integrations;
     state.activities = activities;
+    state.goals = goals;
     renderProviders();
     renderCalendar();
     renderHeroMetrics();
@@ -1378,27 +1521,79 @@ function renderAthleteSelector() {
 function renderAthletes() {
   const list = document.querySelector("#athleteList");
   if (!list) return;
-  if (!state.athletes.length) {
-    list.innerHTML = `<p class="empty-state">Nenhum atleta cadastrado ainda.</p>`;
+  const search = (document.querySelector("#athleteFilterSearch")?.value || "").trim().toLowerCase();
+  const role = document.querySelector("#athleteFilterRole")?.value || "";
+  const team = (document.querySelector("#athleteFilterTeam")?.value || "").trim().toLowerCase();
+  const coach = (document.querySelector("#athleteFilterCoach")?.value || "").trim().toLowerCase();
+  const teamRows = (state.directory.teams || []).map((teamItem) => {
+    const profile = teamItem.profile_data || teamItem.profileData || {};
+    return {
+      id: `team-${teamItem.id || teamItem.name}`,
+      role: "manager",
+      roleLabel: "Equipe",
+      name: teamItem.name,
+      email: profile.email || "",
+      whatsapp: profile.whatsapp || "",
+      teamName: teamItem.name,
+      coachName: "",
+      profileData: profile,
+      isTeamRecord: true
+    };
+  });
+  const rows = [...state.athletes, ...teamRows];
+  const filtered = rows.filter((athlete) => {
+    const haystack = [athlete.name, athlete.email, athlete.teamName, athlete.coachName, athlete.whatsapp, athlete.roleLabel]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    if (search && !haystack.includes(search)) return false;
+    if (role && athlete.role !== role) return false;
+    if (team && !String(athlete.teamName || "").toLowerCase().includes(team)) return false;
+    if (coach && !String(athlete.coachName || athlete.coachEmail || "").toLowerCase().includes(coach)) return false;
+    return true;
+  });
+  if (!rows.length) {
+    list.innerHTML = `<p class="empty-state">Nenhum cadastro encontrado.</p>`;
     return;
   }
-  list.innerHTML = state.athletes.map((athlete) => `
-    <article class="athlete-list-item ${String(athlete.id) === String(state.selectedAthleteId) ?"is-selected" : ""}">
-      <div>
+  if (!filtered.length) {
+    list.innerHTML = `<p class="empty-state">Nenhum cadastro corresponde aos filtros.</p>`;
+    return;
+  }
+  list.innerHTML = filtered.map((athlete) => {
+    const isExpanded = String(athlete.id) === String(state.expandedAdminUserId);
+    const profile = athlete.profileData || {};
+    return `
+    <article class="athlete-list-row ${String(athlete.id) === String(state.selectedAthleteId) ?"is-selected" : ""}">
+      <button class="athlete-row-main" type="button" data-toggle-admin-user="${escapeHtml(athlete.id)}" aria-expanded="${isExpanded ? "true" : "false"}">
         <strong>${escapeHtml(athlete.name)}</strong>
         <span>${escapeHtml(athlete.email)}</span>
-      </div>
-      <p>${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
-      <p>Equipe: ${escapeHtml(athlete.teamName || "não vinculada")}</p>
-      <p>Treinador: ${escapeHtml(athlete.coachName || "não vinculado")}</p>
-      <p>Prova foco: ${escapeHtml(focusDistanceLabels[athlete.focusDistanceM] || "não definida")} ${athlete.targetTime ?`- alvo ${escapeHtml(athlete.targetTime)}` : ""}</p>
-      <p>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</p>
-      <div class="athlete-item-actions">
+        <span>${escapeHtml(athlete.roleLabel || "Atleta")}</span>
+        <span>${escapeHtml(athlete.teamName || "Sem equipe")}</span>
+        <span>${escapeHtml(athlete.coachName || "Sem treinador")}</span>
+        <span>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</span>
+      </button>
+      ${athlete.isTeamRecord ? "" : `<div class="athlete-item-actions">
         <button class="secondary-action compact" type="button" data-edit-athlete="${escapeHtml(athlete.id)}">Editar</button>
         <button class="danger-action" type="button" data-delete-athlete="${escapeHtml(athlete.id)}">Excluir</button>
-      </div>
+      </div>`}
+      ${isExpanded ?`
+        <div class="athlete-row-details">
+          <p><strong>Perfil:</strong> ${escapeHtml(athlete.roleLabel || athlete.role || "Atleta")}</p>
+          <p><strong>Dados:</strong> ${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
+          <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "Não tenho")}</p>
+          <p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "Não tenho")}</p>
+          <p><strong>Formação:</strong> ${escapeHtml(profile.education || "--")}</p>
+          <p><strong>Especialidades:</strong> ${escapeHtml(profile.skills || "--")}</p>
+          <p><strong>Experiência:</strong> ${escapeHtml(profile.experience || "--")}</p>
+          <p><strong>Certificações:</strong> ${escapeHtml(profile.certifications || "--")}</p>
+          <p><strong>Institucional:</strong> ${escapeHtml(profile.institutionalNotes || "--")}</p>
+          <p><strong>Local:</strong> ${escapeHtml(profile.location || "--")}</p>
+        </div>
+      ` : ""}
     </article>
-  `).join("");
+  `;
+  }).join("");
 }
 
 function setLog(items, isError = false) {
@@ -1542,10 +1737,10 @@ function editAthlete(athleteId, options = {}) {
   form.elements.teamName.value = athlete.teamName || "";
   form.elements.coachName.value = athlete.coachName || "";
   form.elements.coachEmail.value = athlete.coachEmail || "";
-  form.elements.focusDistanceM.value = athlete.focusDistanceM || "";
-  form.elements.targetTime.value = athlete.targetTime || "";
-  form.elements.targetDate.value = athlete.targetDate || "";
-  form.elements.bestTime.value = athlete.bestTime || "";
+  if (form.elements.focusDistanceM) form.elements.focusDistanceM.value = athlete.focusDistanceM || "";
+  if (form.elements.targetTime) form.elements.targetTime.value = athlete.targetTime || "";
+  if (form.elements.targetDate) form.elements.targetDate.value = athlete.targetDate || "";
+  if (form.elements.bestTime) form.elements.bestTime.value = athlete.bestTime || "";
   if (form.elements.role) form.elements.role.value = athlete.role || "athlete";
   if (form.elements.historyNotes) form.elements.historyNotes.value = athlete.historyNotes || "";
   renderHistoryTimelineEditor(athlete.historyTimeline || []);
@@ -1577,6 +1772,7 @@ async function deleteAthlete(athleteId) {
     syncSelectedAthlete();
     state.integrations = state.selectedAthleteId ?await api("/api/integrations") : {};
     state.activities = state.selectedAthleteId ?await api("/api/activities") : [];
+    state.goals = state.selectedAthleteId ?await api("/api/goals") : [];
     renderAthletes();
     renderAthleteSelector();
     renderAthleteIdentity();
@@ -1718,6 +1914,7 @@ async function refreshDirectory() {
 
 function renderAdminMode() {
   const isTeam = state.adminMode === "team";
+  const isCoach = state.adminMode === "coach";
   document.querySelectorAll("[data-admin-mode]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.adminMode === state.adminMode);
   });
@@ -1731,6 +1928,12 @@ function renderAdminMode() {
     userForm.hidden = isTeam;
     if (userForm.elements.role) userForm.elements.role.value = state.adminMode === "coach" ?"coach" : "athlete";
   }
+  document.querySelectorAll(".admin-athlete-field").forEach((field) => {
+    field.hidden = isCoach || isTeam;
+  });
+  document.querySelectorAll(".admin-coach-field").forEach((field) => {
+    field.hidden = !isCoach;
+  });
   if (teamForm) teamForm.hidden = !isTeam;
 }
 
@@ -1746,6 +1949,12 @@ async function saveAdminUser(event) {
     body.role = "coach";
     body.teamName = "";
     body.coachEmail = "";
+    body.profileData = {
+      education: body.education || "",
+      skills: body.skills || "",
+      experience: body.experience || "",
+      certifications: body.certifications || ""
+    };
   }
   try {
     setAdminMessage("Salvando cadastro...");
@@ -1780,6 +1989,7 @@ async function saveTeam(event) {
     });
     state.directory = payload.directory || state.directory;
     renderDirectoryOptions(getCurrentUserAthlete());
+    renderAthletes();
     form.reset();
     setAdminMessage(`Equipe ${payload.team.name} cadastrada com sucesso.`);
   } catch (error) {
@@ -1871,6 +2081,7 @@ async function boot() {
     await refreshDirectory();
     state.integrations = await api("/api/integrations");
     state.activities = await api("/api/activities");
+    state.goals = await api("/api/goals");
     await loadSettings();
   } catch (error) {
     if (error.message === "Login obrigatório.") showLogin();
@@ -1886,6 +2097,7 @@ async function boot() {
       renderTrainingInsights();
       setLog([`Erro ao carregar dados do banco: ${error.message}`], true);
       if (initialHash === "treinamentos") setView("training");
+      else if (initialHash === "objetivos") setView("goals");
       else if (initialHash === "configuracoes" || initialHash === "configuracao") setView("settings");
       else if (initialHash === "atleta" || initialHash === "dashboard") setView("athlete");
       else setView("home");
@@ -1894,6 +2106,7 @@ async function boot() {
   }
 
   if (initialHash === "treinamentos") setView("training");
+  else if (initialHash === "objetivos") setView("goals");
   else if (initialHash === "configuracoes" || initialHash === "configuracao") setView("settings");
   else if (initialHash === "atleta" || initialHash === "dashboard") setView("athlete");
   else setView("home");
@@ -1976,12 +2189,14 @@ document.querySelector("#athleteSelector").addEventListener("change", async (eve
   syncSelectedAthlete();
   renderAthleteIdentity();
   try {
-    const [integrations, activities] = await Promise.all([
+    const [integrations, activities, goals] = await Promise.all([
       api("/api/integrations"),
-      api("/api/activities")
+      api("/api/activities"),
+      api("/api/goals")
     ]);
     state.integrations = integrations;
     state.activities = activities;
+    state.goals = goals;
     renderProviders();
     renderCalendar();
     renderHeroMetrics();
@@ -2014,6 +2229,13 @@ document.addEventListener("click", async (event) => {
   const deleteButton = event.target.closest("[data-delete-athlete]");
   if (deleteButton) {
     await deleteAthlete(deleteButton.dataset.deleteAthlete);
+    return;
+  }
+  const adminUserToggle = event.target.closest("[data-toggle-admin-user]");
+  if (adminUserToggle) {
+    const id = adminUserToggle.dataset.toggleAdminUser;
+    state.expandedAdminUserId = String(state.expandedAdminUserId) === String(id) ?"" : id;
+    renderAthletes();
     return;
   }
   const saveButton = event.target.closest("[data-save-provider]");
@@ -2091,8 +2313,13 @@ document.querySelectorAll("[data-admin-mode]").forEach((button) => {
 document.querySelector("#syncSelected")?.addEventListener("click", runSync);
 document.querySelector("[data-import-demo]")?.addEventListener("click", runSync);
 document.querySelector("#athleteForm")?.addEventListener("submit", saveAthlete);
+document.querySelector("#goalForm")?.addEventListener("submit", saveGoal);
 document.querySelector("#adminUserForm")?.addEventListener("submit", saveAdminUser);
 document.querySelector("#teamForm")?.addEventListener("submit", saveTeam);
+["#athleteFilterSearch", "#athleteFilterTeam", "#athleteFilterCoach"].forEach((selector) => {
+  document.querySelector(selector)?.addEventListener("input", renderAthletes);
+});
+document.querySelector("#athleteFilterRole")?.addEventListener("change", renderAthletes);
 document.querySelector("#aiSettingsForm")?.addEventListener("submit", saveAiSettings);
 document.querySelector("#cancelAthleteEdit")?.addEventListener("click", () => resetAthleteForm("Edição cancelada."));
 

@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL,
   whatsapp TEXT,
   password_hash TEXT,
+  profile_data JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (tenant_id, email)
 );
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS teams (
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   manager_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  profile_data JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (tenant_id, name)
 );
@@ -97,8 +99,25 @@ CREATE TABLE IF NOT EXISTS app_settings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS athlete_goals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  athlete_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  distance_m INTEGER NOT NULL,
+  target_time_seconds INTEGER NOT NULL,
+  race_date DATE NOT NULL,
+  notes TEXT,
+  actual_time_seconds INTEGER,
+  result_notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_data JSONB NOT NULL DEFAULT '{}';
 ALTER TABLE teams ADD COLUMN IF NOT EXISTS manager_user_id UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS profile_data JSONB NOT NULL DEFAULT '{}';
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS team_id UUID REFERENCES teams(id) ON DELETE SET NULL;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS coach_user_id UUID REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS focus_distance_m INTEGER;
@@ -108,9 +127,13 @@ ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS best_time_seconds INTEGER;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS history_notes TEXT;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS history_timeline JSONB NOT NULL DEFAULT '[]';
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS tests_3000 JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE athlete_goals ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE athlete_goals ADD COLUMN IF NOT EXISTS actual_time_seconds INTEGER;
+ALTER TABLE athlete_goals ADD COLUMN IF NOT EXISTS result_notes TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role);
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_team ON athlete_profiles(team_id);
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_coach ON athlete_profiles(coach_user_id);
 CREATE INDEX IF NOT EXISTS idx_activities_tenant_date ON activities(tenant_id, activity_date);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_athlete_goals_athlete_date ON athlete_goals(tenant_id, athlete_user_id, race_date);

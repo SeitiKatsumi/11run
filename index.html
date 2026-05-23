@@ -40,6 +40,7 @@
         <nav>
           <a href="#home" class="is-active" data-view-link="home"><span class="nav-label">HOME</span></a>
           <a href="#treinamentos" data-view-link="training"><span class="nav-label">TREINAMENTOS</span></a>
+          <a href="#objetivos" data-view-link="goals"><span class="nav-label">OBJETIVOS</span></a>
           <a href="#dashboard" data-view-link="athlete"><span class="nav-label">MEU DASHBOARD</span></a>
           <a href="#configuracoes" class="manager-only" data-view-link="settings" hidden><span class="nav-label">CONFIGURAÇÕES</span></a>
         </nav>
@@ -95,9 +96,6 @@
             </div>
           </header>
 
-          <section class="panel focus-projection-panel" id="focusProjection" aria-live="polite"></section>
-          <section class="panel focus-roadmap-panel" id="focusRoadmap" aria-live="polite"></section>
-
           <section class="panel performance-chart-panel">
             <div class="chart-heading">
               <div>
@@ -137,6 +135,74 @@
               </div>
               <div id="calendar" class="calendar calendar-month" aria-live="polite"></div>
             </div>
+          </section>
+        </section>
+
+        <section class="view" data-view="goals">
+          <header class="page-header">
+            <div>
+              <p class="kicker">Objetivos</p>
+              <h2>Provas e rotas preditivas</h2>
+            </div>
+          </header>
+
+          <section class="goals-grid">
+            <form class="panel goal-form" id="goalForm">
+              <div class="section-title">
+                <span>Novo objetivo</span>
+                <h3>Adicionar prova foco</h3>
+              </div>
+              <div class="form-grid">
+                <label class="credential-field">
+                  <span>Nome do objetivo</span>
+                  <input name="title" placeholder="Ex.: 5k sub 17" required />
+                </label>
+                <label class="credential-field">
+                  <span>Prova</span>
+                  <select name="distanceM" required>
+                    <option value="">Selecione</option>
+                    <option value="800">800 m</option>
+                    <option value="1500">1500 m</option>
+                    <option value="3000">3000 m</option>
+                    <option value="5000">5000 m</option>
+                    <option value="10000">10000 m</option>
+                    <option value="15000">15 km</option>
+                    <option value="21000">21 km</option>
+                    <option value="42000">42 km</option>
+                  </select>
+                </label>
+                <label class="credential-field">
+                  <span>Tempo alvo</span>
+                  <input name="targetTime" placeholder="mm:ss ou hh:mm:ss" required />
+                </label>
+                <label class="credential-field">
+                  <span>Data da prova</span>
+                  <input name="raceDate" type="date" required />
+                </label>
+                <label class="credential-field wide-field">
+                  <span>Contexto do objetivo</span>
+                  <textarea name="notes" rows="3" placeholder="Ex.: prova de preparação, meta A, terreno, clima esperado, estratégia."></textarea>
+                </label>
+              </div>
+              <button class="primary-action compact" type="submit">Salvar objetivo</button>
+              <p id="goalMessage" class="form-message" aria-live="polite"></p>
+            </form>
+
+            <section class="panel goal-list-panel">
+              <div class="section-title">
+                <span>Objetivos ativos</span>
+                <h3>Projeção e rota por prova</h3>
+              </div>
+              <div id="goalList" class="goal-list" aria-live="polite"></div>
+            </section>
+
+            <section class="panel goal-results-panel">
+              <div class="section-title">
+                <span>Resultados dos objetivos</span>
+                <h3>Histórico versus meta</h3>
+              </div>
+              <div id="goalResults" class="goal-list goal-results" aria-live="polite"></div>
+            </section>
           </section>
         </section>
 
@@ -194,32 +260,6 @@
                   <select name="coachEmail" id="coachEmailSelect">
                     <option value="">Não tenho</option>
                   </select>
-                </label>
-                <label class="credential-field">
-                  <span>Prova foco</span>
-                  <select name="focusDistanceM">
-                    <option value="">Selecione</option>
-                    <option value="800">800 m</option>
-                    <option value="1500">1500 m</option>
-                    <option value="3000">3000 m</option>
-                    <option value="5000">5000 m</option>
-                    <option value="10000">10000 m</option>
-                    <option value="15000">15 km</option>
-                    <option value="21000">21 km</option>
-                    <option value="42000">42 km</option>
-                  </select>
-                </label>
-                <label class="credential-field">
-                  <span>Tempo alvo</span>
-                  <input name="targetTime" placeholder="mm:ss ou hh:mm:ss" />
-                </label>
-                <label class="credential-field">
-                  <span>Data da prova</span>
-                  <input name="targetDate" type="date" />
-                </label>
-                <label class="credential-field">
-                  <span>Melhor tempo na distância</span>
-                  <input name="bestTime" placeholder="mm:ss ou hh:mm:ss" />
                 </label>
                 <label class="credential-field">
                   <span>Senha do atleta</span>
@@ -407,27 +447,69 @@
                     <span>WhatsApp</span>
                     <input name="whatsapp" autocomplete="tel" />
                   </label>
-                  <label class="credential-field">
+                  <label class="credential-field admin-athlete-field">
                     <span>Equipe</span>
                     <select name="teamName" id="adminTeamNameSelect">
                       <option value="">Não tenho</option>
                     </select>
                   </label>
-                  <label class="credential-field">
+                  <label class="credential-field admin-athlete-field">
                     <span>Treinador</span>
                     <select name="coachEmail" id="adminCoachEmailSelect">
                       <option value="">Não tenho</option>
                     </select>
+                  </label>
+                  <label class="credential-field admin-coach-field" hidden>
+                    <span>Formação</span>
+                    <input name="education" placeholder="Ex.: Educação Física, CREF, cursos" />
+                  </label>
+                  <label class="credential-field admin-coach-field" hidden>
+                    <span>Especialidades</span>
+                    <input name="skills" placeholder="Ex.: corrida de rua, pista, base, retorno de lesão" />
+                  </label>
+                  <label class="credential-field admin-coach-field" hidden>
+                    <span>Experiência</span>
+                    <input name="experience" placeholder="Ex.: 12 anos, atletas amadores e elite" />
+                  </label>
+                  <label class="credential-field admin-coach-field" hidden>
+                    <span>Certificações</span>
+                    <input name="certifications" placeholder="CREF, World Athletics, cursos relevantes" />
                   </label>
                 </div>
                 <button class="primary-action compact" type="submit">Salvar cadastro</button>
               </form>
 
               <form id="teamForm" class="team-form" hidden>
-                <label class="credential-field">
-                  <span>Nome da equipe</span>
-                  <input name="name" autocomplete="organization" required />
-                </label>
+                <div class="form-grid">
+                  <label class="credential-field">
+                    <span>Nome da equipe</span>
+                    <input name="name" autocomplete="organization" required />
+                  </label>
+                  <label class="credential-field">
+                    <span>E-mail institucional</span>
+                    <input name="email" type="email" autocomplete="email" />
+                  </label>
+                  <label class="credential-field">
+                    <span>WhatsApp institucional</span>
+                    <input name="whatsapp" autocomplete="tel" />
+                  </label>
+                  <label class="credential-field">
+                    <span>Cidade / UF</span>
+                    <input name="location" placeholder="Ex.: São Paulo / SP" />
+                  </label>
+                  <label class="credential-field">
+                    <span>Responsável</span>
+                    <input name="managerName" autocomplete="name" />
+                  </label>
+                  <label class="credential-field">
+                    <span>Site / Instagram</span>
+                    <input name="website" placeholder="https:// ou @perfil" />
+                  </label>
+                  <label class="credential-field wide-field">
+                    <span>Dados institucionais</span>
+                    <textarea name="institutionalNotes" rows="3" placeholder="Histórico, estrutura, modalidades, objetivos e observações operacionais."></textarea>
+                  </label>
+                </div>
                 <button class="primary-action compact" type="submit">Salvar equipe</button>
               </form>
               <p id="adminMessage" class="form-message" aria-live="polite"></p>
@@ -437,6 +519,30 @@
               <div class="section-title">
                 <span>Usuários</span>
                 <h3>Cadastros</h3>
+              </div>
+              <div class="athlete-filter-grid">
+                <label class="credential-field">
+                  <span>Buscar</span>
+                  <input id="athleteFilterSearch" placeholder="Nome, e-mail, equipe ou treinador" />
+                </label>
+                <label class="credential-field">
+                  <span>Perfil</span>
+                  <select id="athleteFilterRole">
+                    <option value="">Todos</option>
+                    <option value="athlete">Atletas</option>
+                    <option value="coach">Treinadores</option>
+                    <option value="manager">Equipes</option>
+                    <option value="admin">Super admins</option>
+                  </select>
+                </label>
+                <label class="credential-field">
+                  <span>Equipe</span>
+                  <input id="athleteFilterTeam" placeholder="Filtrar equipe" />
+                </label>
+                <label class="credential-field">
+                  <span>Treinador</span>
+                  <input id="athleteFilterCoach" placeholder="Filtrar treinador" />
+                </label>
               </div>
               <div id="athleteList" class="athlete-list"></div>
             </aside>
