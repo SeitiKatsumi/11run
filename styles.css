@@ -534,6 +534,24 @@ dialog {
   gap: 18px;
 }
 
+.admin-management-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+}
+
+.admin-create-panel,
+.admin-user-form,
+.team-form {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-mode-switch {
+  width: fit-content;
+  max-width: 100%;
+}
+
 .training-grid-wide {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -1302,6 +1320,14 @@ dialog {
   gap: 10px;
 }
 
+.activity-test-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 16px;
+}
+
 .history-field {
   margin: 0;
   padding: 12px;
@@ -1738,7 +1764,8 @@ dialog::backdrop {
 @media (max-width: 1080px) {
   .training-grid,
   .settings-grid,
-  .athlete-grid {
+  .athlete-grid,
+  .admin-management-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1752,6 +1779,7 @@ dialog::backdrop {
 
   .ai-settings-form,
   .tests-grid,
+  .activity-test-picker,
   .history-entry-row {
     grid-template-columns: 1fr;
   }

@@ -41,6 +41,7 @@
           <a href="#home" class="is-active" data-view-link="home"><span class="nav-label">HOME</span></a>
           <a href="#treinamentos" data-view-link="training"><span class="nav-label">TREINAMENTOS</span></a>
           <a href="#dashboard" data-view-link="athlete"><span class="nav-label">MEU DASHBOARD</span></a>
+          <a href="#configuracoes" class="manager-only" data-view-link="settings" hidden><span class="nav-label">CONFIGURAÇÕES</span></a>
         </nav>
         <div class="athlete-chip">
           <span>Atleta selecionado</span>
@@ -180,15 +181,19 @@
                 </label>
                 <label class="credential-field">
                   <span>Equipe</span>
-                  <input name="teamName" autocomplete="organization" />
+                  <select name="teamName" id="teamNameSelect">
+                    <option value="">Não tenho</option>
+                  </select>
                 </label>
                 <label class="credential-field">
                   <span>Nome do treinador</span>
-                  <input name="coachName" autocomplete="name" />
+                  <input name="coachName" autocomplete="name" readonly />
                 </label>
                 <label class="credential-field">
                   <span>E-mail do treinador</span>
-                  <input name="coachEmail" type="email" autocomplete="email" />
+                  <select name="coachEmail" id="coachEmailSelect">
+                    <option value="">Não tenho</option>
+                  </select>
                 </label>
                 <label class="credential-field">
                   <span>Prova foco</span>
@@ -269,6 +274,15 @@
                       <input name="test3000Notes3" />
                     </label>
                   </div>
+                  <div class="activity-test-picker">
+                    <label class="credential-field">
+                      <span>Selecionar atividade importada</span>
+                      <select id="activity3000Picker">
+                        <option value="">Carregando atividades...</option>
+                      </select>
+                    </label>
+                    <button class="secondary-action compact" id="flagSelected3000" type="button">Marcar atividade como teste 3000 m</button>
+                  </div>
                 </fieldset>
                 <label class="credential-field wide-field">
                   <span>Histórico e comentários cronológicos</span>
@@ -287,14 +301,6 @@
               </div>
               <p id="athleteMessage" class="form-message" aria-live="polite"></p>
             </form>
-
-            <aside class="panel athlete-list-panel">
-              <div class="section-title">
-                <span>Usuários atletas</span>
-                <h3>Cadastros</h3>
-              </div>
-              <div id="athleteList" class="athlete-list"></div>
-            </aside>
           </section>
 
           <section class="dashboard-settings" id="dashboardIntegrations">
@@ -359,6 +365,81 @@
               <button class="primary-action compact" type="submit">Salvar IA</button>
               <p id="aiSettingsMessage" class="form-message" aria-live="polite"></p>
             </form>
+          </section>
+        </section>
+
+        <section class="view" data-view="settings">
+          <header class="page-header">
+            <div>
+              <p class="kicker">Configurações</p>
+              <h2>Gestão administrativa</h2>
+            </div>
+          </header>
+
+          <section class="admin-management-grid">
+            <div class="panel admin-create-panel">
+              <div class="section-title">
+                <span>Cadastros</span>
+                <h3 id="adminFormTitle">Adicionar atleta</h3>
+              </div>
+              <div class="segmented admin-mode-switch" role="tablist" aria-label="Tipo de cadastro">
+                <button class="is-active" type="button" data-admin-mode="athlete">Adicionar atleta</button>
+                <button type="button" data-admin-mode="coach">Adicionar treinador</button>
+                <button type="button" data-admin-mode="team">Adicionar equipe</button>
+              </div>
+
+              <form id="adminUserForm" class="admin-user-form">
+                <input name="role" type="hidden" value="athlete" />
+                <div class="form-grid">
+                  <label class="credential-field">
+                    <span>Nome</span>
+                    <input name="name" autocomplete="name" required />
+                  </label>
+                  <label class="credential-field">
+                    <span>E-mail</span>
+                    <input name="email" type="email" autocomplete="email" required />
+                  </label>
+                  <label class="credential-field">
+                    <span>Senha inicial</span>
+                    <input name="password" type="password" autocomplete="new-password" />
+                  </label>
+                  <label class="credential-field">
+                    <span>WhatsApp</span>
+                    <input name="whatsapp" autocomplete="tel" />
+                  </label>
+                  <label class="credential-field">
+                    <span>Equipe</span>
+                    <select name="teamName" id="adminTeamNameSelect">
+                      <option value="">Não tenho</option>
+                    </select>
+                  </label>
+                  <label class="credential-field">
+                    <span>Treinador</span>
+                    <select name="coachEmail" id="adminCoachEmailSelect">
+                      <option value="">Não tenho</option>
+                    </select>
+                  </label>
+                </div>
+                <button class="primary-action compact" type="submit">Salvar cadastro</button>
+              </form>
+
+              <form id="teamForm" class="team-form" hidden>
+                <label class="credential-field">
+                  <span>Nome da equipe</span>
+                  <input name="name" autocomplete="organization" required />
+                </label>
+                <button class="primary-action compact" type="submit">Salvar equipe</button>
+              </form>
+              <p id="adminMessage" class="form-message" aria-live="polite"></p>
+            </div>
+
+            <aside class="panel athlete-list-panel">
+              <div class="section-title">
+                <span>Usuários</span>
+                <h3>Cadastros</h3>
+              </div>
+              <div id="athleteList" class="athlete-list"></div>
+            </aside>
           </section>
         </section>
       </main>

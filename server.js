@@ -758,6 +758,65 @@ async function listAthletes(tenantId, user = null) {
   return result.rows.map(formatAthlete);
 }
 
+async function listDirectory(tenantId, user = null) {
+  if (!pool) {
+    const athletes = readJson(ATHLETES_FILE, []);
+    const teams = [...new Set(athletes.map((athlete) => athlete.teamName).filter(Boolean))]
+      .map((name) => ({ name }));
+    const coaches = athletes
+      .filter((athlete) => athlete.role === "coach" || athlete.coachEmail)
+      .map((athlete) => ({
+        name: athlete.role === "coach" ?athlete.name : athlete.coachName,
+        email: athlete.role === "coach" ?athlete.email : athlete.coachEmail
+      }))
+      .filter((coach) => coach.email);
+    return { teams, coaches };
+  }
+  const teamParams = [tenantId];
+  const teamFilters = ["tenant_id = $1"];
+  if (user?.role === "manager") {
+    teamParams.push(user.id);
+    teamFilters.push(`(manager_user_id = $${teamParams.length} OR manager_user_id IS NULL)`);
+  }
+  const [teamResult, coachResult] = await Promise.all([
+    query(
+      `SELECT id, name
+         FROM teams
+        WHERE ${teamFilters.join(" AND ")}
+        ORDER BY name ASC`,
+      teamParams
+    ),
+    query(
+      `SELECT id, name, email
+         FROM users
+        WHERE tenant_id = $1
+          AND role = 'coach'
+        ORDER BY name ASC`,
+      [tenantId]
+    )
+  ]);
+  return { teams: teamResult.rows, coaches: coachResult.rows };
+}
+
+async function createTeam(tenantId, input, user) {
+  const name = String(input.name || "").trim();
+  if (!name) throw httpError("Informe o nome da equipe.", 400);
+  if (!pool) {
+    return { id: crypto.randomUUID(), name };
+  }
+  const managerUserId = user?.role === "manager" ?user.id : null;
+  const result = await query(
+    `INSERT INTO teams (tenant_id, name, manager_user_id)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (tenant_id, name)
+     DO UPDATE SET name = EXCLUDED.name,
+                   manager_user_id = COALESCE(teams.manager_user_id, EXCLUDED.manager_user_id)
+     RETURNING id, name`,
+    [tenantId, name, managerUserId]
+  );
+  return result.rows[0];
+}
+
 async function canAccessAthlete(tenantId, user, athleteUserId) {
   if (!user || !athleteUserId || user.role === "admin") return true;
   if (user.role === "athlete") return String(user.id) === String(athleteUserId);
@@ -1482,7 +1541,7 @@ async function flagActivityAs3000Test(tenantId, athleteUserId, activityId, enabl
             updated_at = now()
       WHERE tenant_id = $1
         AND athlete_user_id = $2
-        AND provider = $3
+        AND lower(provider) = lower($3)
         AND provider_activity_id = $4
       RETURNING provider_activity_id`,
     [tenantId, athleteUserId, provider, providerActivityId, cleanEnabled]
@@ -1508,7 +1567,7 @@ async function resolveAthleteIdFromActivity(tenantId, activityId) {
     `SELECT athlete_user_id
        FROM activities
       WHERE tenant_id = $1
-        AND provider = $2
+        AND lower(provider) = lower($2)
         AND provider_activity_id = $3
       LIMIT 1`,
     [tenantId, provider, providerActivityId]
@@ -2058,6 +2117,24 @@ async function handleApi(req, res, url) {
       requireUser(user);
       await ensureUserAthleteProfile(tenant.id, user);
       sendJson(res, 200, await listAthletes(tenant.id, user));
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/directory") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
+      requireUser(user);
+      sendJson(res, 200, await listDirectory(tenant.id, user));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/teams") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
+      requireRole(user, ["admin", "manager", "coach"]);
+      const body = await readRequestBody(req);
+      const team = await createTeam(tenant.id, body, user);
+      sendJson(res, 201, { team, directory: await listDirectory(tenant.id, user) });
       return;
     }
 

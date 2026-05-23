@@ -4,12 +4,14 @@
   cursor: new Date(),
   activities: [],
   integrations: {},
+  directory: { teams: [], coaches: [] },
   athletes: [],
   selectedAthleteId: localStorage.getItem("selectedAthleteId") || "",
   currentUser: null,
   appSettings: null,
   aiProjection: null,
   editingAthleteId: "",
+  adminMode: "athlete",
   syncing: false,
   collapsedPanels: (() => {
     const defaults = {
@@ -260,11 +262,12 @@ function startOfWeek(date) {
 }
 
 function setView(view) {
-  if (view === "settings") view = "athlete";
+  if (view === "settings" && !canManageAthletes()) view = "athlete";
   state.view = view;
   document.querySelectorAll("[data-view]").forEach((section) => section.classList.toggle("is-visible", section.dataset.view === view));
   document.querySelectorAll("[data-view-link]").forEach((link) => link.classList.toggle("is-active", link.dataset.viewLink === view));
-  location.hash = view === "training" ?"treinamentos" : view === "athlete" ?"dashboard" : "home";
+  if (view === "athlete") editCurrentUserProfile();
+  location.hash = view === "training" ?"treinamentos" : view === "athlete" ?"dashboard" : view === "settings" ?"configuracoes" : "home";
   closeMobileMenu();
 }
 
@@ -718,6 +721,28 @@ function renderAthleteFocusHistory() {
   `;
 }
 
+function render3000ActivityPicker() {
+  const picker = document.querySelector("#activity3000Picker");
+  if (!picker) return;
+  const activities = state.activities
+    .filter((activity) => isRunningActivity(activity))
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+  if (!activities.length) {
+    picker.innerHTML = `<option value="">Importe atividades antes de selecionar</option>`;
+    picker.disabled = true;
+    return;
+  }
+  picker.disabled = false;
+  picker.innerHTML = [
+    `<option value="">Selecione uma atividade importada</option>`,
+    ...activities.map((activity) => {
+      const date = activity.date ?new Date(`${activity.date}T00:00:00`).toLocaleDateString("pt-BR") : "";
+      const marked = activity.is3000Test ?" - marcado" : "";
+      return `<option value="${escapeHtml(activity.id)}">${escapeHtml(date)} - ${escapeHtml(activity.distance || "")} - ${escapeHtml(activity.title)}${marked}</option>`;
+    })
+  ].join("");
+}
+
 function renderHeroMetrics() {
   const target = document.querySelector("#heroMetrics");
   if (!target) return;
@@ -1057,6 +1082,7 @@ function renderCalendar() {
   renderFocusRoadmap();
   renderAthleteFocusHistory();
   renderPerformanceChart();
+  render3000ActivityPicker();
 }
 
 function openActivity(activityId) {
@@ -1111,8 +1137,9 @@ async function setActivity3000Flag(activityId, enabled) {
     state.activities = payload.activities || [];
     renderCalendar();
     renderAthleteFocusHistory();
+    render3000ActivityPicker();
     renderFocusRoadmap();
-    openActivity(activityId);
+    if (dialog.open) openActivity(activityId);
     setLog([enabled ?"Atividade marcada como teste de 3000 m." :"Atividade removida dos testes de 3000 m."]);
     setAthleteMessage(enabled ?"Teste de 3000 m vinculado à atividade." :"Teste de 3000 m removido da atividade.");
   } catch (error) {
@@ -1209,14 +1236,50 @@ function renderAthleteIdentity() {
 function renderPermissions() {
   const manageable = canManageAthletes();
   const admin = isSuperAdmin();
+  document.querySelectorAll(".manager-only").forEach((item) => {
+    item.hidden = !manageable;
+  });
   document.querySelectorAll(".athlete-list-panel").forEach((item) => {
     item.hidden = !manageable;
   });
-  document.querySelectorAll(".admin-only, .admin-only-field").forEach((item) => {
+  document.querySelectorAll(".admin-only").forEach((item) => {
     item.hidden = !admin;
   });
+  document.querySelectorAll(".admin-only-field").forEach((item) => {
+    item.hidden = true;
+  });
   const submit = document.querySelector("#athleteSubmitButton");
-  if (submit && !manageable && !state.editingAthleteId) submit.textContent = "Salvar meu perfil";
+  if (submit) submit.textContent = "Salvar meu perfil";
+}
+
+function getCurrentUserAthlete() {
+  return state.athletes.find((athlete) => String(athlete.id) === String(state.currentUser?.id)) || null;
+}
+
+async function editCurrentUserProfile() {
+  const currentAthlete = getCurrentUserAthlete();
+  if (!currentAthlete) return;
+  const changedAthlete = String(state.selectedAthleteId) !== String(currentAthlete.id);
+  state.selectedAthleteId = currentAthlete.id;
+  syncSelectedAthlete();
+  renderAthleteSelector();
+  renderAthleteIdentity();
+  editAthlete(currentAthlete.id, { profileMode: true });
+  if (!changedAthlete) return;
+  try {
+    const [integrations, activities] = await Promise.all([
+      api("/api/integrations"),
+      api("/api/activities")
+    ]);
+    state.integrations = integrations;
+    state.activities = activities;
+    renderProviders();
+    renderCalendar();
+    renderHeroMetrics();
+    renderTrainingInsights();
+  } catch (error) {
+    setLog([error.message], true);
+  }
 }
 
 function renderAiSettings() {
@@ -1235,6 +1298,71 @@ function syncSelectedAthlete() {
   if (!state.athletes.length) state.selectedAthleteId = "";
   if (state.selectedAthleteId) localStorage.setItem("selectedAthleteId", state.selectedAthleteId);
   else localStorage.removeItem("selectedAthleteId");
+}
+
+function uniqueByName(items) {
+  const map = new Map();
+  items.forEach((item) => {
+    const name = String(item?.name || item || "").trim();
+    if (name && !map.has(name.toLowerCase())) map.set(name.toLowerCase(), { name });
+  });
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+}
+
+function getDirectoryTeams() {
+  const explicit = Array.isArray(state.directory?.teams) ?state.directory.teams : [];
+  const fromAthletes = state.athletes.map((athlete) => athlete.teamName).filter(Boolean);
+  return uniqueByName([...explicit, ...fromAthletes]);
+}
+
+function getDirectoryCoaches() {
+  const explicit = Array.isArray(state.directory?.coaches) ?state.directory.coaches : [];
+  const fromAthletes = state.athletes
+    .filter((athlete) => athlete.role === "coach" || athlete.coachEmail)
+    .map((athlete) => ({
+      name: athlete.role === "coach" ?athlete.name : athlete.coachName,
+      email: athlete.role === "coach" ?athlete.email : athlete.coachEmail
+    }));
+  const map = new Map();
+  [...explicit, ...fromAthletes].forEach((coach) => {
+    const email = String(coach?.email || "").trim().toLowerCase();
+    if (email && !map.has(email)) map.set(email, { name: coach?.name || email, email });
+  });
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+}
+
+function fillSelectOptions(select, options, currentValue = "", emptyLabel = "Não tenho", valueKey = "name", labelFn = null) {
+  if (!select) return;
+  const value = String(currentValue || "");
+  select.innerHTML = `<option value="">${emptyLabel}</option>${options.map((option) => {
+    const optionValue = String(option[valueKey] || "");
+    const label = labelFn ?labelFn(option) : optionValue;
+    return `<option value="${escapeHtml(optionValue)}">${escapeHtml(label)}</option>`;
+  }).join("")}`;
+  select.value = value;
+}
+
+function renderDirectoryOptions(athlete = null) {
+  const teams = getDirectoryTeams();
+  const coaches = getDirectoryCoaches();
+  fillSelectOptions(document.querySelector("#teamNameSelect"), teams, athlete?.teamName || "");
+  fillSelectOptions(document.querySelector("#adminTeamNameSelect"), teams);
+  fillSelectOptions(
+    document.querySelector("#coachEmailSelect"),
+    coaches,
+    athlete?.coachEmail || "",
+    "Não tenho",
+    "email",
+    (coach) => `${coach.name} - ${coach.email}`
+  );
+  fillSelectOptions(
+    document.querySelector("#adminCoachEmailSelect"),
+    coaches,
+    "",
+    "Não tenho",
+    "email",
+    (coach) => `${coach.name} - ${coach.email}`
+  );
 }
 
 function renderAthleteSelector() {
@@ -1327,6 +1455,7 @@ function resetAthleteForm(message = "") {
   if (!form) return;
   form.reset();
   renderHistoryTimelineEditor([]);
+  render3000ActivityPicker();
   state.editingAthleteId = "";
   const submit = document.querySelector("#athleteSubmitButton");
   const cancel = document.querySelector("#cancelAthleteEdit");
@@ -1380,6 +1509,9 @@ function readHistoryTimelineForm(form) {
 
 function readAthleteForm(form) {
   const body = Object.fromEntries(new FormData(form).entries());
+  const coachSelect = form.elements.coachEmail;
+  const coachOption = coachSelect?.selectedOptions?.[0];
+  if (coachOption && coachSelect.value) body.coachName = coachOption.textContent.split(" - ")[0];
   body.historyTimeline = readHistoryTimelineForm(form);
   body.tests3000 = [1, 2, 3].map((index) => ({
     date: body[`test3000Date${index}`],
@@ -1395,11 +1527,12 @@ function readAthleteForm(form) {
   return body;
 }
 
-function editAthlete(athleteId) {
+function editAthlete(athleteId, options = {}) {
   const athlete = state.athletes.find((item) => String(item.id) === String(athleteId));
   const form = document.querySelector("#athleteForm");
   if (!athlete || !form) return;
   state.editingAthleteId = athlete.id;
+  renderDirectoryOptions(athlete);
   form.elements.name.value = athlete.name || "";
   form.elements.email.value = athlete.email || "";
   form.elements.age.value = athlete.age || "";
@@ -1416,6 +1549,7 @@ function editAthlete(athleteId) {
   if (form.elements.role) form.elements.role.value = athlete.role || "athlete";
   if (form.elements.historyNotes) form.elements.historyNotes.value = athlete.historyNotes || "";
   renderHistoryTimelineEditor(athlete.historyTimeline || []);
+  render3000ActivityPicker();
   const tests = Array.isArray(athlete.tests3000) ?athlete.tests3000 : [];
   [1, 2, 3].forEach((index) => {
     const test = tests[index - 1] || {};
@@ -1426,9 +1560,9 @@ function editAthlete(athleteId) {
   form.elements.password.value = "";
   const submit = document.querySelector("#athleteSubmitButton");
   const cancel = document.querySelector("#cancelAthleteEdit");
-  if (submit) submit.textContent = "Atualizar atleta";
-  if (cancel) cancel.hidden = false;
-  setAthleteMessage(`Editando ${athlete.name}.`);
+  if (submit) submit.textContent = options.profileMode ?"Salvar meu perfil" : "Atualizar atleta";
+  if (cancel) cancel.hidden = Boolean(options.profileMode);
+  setAthleteMessage(options.profileMode ?"" : `Editando ${athlete.name}.`);
 }
 
 async function deleteAthlete(athleteId) {
@@ -1542,8 +1676,8 @@ async function saveAthlete(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const body = readAthleteForm(form);
-  const editingId = state.editingAthleteId || (!canManageAthletes() ?state.selectedAthleteId : "");
-  setAthleteMessage(editingId ?"Atualizando atleta..." : "Salvando atleta...");
+  const editingId = state.currentUser?.id || state.editingAthleteId || state.selectedAthleteId;
+  setAthleteMessage("Atualizando meu perfil...");
   try {
     const payload = await api(editingId ?`/api/athletes/${encodeURIComponent(editingId)}` : "/api/athletes", {
       method: editingId ?"PUT" : "POST",
@@ -1552,15 +1686,104 @@ async function saveAthlete(event) {
     state.athletes = payload.athletes || [];
     state.selectedAthleteId = payload.athlete.id;
     syncSelectedAthlete();
+    await refreshDirectory();
     renderAthletes();
     renderAthleteSelector();
     renderAthleteIdentity();
     renderCalendar();
-    resetAthleteForm(`Atleta ${payload.athlete.name} ${editingId ?"atualizado" : "cadastrado"} com sucesso.`);
-    setLog([`Atleta ${payload.athlete.name} salvo com sucesso.`]);
+    editAthlete(payload.athlete.id, { profileMode: true });
+    setAthleteMessage(`Perfil de ${payload.athlete.name} atualizado com sucesso.`);
+    setLog([`Perfil de ${payload.athlete.name} salvo com sucesso.`]);
   } catch (error) {
     setAthleteMessage(error.message, true);
     setLog([error.message], true);
+  }
+}
+
+function setAdminMessage(message, isError = false) {
+  const target = document.querySelector("#adminMessage");
+  if (!target) return;
+  target.classList.toggle("is-error", isError);
+  target.textContent = message;
+}
+
+async function refreshDirectory() {
+  try {
+    state.directory = await api("/api/directory");
+  } catch {
+    state.directory = { teams: [], coaches: [] };
+  }
+  renderDirectoryOptions(getCurrentUserAthlete());
+}
+
+function renderAdminMode() {
+  const isTeam = state.adminMode === "team";
+  document.querySelectorAll("[data-admin-mode]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.adminMode === state.adminMode);
+  });
+  const title = document.querySelector("#adminFormTitle");
+  if (title) {
+    title.textContent = state.adminMode === "coach" ?"Adicionar treinador" : state.adminMode === "team" ?"Adicionar equipe" : "Adicionar atleta";
+  }
+  const userForm = document.querySelector("#adminUserForm");
+  const teamForm = document.querySelector("#teamForm");
+  if (userForm) {
+    userForm.hidden = isTeam;
+    if (userForm.elements.role) userForm.elements.role.value = state.adminMode === "coach" ?"coach" : "athlete";
+  }
+  if (teamForm) teamForm.hidden = !isTeam;
+}
+
+async function saveAdminUser(event) {
+  event.preventDefault();
+  if (!canManageAthletes()) return;
+  const form = event.currentTarget;
+  const body = Object.fromEntries(new FormData(form).entries());
+  const coachSelect = form.elements.coachEmail;
+  const coachOption = coachSelect?.selectedOptions?.[0];
+  if (coachOption && coachSelect.value) body.coachName = coachOption.textContent.split(" - ")[0];
+  if (state.adminMode === "coach") {
+    body.role = "coach";
+    body.teamName = "";
+    body.coachEmail = "";
+  }
+  try {
+    setAdminMessage("Salvando cadastro...");
+    const payload = await api("/api/athletes", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    state.athletes = payload.athletes || [];
+    await refreshDirectory();
+    renderAthletes();
+    renderAthleteSelector();
+    renderAthleteIdentity();
+    renderCalendar();
+    form.reset();
+    renderAdminMode();
+    setAdminMessage(`${payload.athlete.name} cadastrado com sucesso.`);
+  } catch (error) {
+    setAdminMessage(error.message, true);
+  }
+}
+
+async function saveTeam(event) {
+  event.preventDefault();
+  if (!canManageAthletes()) return;
+  const form = event.currentTarget;
+  const body = Object.fromEntries(new FormData(form).entries());
+  try {
+    setAdminMessage("Salvando equipe...");
+    const payload = await api("/api/teams", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    state.directory = payload.directory || state.directory;
+    renderDirectoryOptions(getCurrentUserAthlete());
+    form.reset();
+    setAdminMessage(`Equipe ${payload.team.name} cadastrada com sucesso.`);
+  } catch (error) {
+    setAdminMessage(error.message, true);
   }
 }
 
@@ -1645,6 +1868,7 @@ async function boot() {
     showApp();
     state.athletes = await api("/api/athletes");
     syncSelectedAthlete();
+    await refreshDirectory();
     state.integrations = await api("/api/integrations");
     state.activities = await api("/api/activities");
     await loadSettings();
@@ -1662,14 +1886,16 @@ async function boot() {
       renderTrainingInsights();
       setLog([`Erro ao carregar dados do banco: ${error.message}`], true);
       if (initialHash === "treinamentos") setView("training");
-      else if (initialHash === "atleta" || initialHash === "dashboard" || initialHash === "configuracao") setView("athlete");
+      else if (initialHash === "configuracoes" || initialHash === "configuracao") setView("settings");
+      else if (initialHash === "atleta" || initialHash === "dashboard") setView("athlete");
       else setView("home");
     }
     return;
   }
 
   if (initialHash === "treinamentos") setView("training");
-  else if (initialHash === "atleta" || initialHash === "dashboard" || initialHash === "configuracao") setView("athlete");
+  else if (initialHash === "configuracoes" || initialHash === "configuracao") setView("settings");
+  else if (initialHash === "atleta" || initialHash === "dashboard") setView("athlete");
   else setView("home");
   renderPermissions();
   renderProviders();
@@ -1679,7 +1905,9 @@ async function boot() {
   renderCalendar();
   renderHeroMetrics();
   renderTrainingInsights();
-  if (!canManageAthletes() && state.selectedAthleteId) editAthlete(state.selectedAthleteId);
+  renderDirectoryOptions(getCurrentUserAthlete());
+  renderAdminMode();
+  if (state.view === "athlete") editCurrentUserProfile();
 
   if (status.get("strava") === "connected") setLog(["Strava conectado. Clique em Importar e atualizar para puxar as atividades reais."]);
   if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorização."}`], true);
@@ -1813,6 +2041,16 @@ document.addEventListener("click", async (event) => {
     if (list) list.insertAdjacentHTML("beforeend", historyTimelineRowTemplate({}));
     return;
   }
+  if (event.target.closest("#flagSelected3000")) {
+    const picker = document.querySelector("#activity3000Picker");
+    const activityId = picker?.value || "";
+    if (!activityId) {
+      setAthleteMessage("Selecione uma atividade importada para marcar como teste de 3000 m.", true);
+      return;
+    }
+    await setActivity3000Flag(activityId, true);
+    return;
+  }
   if (event.target.closest("[data-remove-history-entry]")) {
     const row = event.target.closest(".history-entry-row");
     const list = document.querySelector("#historyTimelineList");
@@ -1834,9 +2072,27 @@ document.addEventListener("click", async (event) => {
   }
 });
 
+document.querySelector("#coachEmailSelect")?.addEventListener("change", (event) => {
+  const option = event.currentTarget.selectedOptions?.[0];
+  const form = document.querySelector("#athleteForm");
+  if (form?.elements.coachName) {
+    form.elements.coachName.value = event.currentTarget.value && option ?option.textContent.split(" - ")[0] : "";
+  }
+});
+
+document.querySelectorAll("[data-admin-mode]").forEach((button) => {
+  button.addEventListener("click", () => {
+    state.adminMode = button.dataset.adminMode;
+    setAdminMessage("");
+    renderAdminMode();
+  });
+});
+
 document.querySelector("#syncSelected")?.addEventListener("click", runSync);
 document.querySelector("[data-import-demo]")?.addEventListener("click", runSync);
 document.querySelector("#athleteForm")?.addEventListener("submit", saveAthlete);
+document.querySelector("#adminUserForm")?.addEventListener("submit", saveAdminUser);
+document.querySelector("#teamForm")?.addEventListener("submit", saveTeam);
 document.querySelector("#aiSettingsForm")?.addEventListener("submit", saveAiSettings);
 document.querySelector("#cancelAthleteEdit")?.addEventListener("click", () => resetAthleteForm("Edição cancelada."));
 
