@@ -80,15 +80,17 @@
               <h2>Calendário de atividades</h2>
             </div>
             <div class="toolbar">
-              <div class="segmented" role="tablist" aria-label="Visualização do calendário">
+              <div class="segmented calendar-view-switch" role="tablist" aria-label="Visualização do calendário">
                 <button class="is-active" data-calendar-view="month">Mês</button>
                 <button data-calendar-view="week">Semana</button>
                 <button data-calendar-view="day">Dia</button>
                 <button data-calendar-view="quarter">Trimestre</button>
                 <button data-calendar-view="semester">Semestre</button>
               </div>
-              <button class="icon-button" data-period-shift="-1" aria-label="Período anterior">&lt;</button>
-              <button class="icon-button" data-period-shift="1" aria-label="Próximo período">&gt;</button>
+              <div class="period-nav" aria-label="Navegação de período">
+                <button class="icon-button" data-period-shift="-1" aria-label="Período anterior">&lt;</button>
+                <button class="icon-button" data-period-shift="1" aria-label="Próximo período">&gt;</button>
+              </div>
             </div>
           </header>
 
@@ -118,15 +120,17 @@
                   <h3 id="calendarTitle">Bloco de performance</h3>
                 </div>
                 <div class="calendar-tools">
-                  <div class="segmented" role="tablist" aria-label="Visualização do calendário (próximo ao calendário)">
+                  <div class="segmented calendar-view-switch" role="tablist" aria-label="Visualização do calendário (próximo ao calendário)">
                     <button class="is-active" data-calendar-view="month">Mês</button>
                     <button data-calendar-view="week">Semana</button>
                     <button data-calendar-view="day">Dia</button>
                     <button data-calendar-view="quarter">Trimestre</button>
                     <button data-calendar-view="semester">Semestre</button>
                   </div>
-                  <button class="icon-button" data-period-shift="-1" aria-label="Período anterior (calendário)">&lt;</button>
-                  <button class="icon-button" data-period-shift="1" aria-label="Próximo período (calendário)">&gt;</button>
+                  <div class="period-nav" aria-label="Navegação de período (calendário)">
+                    <button class="icon-button" data-period-shift="-1" aria-label="Período anterior (calendário)">&lt;</button>
+                    <button class="icon-button" data-period-shift="1" aria-label="Próximo período (calendário)">&gt;</button>
+                  </div>
                   <button class="secondary-action compact" data-import-demo>Atualizar atividades</button>
                 </div>
               </div>

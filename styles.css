@@ -520,6 +520,12 @@ dialog {
   font-size: 24px;
 }
 
+.period-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .training-grid,
 .settings-grid,
 .athlete-grid {
@@ -1833,7 +1839,6 @@ dialog::backdrop {
   }
 
   .hero-actions,
-  .toolbar,
   .settings-header {
     display: grid;
     grid-template-columns: 1fr;
@@ -1841,8 +1846,6 @@ dialog::backdrop {
   }
 
   .hero-actions button,
-  .toolbar button,
-  .toolbar .segmented,
   .page-header .secondary-action {
     width: 100%;
   }
@@ -1865,17 +1868,52 @@ dialog::backdrop {
     line-height: 1;
   }
 
+  .view[data-view="training"] > .page-header .toolbar {
+    display: none;
+  }
+
   .toolbar {
-    margin-top: 16px;
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
   }
 
-  .segmented {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-flow: row;
-  }
-
-  .icon-button {
+  .toolbar .calendar-view-switch,
+  .calendar-tools .calendar-view-switch {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 6px;
     width: 100%;
+    scrollbar-width: none;
+  }
+
+  .toolbar .calendar-view-switch::-webkit-scrollbar,
+  .calendar-tools .calendar-view-switch::-webkit-scrollbar {
+    display: none;
+  }
+
+  .toolbar .calendar-view-switch button,
+  .calendar-tools .calendar-view-switch button {
+    min-width: 92px;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .toolbar .period-nav,
+  .calendar-tools .period-nav {
+    display: inline-flex;
+    gap: 8px;
+  }
+
+  .toolbar .period-nav .icon-button,
+  .calendar-tools .period-nav .icon-button {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
   }
 
   .calendar-top,
@@ -1888,8 +1926,15 @@ dialog::backdrop {
   .calendar-tools {
     margin-top: 12px;
     display: grid;
-    grid-template-columns: 1fr;
-    justify-items: stretch;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    justify-items: initial;
+  }
+
+  .calendar-tools [data-import-demo] {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .chart-legend {
@@ -1965,5 +2010,30 @@ dialog::backdrop {
 
   .performance-chart svg {
     min-height: 108px;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .toolbar .period-nav {
+    justify-content: flex-end;
+  }
+
+  .toolbar .calendar-view-switch button,
+  .calendar-tools .calendar-view-switch button {
+    min-width: 86px;
+    padding: 0 10px;
+    font-size: 15px;
+  }
+
+  .calendar-tools {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .calendar-tools .period-nav {
+    justify-content: flex-end;
   }
 }
