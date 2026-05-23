@@ -10,7 +10,18 @@
   appSettings: null,
   aiProjection: null,
   editingAthleteId: "",
-  syncing: false
+  syncing: false,
+  panelCollapsed: (() => {
+    const defaults = { focusProjection: true, focusRoadmap: true, performanceChart: true };
+    try {
+      const raw = localStorage.getItem("panelCollapsedState");
+      if (!raw) return defaults;
+      const parsed = JSON.parse(raw);
+      return { ...defaults, ...(parsed && typeof parsed === "object" ?parsed : {}) };
+    } catch {
+      return defaults;
+    }
+  })()
 };
 
 const APP_VERSION_FALLBACK = "local-ui";
@@ -146,6 +157,21 @@ function toggleMenu() {
 
 function closeMobileMenu() {
   if (isMobileLayout()) setMenuOpen(false);
+}
+
+function savePanelCollapsedState() {
+  localStorage.setItem("panelCollapsedState", JSON.stringify(state.panelCollapsed || {}));
+}
+
+function isPanelCollapsed(key) {
+  return Boolean(state.panelCollapsed?.[key]);
+}
+
+function togglePanel(key) {
+  state.panelCollapsed = state.panelCollapsed || {};
+  state.panelCollapsed[key] = !isPanelCollapsed(key);
+  savePanelCollapsedState();
+  renderCalendar();
 }
 
 async function api(path, options = {}) {
@@ -432,15 +458,21 @@ function collectFocusPerformances(athlete) {
 function renderFocusProjection() {
   const target = document.querySelector("#focusProjection");
   if (!target) return;
+  const collapsed = isPanelCollapsed("focusProjection");
   const athlete = getActiveAthlete();
   const focusMeters = Number(athlete?.focusDistanceM || 0);
   if (!athlete || !focusMeters) {
     target.innerHTML = `
-      <div class="focus-projection-empty">
+      <div class="panel-collapse-head">
+        <span class="kicker">Projeção da prova foco</span>
+        <button class="secondary-action compact panel-toggle" type="button" data-toggle-panel="focusProjection">${collapsed ?"Abrir" : "Fechar"}</button>
+      </div>
+      ${collapsed ?"" : `<div class="focus-projection-empty">
         <span>Prova foco</span>
         <strong>Defina a prova foco do atleta</strong>
         <p>Informe distância, tempo alvo e data no cadastro para ativar a projeção.</p>
       </div>
+    `}`}
     `;
     return;
   }
@@ -467,6 +499,11 @@ function renderFocusProjection() {
     : "data não definida";
 
   target.innerHTML = `
+    <div class="panel-collapse-head">
+      <span class="kicker">Projeção da prova foco</span>
+      <button class="secondary-action compact panel-toggle" type="button" data-toggle-panel="focusProjection">${collapsed ?"Abrir" : "Fechar"}</button>
+    </div>
+    ${collapsed ?"" : `
     <div class="focus-projection-head">
       <div>
         <p class="kicker">Projeção da prova foco</p>
@@ -480,6 +517,7 @@ function renderFocusProjection() {
       <div><span>Melhor 90 dias</span><strong>${escapeHtml(bestRecentLabel)}</strong><p>${escapeHtml(`tempos: ${recentTimesLabel}`)}</p></div>
       <div><span>Modelo</span><strong>Riegel + 11TSS</strong><p>corridas reais e best efforts do Strava</p></div>
     </div>
+    `}
   `;
 }
 
@@ -586,15 +624,21 @@ function buildFocusModel(athlete) {
 function renderFocusRoadmap() {
   const target = document.querySelector("#focusRoadmap");
   if (!target) return;
+  const collapsed = isPanelCollapsed("focusRoadmap");
   const athlete = getActiveAthlete();
   const model = buildFocusModel(athlete);
   if (!athlete || !model.focusMeters || !model.targetSeconds || !model.targetDate) {
     target.innerHTML = `
-      <div class="focus-projection-empty">
+      <div class="panel-collapse-head">
+        <span class="kicker">Rota preditiva até a prova</span>
+        <button class="secondary-action compact panel-toggle" type="button" data-toggle-panel="focusRoadmap">${collapsed ?"Abrir" : "Fechar"}</button>
+      </div>
+      ${collapsed ?"" : `<div class="focus-projection-empty">
         <span>Caminho até a prova</span>
         <strong>Configure prova foco, tempo alvo e data</strong>
         <p>A projeção usa 11TSS, volume, consistência, testes de 3000 m e histórico do atleta.</p>
       </div>
+    `}`}
     `;
     return;
   }
@@ -609,6 +653,11 @@ function renderFocusRoadmap() {
   const targetLabel = model.targetDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
   const aiText = state.aiProjection?.text || "A análise preditiva considera carga 11TSS, distribuição de intensidade, regularidade, recência dos testes de 3000 m e histórico clínico/operacional informado.";
   target.innerHTML = `
+    <div class="panel-collapse-head">
+      <span class="kicker">Rota preditiva até a prova</span>
+      <button class="secondary-action compact panel-toggle" type="button" data-toggle-panel="focusRoadmap">${collapsed ?"Abrir" : "Fechar"}</button>
+    </div>
+    ${collapsed ?"" : `
     <div class="roadmap-head">
       <div>
         <p class="kicker">Rota preditiva até a prova</p>
@@ -635,6 +684,7 @@ function renderFocusRoadmap() {
     </div>
     <p class="roadmap-ai">${escapeHtml(aiText)}</p>
     <div class="roadmap-actions"><button class="secondary-action compact" type="button" data-refresh-ai>Atualizar análise IA</button></div>
+    `}
   `;
 }
 
@@ -764,6 +814,15 @@ function linePath(points) {
 function renderPerformanceChart() {
   const target = document.querySelector("#performanceChart");
   if (!target) return;
+  const panel = document.querySelector(".performance-chart-panel");
+  const collapsed = isPanelCollapsed("performanceChart");
+  const toggle = document.querySelector("[data-toggle-panel=\"performanceChart\"]");
+  if (toggle) toggle.textContent = collapsed ?"Abrir" : "Fechar";
+  if (panel) panel.classList.toggle("is-collapsed", collapsed);
+  if (collapsed) {
+    target.innerHTML = "";
+    return;
+  }
 
   const { series, label, unit } = aggregatePerformanceSeries();
   const width = 920;
@@ -1649,6 +1708,11 @@ calendar.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", async (event) => {
+  const panelToggle = event.target.closest("[data-toggle-panel]");
+  if (panelToggle) {
+    togglePanel(panelToggle.dataset.togglePanel);
+    return;
+  }
   const editButton = event.target.closest("[data-edit-athlete]");
   if (editButton) {
     editAthlete(editButton.dataset.editAthlete);

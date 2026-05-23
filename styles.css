@@ -553,6 +553,18 @@ dialog {
     var(--panel);
 }
 
+.panel-collapse-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.panel-toggle {
+  min-width: 72px;
+}
+
 .focus-projection-head {
   display: flex;
   justify-content: space-between;
@@ -819,6 +831,10 @@ dialog {
   font-size: 12px;
   font-weight: 560;
   text-transform: uppercase;
+}
+
+.performance-chart-panel.is-collapsed {
+  margin-bottom: 12px;
 }
 
 .chart-legend span {
