@@ -1,4 +1,4 @@
-const state = {
+﻿const state = {
   view: "home",
   calendarView: "month",
   cursor: new Date(),
@@ -7,6 +7,8 @@ const state = {
   athletes: [],
   selectedAthleteId: localStorage.getItem("selectedAthleteId") || "",
   currentUser: null,
+  appSettings: null,
+  aiProjection: null,
   editingAthleteId: "",
   syncing: false
 };
@@ -109,6 +111,14 @@ const shell = document.querySelector("#appShell");
 const menuToggle = document.querySelector("#menuToggle");
 const railBackdrop = document.querySelector("#railBackdrop");
 
+function isSuperAdmin() {
+  return state.currentUser?.role === "admin";
+}
+
+function canManageAthletes() {
+  return ["admin", "manager", "coach"].includes(state.currentUser?.role);
+}
+
 function isMobileLayout() {
   return window.matchMedia("(max-width: 900px)").matches;
 }
@@ -116,13 +126,13 @@ function isMobileLayout() {
 function setMenuOpen(open) {
   if (!shell) return;
   shell.classList.toggle("menu-open", open);
-  if (menuToggle) menuToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  if (menuToggle) menuToggle.setAttribute("aria-expanded", open ?"true" : "false");
 }
 
 function setRailCollapsed(collapsed) {
   if (!shell) return;
   shell.classList.toggle("rail-collapsed", collapsed);
-  localStorage.setItem("railCollapsed", collapsed ? "1" : "0");
+  localStorage.setItem("railCollapsed", collapsed ?"1" : "0");
 }
 
 function toggleMenu() {
@@ -139,9 +149,9 @@ function closeMobileMenu() {
 }
 
 async function api(path, options = {}) {
-  const scopedPaths = ["/api/integrations", "/api/activities", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich"];
+  const scopedPaths = ["/api/integrations", "/api/activities", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich", "/api/ai/projection"];
   const shouldScopeAthlete = scopedPaths.some((prefix) => path.startsWith(prefix));
-  const athleteHeaders = shouldScopeAthlete && state.selectedAthleteId ? { "X-Athlete-Id": state.selectedAthleteId } : {};
+  const athleteHeaders = shouldScopeAthlete && state.selectedAthleteId ?{ "X-Athlete-Id": state.selectedAthleteId } : {};
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json", ...athleteHeaders, ...(options.headers || {}) },
     ...options
@@ -193,10 +203,11 @@ function startOfWeek(date) {
 }
 
 function setView(view) {
+  if (view === "settings") view = "athlete";
   state.view = view;
   document.querySelectorAll("[data-view]").forEach((section) => section.classList.toggle("is-visible", section.dataset.view === view));
   document.querySelectorAll("[data-view-link]").forEach((link) => link.classList.toggle("is-active", link.dataset.viewLink === view));
-  location.hash = view === "training" ? "treinamentos" : view === "settings" ? "configuracao" : view === "athlete" ? "atleta" : "home";
+  location.hash = view === "training" ?"treinamentos" : view === "athlete" ?"dashboard" : "home";
   closeMobileMenu();
 }
 
@@ -206,7 +217,7 @@ function normalizeDateKey(value) {
   const isoDate = text.match(/^(\d{4}-\d{2}-\d{2})/);
   if (isoDate) return isoDate[1];
   const parsed = new Date(text);
-  return Number.isNaN(parsed.getTime()) ? "" : dateKey(parsed);
+  return Number.isNaN(parsed.getTime()) ?"" : dateKey(parsed);
 }
 
 function normalizeActivity(activity) {
@@ -228,7 +239,7 @@ function activityDate(activity) {
   if (!normalized) return null;
   const [year, month, day] = normalized.split("-").map(Number);
   const date = new Date(year, month - 1, day);
-  return Number.isNaN(date.getTime()) ? null : date;
+  return Number.isNaN(date.getTime()) ?null : date;
 }
 
 function periodRange(view = state.calendarView, cursor = state.cursor) {
@@ -254,7 +265,7 @@ function periodRange(view = state.calendarView, cursor = state.cursor) {
     };
   }
   if (view === "semester") {
-    const semesterStartMonth = base.getMonth() < 6 ? 0 : 6;
+    const semesterStartMonth = base.getMonth() < 6 ?0 : 6;
     const start = new Date(base.getFullYear(), semesterStartMonth, 1);
     const end = new Date(base.getFullYear(), semesterStartMonth + 6, 0);
     return {
@@ -262,7 +273,7 @@ function periodRange(view = state.calendarView, cursor = state.cursor) {
       end,
       days: Math.ceil((Math.round((end - start) / 86400000) + 1) / 7),
       unit: "week",
-      label: `Semestre ${semesterStartMonth === 0 ? 1 : 2}/${base.getFullYear()}`
+      label: `Semestre ${semesterStartMonth === 0 ?1 : 2}/${base.getFullYear()}`
     };
   }
   const start = new Date(base.getFullYear(), base.getMonth(), 1);
@@ -299,7 +310,7 @@ function hasActivitiesInCurrentRange() {
 
 function parseDistanceKm(distance) {
   const match = String(distance || "").replace(",", ".").match(/[\d.]+/);
-  return match ? Number(match[0]) : 0;
+  return match ?Number(match[0]) : 0;
 }
 
 function parseDurationSeconds(duration) {
@@ -347,7 +358,7 @@ function activitiesSince(days) {
 
 function formatKm(value) {
   if (!value) return "--";
-  return `${value.toFixed(value >= 10 ? 1 : 2)} km`;
+  return `${value.toFixed(value >= 10 ?1 : 2)} km`;
 }
 
 function projectTime(seconds, fromMeters, toMeters) {
@@ -372,7 +383,7 @@ function collectFocusPerformances(athlete) {
     })
     .forEach((activity) => {
       const date = activityDate(activity);
-      const efforts = Array.isArray(activity.bestEfforts) ? activity.bestEfforts : [];
+      const efforts = Array.isArray(activity.bestEfforts) ?activity.bestEfforts : [];
       efforts.forEach((effort) => {
         const distanceMeters = Number(effort.distanceMeters || 0);
         const seconds = Number(effort.movingTimeSeconds || effort.elapsedTimeSeconds || 0);
@@ -435,18 +446,18 @@ function renderFocusProjection() {
   const baselineSeconds = manualBest || bestDirect?.seconds || bestCandidate?.projectedSeconds || 0;
   const projectedSeconds = bestCandidate?.projectedSeconds || baselineSeconds;
   const targetSeconds = Number(athlete.targetTimeSeconds || 0);
-  const gapSeconds = targetSeconds && projectedSeconds ? Math.round(projectedSeconds - targetSeconds) : 0;
-  const gapLabel = !targetSeconds ? "sem alvo" : gapSeconds <= 0 ? `${formatDurationSeconds(Math.abs(gapSeconds))} abaixo do alvo` : `${formatDurationSeconds(gapSeconds)} acima do alvo`;
+  const gapSeconds = targetSeconds && projectedSeconds ?Math.round(projectedSeconds - targetSeconds) : 0;
+  const gapLabel = !targetSeconds ?"sem alvo" : gapSeconds <= 0 ?`${formatDurationSeconds(Math.abs(gapSeconds))} abaixo do alvo` : `${formatDurationSeconds(gapSeconds)} acima do alvo`;
   const bestRecentLabel = bestDirect
-    ? `${formatDurationSeconds(bestDirect.seconds)} em ${bestDirect.activity.title}`
+    ?`${formatDurationSeconds(bestDirect.seconds)} em ${bestDirect.activity.title}`
     : manualBest
-      ? `${formatDurationSeconds(manualBest)} informado manualmente`
+      ?`${formatDurationSeconds(manualBest)} informado manualmente`
       : "sem marca recente";
   const recentTimesLabel = direct.length
-    ? direct.slice(0, 3).map((item) => formatDurationSeconds(item.seconds)).join(" / ")
+    ?direct.slice(0, 3).map((item) => formatDurationSeconds(item.seconds)).join(" / ")
     : "sem tempos importados";
   const dateLabel = athlete.targetDate
-    ? new Date(`${athlete.targetDate}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
+    ?new Date(`${athlete.targetDate}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
     : "data não definida";
 
   target.innerHTML = `
@@ -455,14 +466,150 @@ function renderFocusProjection() {
         <p class="kicker">Projeção da prova foco</p>
         <h3>${escapeHtml(focusDistanceLabels[focusMeters] || `${focusMeters} m`)}</h3>
       </div>
-      <strong>${escapeHtml(projectedSeconds ? formatDurationSeconds(projectedSeconds) : "--")}</strong>
+      <strong>${escapeHtml(projectedSeconds ?formatDurationSeconds(projectedSeconds) : "--")}</strong>
     </div>
     <div class="focus-projection-grid">
-      <div><span>Tempo alvo</span><strong>${escapeHtml(targetSeconds ? formatDurationSeconds(targetSeconds) : "--")}</strong><p>${escapeHtml(dateLabel)}</p></div>
+      <div><span>Tempo alvo</span><strong>${escapeHtml(targetSeconds ?formatDurationSeconds(targetSeconds) : "--")}</strong><p>${escapeHtml(dateLabel)}</p></div>
       <div><span>Diferença</span><strong>${escapeHtml(gapLabel)}</strong><p>comparado com a projeção atual</p></div>
       <div><span>Melhor 90 dias</span><strong>${escapeHtml(bestRecentLabel)}</strong><p>${escapeHtml(`tempos: ${recentTimesLabel}`)}</p></div>
       <div><span>Modelo</span><strong>Riegel + 11TSS</strong><p>corridas reais e best efforts do Strava</p></div>
     </div>
+  `;
+}
+
+function collect3000Tests(athlete) {
+  const manual = Array.isArray(athlete?.tests3000) ?athlete.tests3000 : [];
+  const fromManual = manual
+    .filter((test) => test.timeSeconds)
+    .map((test) => ({
+      date: test.date ?new Date(`${test.date}T00:00:00`) : null,
+      seconds: Number(test.timeSeconds),
+      source: test.notes || "teste manual"
+    }));
+  const fromActivities = visibleActivities()
+    .filter((activity) => isRunningActivity(activity))
+    .flatMap((activity) => {
+      const efforts = Array.isArray(activity.bestEfforts) ?activity.bestEfforts : [];
+      return efforts
+        .filter((effort) => Math.abs(Number(effort.distanceMeters || 0) - 3000) <= 80)
+        .map((effort) => ({
+          date: activityDate(activity),
+          seconds: Number(effort.movingTimeSeconds || effort.elapsedTimeSeconds || 0),
+          source: activity.title
+        }));
+    })
+    .filter((test) => test.seconds);
+  return [...fromManual, ...fromActivities].sort((a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0)).slice(0, 3);
+}
+
+function buildFocusModel(athlete) {
+  const focusMeters = Number(athlete?.focusDistanceM || 0);
+  const targetSeconds = Number(athlete?.targetTimeSeconds || 0);
+  const targetDate = athlete?.targetDate ?new Date(`${athlete.targetDate}T00:00:00`) : null;
+  const { candidates, direct } = collectFocusPerformances(athlete);
+  const tests3000 = collect3000Tests(athlete);
+  const manualBest = Number(athlete?.bestTimeSeconds || 0);
+  const bestCandidate = candidates[0];
+  const directBest = direct[0];
+  const projectedFromActivity = bestCandidate?.projectedSeconds || directBest?.seconds || 0;
+  const projectedFromTest = tests3000[0]?.seconds && focusMeters ?projectTime(tests3000[0].seconds, 3000, focusMeters) : 0;
+  const currentSeconds = Math.round(projectedFromActivity && projectedFromTest
+    ?(projectedFromActivity * 0.62) + (projectedFromTest * 0.38)
+    : projectedFromActivity || projectedFromTest || manualBest || 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const daysToRace = targetDate ?Math.max(0, Math.round((targetDate - today) / 86400000)) : 0;
+  const recent90 = activitiesSince(90).filter(isRunningActivity);
+  const recent30 = activitiesSince(30).filter(isRunningActivity);
+  const recent14 = activitiesSince(14).filter(isRunningActivity);
+  const weeklySessions = recent90.length / Math.max(1, 90 / 7);
+  const volume90 = recent90.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const volume30 = recent30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const volumeTrend = volume90 ?(volume30 * 3) / volume90 : 0;
+  const consistency = Math.min(1, weeklySessions / 5);
+  const freshness = recent14.length ?Math.min(1, recent14.length / 8) : 0.18;
+  const testSignal = tests3000.length ?Math.min(1, tests3000.length / 3) : 0;
+  const history = String(athlete?.historyNotes || "").toLowerCase();
+  const riskPenalty = /(les|dor|inflama|fadiga|cansa|viagem|pausa|doente|posterior)/i.test(history) ?12 : 0;
+  const gapPercent = targetSeconds && currentSeconds ?((currentSeconds - targetSeconds) / currentSeconds) * 100 : 0;
+  const weeks = daysToRace / 7;
+  const realisticGain = Math.max(0, weeks * (0.45 + consistency * 0.45 + testSignal * 0.18));
+  const loadScore = (consistency * 28) + (Math.min(1.25, volumeTrend) * 18) + (freshness * 14) + (testSignal * 12);
+  const probability = targetSeconds && currentSeconds
+    ?Math.round(Math.max(4, Math.min(96, 54 + loadScore + realisticGain - Math.max(0, gapPercent) * 5.2 - riskPenalty)))
+    : 0;
+  const status = !targetSeconds || !currentSeconds ?"Dados insuficientes" : probability >= 72 ?"Alta viabilidade" : probability >= 45 ?"Viabilidade moderada" : "Alvo agressivo";
+  const requiredGain = targetSeconds && currentSeconds ?Math.max(0, currentSeconds - targetSeconds) : 0;
+  const requiredPerWeek = weeks && requiredGain ?requiredGain / weeks : 0;
+  return {
+    focusMeters,
+    targetSeconds,
+    currentSeconds,
+    targetDate,
+    daysToRace,
+    probability,
+    status,
+    requiredGain,
+    requiredPerWeek,
+    tests3000,
+    volume30,
+    weeklySessions,
+    historyRisk: riskPenalty > 0
+  };
+}
+
+function renderFocusRoadmap() {
+  const target = document.querySelector("#focusRoadmap");
+  if (!target) return;
+  const athlete = getActiveAthlete();
+  const model = buildFocusModel(athlete);
+  if (!athlete || !model.focusMeters || !model.targetSeconds || !model.targetDate) {
+    target.innerHTML = `
+      <div class="focus-projection-empty">
+        <span>Caminho até a prova</span>
+        <strong>Configure prova foco, tempo alvo e data</strong>
+        <p>A projeção usa 11TSS, volume, consistência, testes de 3000 m e histórico do atleta.</p>
+      </div>
+    `;
+    return;
+  }
+  const width = 920;
+  const height = 118;
+  const pad = { left: 42, right: 38, top: 20, bottom: 28 };
+  const startY = 38;
+  const targetY = 78;
+  const endX = width - pad.right;
+  const startX = pad.left;
+  const todayX = model.daysToRace ?startX + Math.min(1, Math.max(0, 0)) * (endX - startX) : startX;
+  const targetLabel = model.targetDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  const aiText = state.aiProjection?.text || "A análise preditiva considera carga 11TSS, distribuição de intensidade, regularidade, recência dos testes de 3000 m e histórico clínico/operacional informado.";
+  target.innerHTML = `
+    <div class="roadmap-head">
+      <div>
+        <p class="kicker">Rota preditiva até a prova</p>
+        <h3>${escapeHtml(focusDistanceLabels[model.focusMeters] || `${model.focusMeters} m`)}: projeção atual para tempo alvo</h3>
+      </div>
+      <div class="probability-badge"><strong>${model.probability || "--"}%</strong><span>probabilidade</span></div>
+    </div>
+    <div class="roadmap-grid">
+      <div class="roadmap-metric"><span>Projeção atual</span><strong>${escapeHtml(formatDurationSeconds(model.currentSeconds))}</strong><p>${escapeHtml(model.status)}</p></div>
+      <div class="roadmap-metric"><span>Tempo alvo</span><strong>${escapeHtml(formatDurationSeconds(model.targetSeconds))}</strong><p>${escapeHtml(targetLabel)} - ${model.daysToRace} dias</p></div>
+      <div class="roadmap-metric"><span>Ganho necessário</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong><p>${escapeHtml(formatDurationSeconds(model.requiredPerWeek))} por semana</p></div>
+      <div class="roadmap-metric"><span>Base recente</span><strong>${escapeHtml(formatKm(model.volume30))}</strong><p>${model.weeklySessions.toFixed(1)} sessões/semana ${model.historyRisk ?"- atenção ao histórico" : ""}</p></div>
+    </div>
+    <div class="roadmap-chart">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Caminho preditivo ate a prova">
+        <line x1="${startX}" y1="${targetY}" x2="${endX}" y2="${targetY}" />
+        <path class="roadmap-required" d="M ${startX} ${startY} C ${width * 0.38} ${startY + 8}, ${width * 0.62} ${targetY - 10}, ${endX} ${targetY}" />
+        <path class="roadmap-current" d="M ${startX} ${startY} C ${width * 0.28} ${startY + 2}, ${width * 0.42} ${startY + 10}, ${width * 0.52} ${startY + 14}" />
+        <circle cx="${startX}" cy="${startY}" r="3" fill="#ff4b0b" />
+        <circle cx="${endX}" cy="${targetY}" r="3" fill="#f3efe8" />
+        <text x="${startX}" y="${height - 10}" text-anchor="start">Hoje - ${escapeHtml(formatDurationSeconds(model.currentSeconds))}</text>
+        <text x="${endX}" y="${height - 10}" text-anchor="end">${escapeHtml(targetLabel)} - ${escapeHtml(formatDurationSeconds(model.targetSeconds))}</text>
+      </svg>
+    </div>
+    <p class="roadmap-ai">${escapeHtml(aiText)}</p>
+    <div class="roadmap-actions"><button class="secondary-action compact" type="button" data-refresh-ai>Atualizar análise IA</button></div>
   `;
 }
 
@@ -477,7 +624,7 @@ function renderAthleteFocusHistory() {
   const { direct } = collectFocusPerformances(athlete);
   const times = direct.slice(0, 3).map((item) => `
     <strong>${escapeHtml(formatDurationSeconds(item.seconds))}</strong>
-    <small>${escapeHtml(item.activity.title)} · ${escapeHtml(item.date ? item.date.toLocaleDateString("pt-BR") : "")}</small>
+    <small>${escapeHtml(item.activity.title)} · ${escapeHtml(item.date ?item.date.toLocaleDateString("pt-BR") : "")}</small>
   `).join("");
   target.innerHTML = `
     <span>Tempos importados - últimos 3 meses</span>
@@ -494,9 +641,9 @@ function renderHeroMetrics() {
   const km30 = last30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
   const km7 = last7.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
   const averageWeeklyKm = km30 / 4.285;
-  const trend = averageWeeklyKm ? Math.round((km7 / averageWeeklyKm) * 100) : 0;
-  const status = !last30.length ? "Sem dados" : trend > 135 ? "Atenção" : trend < 55 ? "Baixa carga" : "Estável";
-  const statusDetail = !last30.length ? "importe atividades" : `${trend}% da média recente`;
+  const trend = averageWeeklyKm ?Math.round((km7 / averageWeeklyKm) * 100) : 0;
+  const status = !last30.length ?"Sem dados" : trend > 135 ?"Atenção" : trend < 55 ?"Baixa carga" : "Estável";
+  const statusDetail = !last30.length ?"importe atividades" : `${trend}% da média recente`;
 
   target.innerHTML = `
     <div><span>30 dias</span><strong>${escapeHtml(formatKm(km30))}</strong><small>${last30.length} sessões</small></div>
@@ -527,13 +674,13 @@ function renderTrainingInsights() {
   const km30 = last30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
   const km7 = last7.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
   const weeklyAverage = km30 / 4.285;
-  const ratio = weeklyAverage ? km7 / weeklyAverage : 0;
-  const risk = ratio > 1.35 ? "Alto" : ratio < 0.55 ? "Baixa carga" : "Controlado";
-  const action = risk === "Alto" ? "Reduzir carga" : risk === "Baixa carga" ? "Retomar volume" : "Manter progressão";
+  const ratio = weeklyAverage ?km7 / weeklyAverage : 0;
+  const risk = ratio > 1.35 ?"Alto" : ratio < 0.55 ?"Baixa carga" : "Controlado";
+  const action = risk === "Alto" ?"Reduzir carga" : risk === "Baixa carga" ?"Retomar volume" : "Manter progressão";
   const detail = risk === "Alto"
-    ? "A semana atual está acima da média recente."
+    ?"A semana atual está acima da média recente."
     : risk === "Baixa carga"
-      ? "A semana atual está abaixo da média recente."
+      ?"A semana atual está abaixo da média recente."
       : "A semana está compatível com o histórico recente.";
 
   target.innerHTML = `
@@ -554,16 +701,16 @@ function chartRange() {
 function aggregatePerformanceSeries() {
   const range = chartRange();
   const series = Array.from({ length: range.days }, (_, index) => {
-    const date = range.unit === "week" ? addDays(range.start, index * 7) : addDays(range.start, index);
-    const end = range.unit === "week" ? new Date(Math.min(addDays(date, 6).getTime(), range.end.getTime())) : date;
+    const date = range.unit === "week" ?addDays(range.start, index * 7) : addDays(range.start, index);
+    const end = range.unit === "week" ?new Date(Math.min(addDays(date, 6).getTime(), range.end.getTime())) : date;
     return {
       date,
       end,
       key: dateKey(date),
       label: range.unit === "week"
-        ? `S${String(index + 1).padStart(2, "0")}`
+        ?`S${String(index + 1).padStart(2, "0")}`
         : state.calendarView === "month"
-          ? String(date.getDate()).padStart(2, "0")
+          ?String(date.getDate()).padStart(2, "0")
           : `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`,
       volume: 0,
       tss: 0,
@@ -574,7 +721,7 @@ function aggregatePerformanceSeries() {
     const date = activityDate(activity);
     if (!date || date < range.start || date > range.end) return;
     const index = range.unit === "week"
-      ? Math.floor((date - range.start) / 604800000)
+      ?Math.floor((date - range.start) / 604800000)
       : Math.round((date - range.start) / 86400000);
     const item = series[index];
     if (!item) return;
@@ -586,7 +733,7 @@ function aggregatePerformanceSeries() {
 }
 
 function linePath(points) {
-  return points.map((point, index) => `${index ? "L" : "M"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
+  return points.map((point, index) => `${index ?"L" : "M"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
 }
 
 function renderPerformanceChart() {
@@ -612,7 +759,7 @@ function renderPerformanceChart() {
   const volumePoints = series.map((item, index) => ({ x: xFor(index), y: yVolume(item.volume) }));
   const tssPoints = series.map((item, index) => ({ x: xFor(index), y: yTss(item.tss) }));
   const volumeArea = hasData
-    ? `${linePath(volumePoints)} L ${volumePoints[volumePoints.length - 1].x.toFixed(1)} ${padding.top + chartHeight} L ${volumePoints[0].x.toFixed(1)} ${padding.top + chartHeight} Z`
+    ?`${linePath(volumePoints)} L ${volumePoints[volumePoints.length - 1].x.toFixed(1)} ${padding.top + chartHeight} L ${volumePoints[0].x.toFixed(1)} ${padding.top + chartHeight} Z`
     : "";
   const grid = [0, 0.25, 0.5, 0.75, 1].map((step) => {
     const y = padding.top + chartHeight - (step * chartHeight);
@@ -621,7 +768,7 @@ function renderPerformanceChart() {
   const labels = series
     .map((item, index) => {
       const originalIndex = series.indexOf(item);
-      const anchor = index === 0 ? "start" : index === series.length - 1 ? "end" : "middle";
+      const anchor = index === 0 ?"start" : index === series.length - 1 ?"end" : "middle";
       return `<text x="${xFor(originalIndex)}" y="${height - 12}" text-anchor="${anchor}">${escapeHtml(item.label)}</text>`;
     }).join("");
   const points = series.filter((item) => item.count).map((item, index) => {
@@ -631,10 +778,10 @@ function renderPerformanceChart() {
   const todayKey = dateKey(new Date());
   const today = new Date();
   const todayIndex = unit === "week"
-    ? series.findIndex((item) => today >= item.date && today <= item.end)
+    ?series.findIndex((item) => today >= item.date && today <= item.end)
     : series.findIndex((item) => item.key === todayKey);
   const todayMarker = todayIndex >= 0
-    ? `<g class="today-marker">
+    ?`<g class="today-marker">
         <line x1="${xFor(todayIndex)}" y1="${padding.top}" x2="${xFor(todayIndex)}" y2="${padding.top + chartHeight}" />
         <text x="${xFor(todayIndex) + 6}" y="${padding.top + 11}">Hoje</text>
       </g>`
@@ -662,23 +809,23 @@ function renderPerformanceChart() {
         </filter>
       </defs>
       <g class="chart-grid">${grid}</g>
-      ${hasData ? `<path class="volume-area" d="${volumeArea}" />` : ""}
-      ${hasData ? `<path class="volume-line" d="${linePath(volumePoints)}" />` : ""}
-      ${hasData ? `<path class="tss-line" d="${linePath(tssPoints)}" />` : ""}
+      ${hasData ?`<path class="volume-area" d="${volumeArea}" />` : ""}
+      ${hasData ?`<path class="volume-line" d="${linePath(volumePoints)}" />` : ""}
+      ${hasData ?`<path class="tss-line" d="${linePath(tssPoints)}" />` : ""}
       ${todayMarker}
       <g class="tss-points">${points}</g>
       <text x="${padding.left}" y="16">km</text>
       <text x="${width - padding.right}" y="16" text-anchor="end">11TSS</text>
       <g class="chart-labels">${labels}</g>
     </svg>
-    ${hasData ? "" : `<p class="chart-empty">Importe atividades do Strava para visualizar a evolucao de volume e 11TSS.</p>`}
+    ${hasData ?"" : `<p class="chart-empty">Importe atividades do Strava para visualizar a evolucao de volume e 11TSS.</p>`}
   `;
 }
 
 function renderActivity(activity) {
   const analysis = activity.analysis || {};
   const analysisLine = analysis.tss
-    ? `<em>${escapeHtml(analysis.standard || "11TSS Advance")} ${escapeHtml(analysis.tss)} - agressao ${escapeHtml(analysis.aggressionScore || "--")} - ${escapeHtml(analysis.characteristic || "")}</em>`
+    ?`<em>${escapeHtml(analysis.standard || "11TSS Advance")} ${escapeHtml(analysis.tss)} - agressao ${escapeHtml(analysis.aggressionScore || "--")} - ${escapeHtml(analysis.characteristic || "")}</em>`
     : "";
   return `
     <button class="activity" data-activity-id="${escapeHtml(activity.id)}" data-source="${escapeHtml(activity.source)}">
@@ -694,7 +841,7 @@ function renderDayCell(date, muted = false) {
   const key = dateKey(date);
   const dayActivities = visibleActivities().filter((activity) => activity.date === key);
   return `
-    <div class="day ${muted ? "is-muted" : ""} ${sameDay(date, today) ? "is-today" : ""}">
+    <div class="day ${muted ?"is-muted" : ""} ${sameDay(date, today) ?"is-today" : ""}">
       <div class="day-number">${date.getDate().toString().padStart(2, "0")}</div>
       ${dayActivities.map(renderActivity).join("")}
     </div>
@@ -711,7 +858,7 @@ function renderPeriodMonth(monthDate) {
   const volume = activities.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
   const tss = activities.reduce((sum, activity) => sum + activityTss(activity), 0);
   const list = activities.length
-    ? activities.slice(0, 8).map(renderActivity).join("")
+    ?activities.slice(0, 8).map(renderActivity).join("")
     : `<p class="period-empty">Sem atividades importadas neste mes.</p>`;
 
   return `
@@ -731,22 +878,45 @@ function renderPeriodMonth(monthDate) {
   `;
 }
 
+function renderPeriodWeek(start, end, index) {
+  const activities = visibleActivities().filter((activity) => {
+    const date = activityDate(activity);
+    return date && date >= start && date <= end;
+  });
+  const volume = activities.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss = activities.reduce((sum, activity) => sum + activityTss(activity), 0);
+  return `
+    <article class="period-week">
+      <div class="period-week-head">
+        <strong>Semana ${String(index + 1).padStart(2, "0")}</strong>
+        <span>${escapeHtml(start.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }))} - ${escapeHtml(end.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }))}</span>
+      </div>
+      <div class="period-month-stats">
+        <span>${activities.length} sessões</span>
+        <span>${escapeHtml(formatKm(volume))}</span>
+        <span>${Math.round(tss)} 11TSS</span>
+      </div>
+      <div class="period-activities">${activities.length ?activities.slice(0, 4).map(renderActivity).join("") : `<p class="period-empty">Sem atividades nesta semana.</p>`}</div>
+    </article>
+  `;
+}
+
 function renderPeriodCalendar() {
   const range = periodRange();
-  const months = [];
-  for (let date = new Date(range.start); date <= range.end; date.setMonth(date.getMonth() + 1)) {
-    months.push(new Date(date.getFullYear(), date.getMonth(), 1));
+  const weeks = [];
+  for (let date = new Date(range.start), index = 0; date <= range.end; date = addDays(date, 7), index += 1) {
+    weeks.push(renderPeriodWeek(new Date(date), new Date(Math.min(addDays(date, 6).getTime(), range.end.getTime())), index));
   }
-  calendar.innerHTML = months.map(renderPeriodMonth).join("");
+  calendar.innerHTML = `<div class="period-week-list">${weeks.join("")}</div>`;
   document.querySelector("#calendarEyebrow").textContent = range.label;
   document.querySelector("#calendarTitle").textContent = hasActivitiesInCurrentRange()
-    ? "Resumo de performance"
-    : "Sem atividades neste periodo";
+    ?"Semanas do ciclo"
+    : "Sem atividades neste período";
 }
 
 function renderCalendar() {
   const cursor = state.cursor;
-  const calendarClass = state.calendarView === "quarter" || state.calendarView === "semester" ? "calendar-period" : `calendar-${state.calendarView}`;
+  const calendarClass = state.calendarView === "quarter" || state.calendarView === "semester" ?"calendar-period" : `calendar-${state.calendarView}`;
   calendar.className = `calendar ${calendarClass} calendar-${state.calendarView}`;
   const activities = visibleActivities();
 
@@ -761,7 +931,7 @@ function renderCalendar() {
     calendar.innerHTML = weekdayNames.map((day) => `<div class="weekday">${day}</div>`).join("") + cells.join("");
     document.querySelector("#calendarEyebrow").textContent = `${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}`;
     document.querySelector("#calendarTitle").textContent = activities.length && !hasActivitiesInCurrentRange()
-      ? `${activities.length} atividades importadas fora deste mês`
+      ?`${activities.length} atividades importadas fora deste mês`
       : "Bloco de performance";
   }
 
@@ -773,7 +943,7 @@ function renderCalendar() {
     calendar.innerHTML = weekdayNames.map((day) => `<div class="weekday">${day}</div>`).join("") + cells.join("");
     document.querySelector("#calendarEyebrow").textContent = `${start.getDate()}-${end.getDate()} ${monthNames[end.getMonth()]} ${end.getFullYear()}`;
     document.querySelector("#calendarTitle").textContent = activities.length && !hasActivitiesInCurrentRange()
-      ? `${activities.length} atividades importadas fora desta semana`
+      ?`${activities.length} atividades importadas fora desta semana`
       : "Microciclo semanal";
   }
 
@@ -781,13 +951,14 @@ function renderCalendar() {
     calendar.innerHTML = renderDayCell(cursor);
     document.querySelector("#calendarEyebrow").textContent = `${cursor.getDate()} ${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}`;
     document.querySelector("#calendarTitle").textContent = activities.length && !hasActivitiesInCurrentRange()
-      ? `${activities.length} atividades importadas em outras datas`
+      ?`${activities.length} atividades importadas em outras datas`
       : "Detalhe do dia";
   }
   if (state.calendarView === "quarter" || state.calendarView === "semester") {
     renderPeriodCalendar();
   }
   renderFocusProjection();
+  renderFocusRoadmap();
   renderAthleteFocusHistory();
   renderPerformanceChart();
 }
@@ -796,8 +967,8 @@ function openActivity(activityId) {
   const activity = visibleActivities().find((item) => String(item.id) === String(activityId));
   if (!activity) return;
   const analysis = activity.analysis || {};
-  const external = activity.externalUrl ? `<a class="detail-link" href="${escapeHtml(activity.externalUrl)}" target="_blank" rel="noreferrer">Abrir atividade original</a>` : "";
-  const analysisPanel = analysis.tss ? `
+  const external = activity.externalUrl ?`<a class="detail-link" href="${escapeHtml(activity.externalUrl)}" target="_blank" rel="noreferrer">Abrir atividade original</a>` : "";
+  const analysisPanel = analysis.tss ?`
     <div class="analysis-panel">
       <span class="kicker">${escapeHtml(analysis.standard || "11TSS Advance")}</span>
       <h4>${escapeHtml(analysis.characteristic || "Caracteristica do treino")}</h4>
@@ -837,10 +1008,10 @@ function renderProviders() {
     const credentials = integration.credentials || {};
     const hasStoredToken = integration.token?.access_token === "stored" || integration.token?.refresh_token === "stored";
     const isConnected = Boolean(integration.connected || hasStoredToken);
-    const connected = isConnected ? "Conectado" : "Não conectado";
+    const connected = isConnected ?"Conectado" : "Não conectado";
     const scope = String(integration.token?.scope || "");
     const stravaScopeWarning = key === "strava" && isConnected && !scope.split(/[,\s]+/).some((item) => item === "activity:read" || item === "activity:read_all")
-      ? `<p class="provider-warning">Reconecte aprovando activity:read ou activity:read_all para importar atividades.</p>`
+      ?`<p class="provider-warning">Reconecte aprovando activity:read ou activity:read_all para importar atividades.</p>`
       : "";
     const fields = definition.fields.map(([field, label, type = "text"]) => `
       <label class="credential-field">
@@ -848,7 +1019,7 @@ function renderProviders() {
         <input type="${type}" name="${escapeHtml(field)}" value="${escapeHtml(credentials[field] || "")}" />
       </label>
     `).join("");
-    const stravaActions = key === "strava" ? `
+    const stravaActions = key === "strava" ?`
       <div class="provider-actions">
         <button class="primary-action compact" data-save-provider="${key}" type="button">Salvar credenciais</button>
         <button class="secondary-action compact" data-connect-strava type="button">Conectar Strava</button>
@@ -859,7 +1030,7 @@ function renderProviders() {
         <button class="primary-action compact" data-save-provider="${key}" type="button">Salvar credenciais</button>
       </div>
     `;
-    const athlete = integration.athlete ? `<p class="provider-athlete">Atleta autorizado: ${escapeHtml(integration.athlete.firstname || "")} ${escapeHtml(integration.athlete.lastname || "")}</p>` : "";
+    const athlete = integration.athlete ?`<p class="provider-athlete">Atleta autorizado: ${escapeHtml(integration.athlete.firstname || "")} ${escapeHtml(integration.athlete.lastname || "")}</p>` : "";
     return `
       <form class="provider-card provider-form" data-provider="${key}">
         <div class="provider-mark">${escapeHtml(definition.mark)}</div>
@@ -870,7 +1041,7 @@ function renderProviders() {
               <h4>${escapeHtml(definition.name)}</h4>
             </div>
             <label class="provider-toggle">
-              <input type="checkbox" name="enabled" ${integration.enabled ? "checked" : ""} />
+              <input type="checkbox" name="enabled" ${integration.enabled ?"checked" : ""} />
               Ativo
             </label>
           </div>
@@ -899,7 +1070,7 @@ function formatAthleteMeta(athlete) {
   if (athlete.age) items.push(`${athlete.age} anos`);
   if (athlete.weightKg) items.push(`${athlete.weightKg} kg`);
   if (athlete.heightCm) items.push(`${athlete.heightCm} cm`);
-  return items.length ? items.join(" - ") : athlete.email || "Perfil de atleta cadastrado.";
+  return items.length ?items.join(" - ") : athlete.email || "Perfil de atleta cadastrado.";
 }
 
 function renderAthleteIdentity() {
@@ -912,6 +1083,28 @@ function renderAthleteIdentity() {
   if (activeName) activeName.textContent = name;
   if (activeMeta) activeMeta.textContent = formatAthleteMeta(athlete);
   renderAthleteFocusHistory();
+}
+
+function renderPermissions() {
+  const manageable = canManageAthletes();
+  const admin = isSuperAdmin();
+  document.querySelectorAll(".athlete-list-panel").forEach((item) => {
+    item.hidden = !manageable;
+  });
+  document.querySelectorAll(".admin-only, .admin-only-field").forEach((item) => {
+    item.hidden = !admin;
+  });
+  const submit = document.querySelector("#athleteSubmitButton");
+  if (submit && !manageable && !state.editingAthleteId) submit.textContent = "Salvar meu perfil";
+}
+
+function renderAiSettings() {
+  const form = document.querySelector("#aiSettingsForm");
+  if (!form || !isSuperAdmin()) return;
+  const settings = state.appSettings || {};
+  form.elements.openaiApiKey.value = settings.openaiApiKey || (settings.hasOpenaiApiKey ?SECRET_MASK : "");
+  form.elements.openaiModel.value = settings.openaiModel || "gpt-4.1-mini";
+  form.elements.openaiEnabled.checked = Boolean(settings.openaiEnabled);
 }
 
 function syncSelectedAthlete() {
@@ -927,7 +1120,7 @@ function renderAthleteSelector() {
   const selector = document.querySelector("#athleteSelector");
   if (!selector) return;
   selector.innerHTML = state.athletes.length
-    ? state.athletes.map((athlete) => `<option value="${escapeHtml(athlete.id)}">${escapeHtml(athlete.name)}</option>`).join("")
+    ?state.athletes.map((athlete) => `<option value="${escapeHtml(athlete.id)}">${escapeHtml(athlete.name)}</option>`).join("")
     : `<option value="">Nenhum atleta</option>`;
   selector.value = state.selectedAthleteId || "";
   selector.disabled = !state.athletes.length;
@@ -941,7 +1134,7 @@ function renderAthletes() {
     return;
   }
   list.innerHTML = state.athletes.map((athlete) => `
-    <article class="athlete-list-item ${String(athlete.id) === String(state.selectedAthleteId) ? "is-selected" : ""}">
+    <article class="athlete-list-item ${String(athlete.id) === String(state.selectedAthleteId) ?"is-selected" : ""}">
       <div>
         <strong>${escapeHtml(athlete.name)}</strong>
         <span>${escapeHtml(athlete.email)}</span>
@@ -949,7 +1142,7 @@ function renderAthletes() {
       <p>${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
       <p>Equipe: ${escapeHtml(athlete.teamName || "não vinculada")}</p>
       <p>Treinador: ${escapeHtml(athlete.coachName || "não vinculado")}</p>
-      <p>Prova foco: ${escapeHtml(focusDistanceLabels[athlete.focusDistanceM] || "não definida")} ${athlete.targetTime ? `- alvo ${escapeHtml(athlete.targetTime)}` : ""}</p>
+      <p>Prova foco: ${escapeHtml(focusDistanceLabels[athlete.focusDistanceM] || "não definida")} ${athlete.targetTime ?`- alvo ${escapeHtml(athlete.targetTime)}` : ""}</p>
       <p>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</p>
       <div class="athlete-item-actions">
         <button class="secondary-action compact" type="button" data-edit-athlete="${escapeHtml(athlete.id)}">Editar</button>
@@ -985,7 +1178,7 @@ async function enrichStravaDescriptions() {
   let updated = 0;
   let remaining = Number.POSITIVE_INFINITY;
   for (let batch = 1; batch <= 30 && remaining > 0; batch += 1) {
-    setSyncLoading(true, "Puxando descrições do Strava", `Lote ${batch}: buscando descrições completas sem travar o servidor.`, updated ? `${updated} descrições atualizadas` : "Detalhando atividades");
+    setSyncLoading(true, "Puxando descrições do Strava", `Lote ${batch}: buscando descrições completas sem travar o servidor.`, updated ?`${updated} descrições atualizadas` : "Detalhando atividades");
     const payload = await api("/api/strava/enrich", {
       method: "POST",
       body: JSON.stringify({ limit: 8 })
@@ -998,7 +1191,7 @@ async function enrichStravaDescriptions() {
     renderTrainingInsights();
     if (!payload.updated || !remaining) break;
   }
-  return { updated, remaining: Number.isFinite(remaining) ? remaining : 0 };
+  return { updated, remaining: Number.isFinite(remaining) ?remaining : 0 };
 }
 
 function setAthleteMessage(message, isError = false) {
@@ -1020,6 +1213,22 @@ function resetAthleteForm(message = "") {
   if (message) setAthleteMessage(message);
 }
 
+function readAthleteForm(form) {
+  const body = Object.fromEntries(new FormData(form).entries());
+  body.tests3000 = [1, 2, 3].map((index) => ({
+    date: body[`test3000Date${index}`],
+    time: body[`test3000Time${index}`],
+    notes: body[`test3000Notes${index}`]
+  }));
+  [1, 2, 3].forEach((index) => {
+    delete body[`test3000Date${index}`];
+    delete body[`test3000Time${index}`];
+    delete body[`test3000Notes${index}`];
+  });
+  if (!isSuperAdmin()) delete body.role;
+  return body;
+}
+
 function editAthlete(athleteId) {
   const athlete = state.athletes.find((item) => String(item.id) === String(athleteId));
   const form = document.querySelector("#athleteForm");
@@ -1038,6 +1247,15 @@ function editAthlete(athleteId) {
   form.elements.targetTime.value = athlete.targetTime || "";
   form.elements.targetDate.value = athlete.targetDate || "";
   form.elements.bestTime.value = athlete.bestTime || "";
+  if (form.elements.role) form.elements.role.value = athlete.role || "athlete";
+  if (form.elements.historyNotes) form.elements.historyNotes.value = athlete.historyNotes || "";
+  const tests = Array.isArray(athlete.tests3000) ?athlete.tests3000 : [];
+  [1, 2, 3].forEach((index) => {
+    const test = tests[index - 1] || {};
+    if (form.elements[`test3000Date${index}`]) form.elements[`test3000Date${index}`].value = test.date || "";
+    if (form.elements[`test3000Time${index}`]) form.elements[`test3000Time${index}`].value = test.time || "";
+    if (form.elements[`test3000Notes${index}`]) form.elements[`test3000Notes${index}`].value = test.notes || "";
+  });
   form.elements.password.value = "";
   const submit = document.querySelector("#athleteSubmitButton");
   const cancel = document.querySelector("#cancelAthleteEdit");
@@ -1049,15 +1267,15 @@ function editAthlete(athleteId) {
 async function deleteAthlete(athleteId) {
   const athlete = state.athletes.find((item) => String(item.id) === String(athleteId));
   if (!athlete) return;
-  if (!window.confirm(`Excluir o atleta ${athlete.name}? Esta ação remove integrações e atividades importadas deste atleta.`)) return;
+  if (!window.confirm(`Excluir o atleta ${athlete.name}?Esta ação remove integrações e atividades importadas deste atleta.`)) return;
   try {
     setAthleteMessage("Excluindo atleta...");
     const payload = await api(`/api/athletes/${encodeURIComponent(athlete.id)}`, { method: "DELETE" });
     state.athletes = payload.athletes || [];
     if (String(state.selectedAthleteId) === String(athlete.id)) state.selectedAthleteId = state.athletes[0]?.id || "";
     syncSelectedAthlete();
-    state.integrations = state.selectedAthleteId ? await api("/api/integrations") : {};
-    state.activities = state.selectedAthleteId ? await api("/api/activities") : [];
+    state.integrations = state.selectedAthleteId ?await api("/api/integrations") : {};
+    state.activities = state.selectedAthleteId ?await api("/api/activities") : [];
     renderAthletes();
     renderAthleteSelector();
     renderAthleteIdentity();
@@ -1120,11 +1338,11 @@ async function runSync() {
     }
     setLog([
       payload.imported
-        ? `Importadas/atualizadas: ${payload.imported} atividades reais.`
+        ?`Importadas/atualizadas: ${payload.imported} atividades reais.`
         : `Nenhuma atividade nova retornada pelas fontes no intervalo de ${days} dias.`,
-      state.activities.length ? `Total no banco para este atleta: ${state.activities.length}.` : "Nenhuma atividade salva para este atleta.",
-      detailResult.updated ? `Descrições completas atualizadas: ${detailResult.updated}.` : "Descrições já estavam atualizadas ou não retornaram detalhe adicional.",
-      detailResult.remaining ? `Descrições pendentes: ${detailResult.remaining}. Clique novamente para continuar.` : "Descrições sincronizadas em lotes.",
+      state.activities.length ?`Total no banco para este atleta: ${state.activities.length}.` : "Nenhuma atividade salva para este atleta.",
+      detailResult.updated ?`Descrições completas atualizadas: ${detailResult.updated}.` : "Descrições já estavam atualizadas ou não retornaram detalhe adicional.",
+      detailResult.remaining ?`Descrições pendentes: ${detailResult.remaining}. Clique novamente para continuar.` : "Descrições sincronizadas em lotes.",
       ...(payload.warnings || []),
       "Calendário atualizado."
     ]);
@@ -1156,12 +1374,12 @@ async function testStrava() {
 async function saveAthlete(event) {
   event.preventDefault();
   const form = event.currentTarget;
-  const body = Object.fromEntries(new FormData(form).entries());
-  const editingId = state.editingAthleteId;
-  setAthleteMessage(editingId ? "Atualizando atleta..." : "Salvando atleta...");
+  const body = readAthleteForm(form);
+  const editingId = state.editingAthleteId || (!canManageAthletes() ?state.selectedAthleteId : "");
+  setAthleteMessage(editingId ?"Atualizando atleta..." : "Salvando atleta...");
   try {
-    const payload = await api(editingId ? `/api/athletes/${encodeURIComponent(editingId)}` : "/api/athletes", {
-      method: editingId ? "PUT" : "POST",
+    const payload = await api(editingId ?`/api/athletes/${encodeURIComponent(editingId)}` : "/api/athletes", {
+      method: editingId ?"PUT" : "POST",
       body: JSON.stringify(body)
     });
     state.athletes = payload.athletes || [];
@@ -1171,12 +1389,63 @@ async function saveAthlete(event) {
     renderAthleteSelector();
     renderAthleteIdentity();
     renderCalendar();
-    resetAthleteForm(`Atleta ${payload.athlete.name} ${editingId ? "atualizado" : "cadastrado"} com sucesso.`);
+    resetAthleteForm(`Atleta ${payload.athlete.name} ${editingId ?"atualizado" : "cadastrado"} com sucesso.`);
     setLog([`Atleta ${payload.athlete.name} salvo com sucesso.`]);
   } catch (error) {
     setAthleteMessage(error.message, true);
     setLog([error.message], true);
   }
+}
+
+async function loadSettings() {
+  if (!isSuperAdmin()) {
+    state.appSettings = null;
+    renderPermissions();
+    return;
+  }
+  try {
+    state.appSettings = await api("/api/settings");
+    renderAiSettings();
+  } catch (error) {
+    const target = document.querySelector("#aiSettingsMessage");
+    if (target) target.textContent = error.message;
+  }
+  renderPermissions();
+}
+
+async function saveAiSettings(event) {
+  event.preventDefault();
+  if (!isSuperAdmin()) return;
+  const form = event.currentTarget;
+  const body = Object.fromEntries(new FormData(form).entries());
+  body.openaiEnabled = form.elements.openaiEnabled.checked;
+  try {
+    state.appSettings = await api("/api/settings", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    renderAiSettings();
+    document.querySelector("#aiSettingsMessage").textContent = "Configuração de IA salva.";
+  } catch (error) {
+    document.querySelector("#aiSettingsMessage").textContent = error.message;
+  }
+}
+
+async function refreshAiProjection() {
+  const athlete = getActiveAthlete();
+  if (!athlete) return;
+  const model = buildFocusModel(athlete);
+  state.aiProjection = { text: "Analisando com IA..." };
+  renderFocusRoadmap();
+  try {
+    state.aiProjection = await api("/api/ai/projection", {
+      method: "POST",
+      body: JSON.stringify({ athlete, model, activities: activitiesSince(90).slice(-60) })
+    });
+  } catch (error) {
+    state.aiProjection = { text: `IA indisponível: ${error.message}` };
+  }
+  renderFocusRoadmap();
 }
 
 async function loadAppVersion() {
@@ -1185,7 +1454,7 @@ async function loadAppVersion() {
   try {
     const health = await api("/api/health");
     const rawVersion = String(health.version || APP_VERSION_FALLBACK).trim();
-    const version = rawVersion.length > 12 ? rawVersion.slice(0, 12) : rawVersion;
+    const version = rawVersion.length > 12 ?rawVersion.slice(0, 12) : rawVersion;
     versionTarget.textContent = `deploy ${version}`;
   } catch {
     versionTarget.textContent = `deploy ${APP_VERSION_FALLBACK}`;
@@ -1211,10 +1480,12 @@ async function boot() {
     syncSelectedAthlete();
     state.integrations = await api("/api/integrations");
     state.activities = await api("/api/activities");
+    await loadSettings();
   } catch (error) {
     if (error.message === "Login obrigatório.") showLogin();
     else {
       showApp();
+      renderPermissions();
       renderProviders();
       renderAthletes();
       renderAthleteSelector();
@@ -1224,17 +1495,16 @@ async function boot() {
       renderTrainingInsights();
       setLog([`Erro ao carregar dados do banco: ${error.message}`], true);
       if (initialHash === "treinamentos") setView("training");
-      else if (initialHash === "atleta") setView("athlete");
-      else if (initialHash === "configuracao") setView("settings");
+      else if (initialHash === "atleta" || initialHash === "dashboard" || initialHash === "configuracao") setView("athlete");
       else setView("home");
     }
     return;
   }
 
   if (initialHash === "treinamentos") setView("training");
-  else if (initialHash === "atleta") setView("athlete");
-  else if (initialHash === "configuracao") setView("settings");
+  else if (initialHash === "atleta" || initialHash === "dashboard" || initialHash === "configuracao") setView("athlete");
   else setView("home");
+  renderPermissions();
   renderProviders();
   renderAthletes();
   renderAthleteSelector();
@@ -1242,6 +1512,7 @@ async function boot() {
   renderCalendar();
   renderHeroMetrics();
   renderTrainingInsights();
+  if (!canManageAthletes() && state.selectedAthleteId) editAthlete(state.selectedAthleteId);
 
   if (status.get("strava") === "connected") setLog(["Strava conectado. Clique em Importar e atualizar para puxar as atividades reais."]);
   if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorização."}`], true);
@@ -1351,19 +1622,24 @@ document.addEventListener("click", async (event) => {
   if (event.target.closest("[data-connect-strava]")) {
     const saved = await saveProvider("strava");
     if (!saved) return;
-    const athleteParam = state.selectedAthleteId ? `?athlete=${encodeURIComponent(state.selectedAthleteId)}` : "";
+    const athleteParam = state.selectedAthleteId ?`?athlete=${encodeURIComponent(state.selectedAthleteId)}` : "";
     window.location.href = `/api/strava/auth${athleteParam}`;
     return;
   }
   if (event.target.closest("[data-test-strava]")) {
     await testStrava();
+    return;
+  }
+  if (event.target.closest("[data-refresh-ai]")) {
+    await refreshAiProjection();
   }
 });
 
-document.querySelector("#syncSelected").addEventListener("click", runSync);
-document.querySelector("[data-import-demo]").addEventListener("click", runSync);
-document.querySelector("#athleteForm").addEventListener("submit", saveAthlete);
-document.querySelector("#cancelAthleteEdit").addEventListener("click", () => resetAthleteForm("Edição cancelada."));
+document.querySelector("#syncSelected")?.addEventListener("click", runSync);
+document.querySelector("[data-import-demo]")?.addEventListener("click", runSync);
+document.querySelector("#athleteForm")?.addEventListener("submit", saveAthlete);
+document.querySelector("#aiSettingsForm")?.addEventListener("submit", saveAiSettings);
+document.querySelector("#cancelAthleteEdit")?.addEventListener("click", () => resetAthleteForm("Edição cancelada."));
 
 loadAppVersion();
 boot();

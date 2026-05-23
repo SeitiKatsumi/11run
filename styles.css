@@ -108,7 +108,7 @@ button {
 .menu-toggle {
   position: fixed;
   top: 14px;
-  left: 208px;
+  left: 254px;
   z-index: 40;
   width: 42px;
   height: 42px;
@@ -123,10 +123,18 @@ button {
   backdrop-filter: blur(14px);
 }
 
+.menu-toggle::before {
+  content: "\2039";
+  color: var(--heading);
+  font-size: 30px;
+  line-height: 1;
+  transform: translateX(-1px);
+}
+
 .menu-toggle span {
+  display: none;
   width: 18px;
   height: 2px;
-  display: block;
   border-radius: 999px;
   background: var(--heading);
 }
@@ -183,7 +191,7 @@ nav a {
   border: 1px solid transparent;
   border-radius: var(--radius);
   font-size: 13px;
-  font-weight: 560;
+  font-weight: 520;
   text-transform: uppercase;
 }
 
@@ -199,7 +207,12 @@ nav a.is-active {
 }
 
 .shell.rail-collapsed .menu-toggle {
-  left: 22px;
+  left: 96px;
+}
+
+.shell.rail-collapsed .menu-toggle::before {
+  content: "\203A";
+  transform: translateX(1px);
 }
 
 .shell.rail-collapsed .rail {
@@ -515,6 +528,17 @@ dialog {
   gap: 18px;
 }
 
+.training-grid-wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+[hidden],
+.admin-only[hidden],
+.admin-only-field[hidden],
+.manager-only[hidden] {
+  display: none !important;
+}
+
 .panel {
   padding: 18px;
 }
@@ -625,6 +649,128 @@ dialog {
   margin: 3px 0 0;
   color: var(--muted);
   font-size: 11px;
+}
+
+.focus-roadmap-panel {
+  margin-bottom: 18px;
+  border-color: rgba(255, 75, 11, 0.18);
+  background:
+    linear-gradient(110deg, rgba(255, 75, 11, 0.075), rgba(255, 255, 255, 0.025) 40%, rgba(0, 0, 0, 0.08)),
+    var(--panel);
+}
+
+.roadmap-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.roadmap-head h3 {
+  margin: 5px 0 0;
+  color: #dedbd4;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.probability-badge {
+  display: grid;
+  justify-items: end;
+  color: var(--orange);
+}
+
+.probability-badge strong {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 460;
+  line-height: 1;
+}
+
+.probability-badge span {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.roadmap-metric {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.roadmap-metric span {
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.roadmap-metric strong {
+  display: block;
+  margin-top: 5px;
+  color: #e7e3dc;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.roadmap-metric p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.roadmap-chart {
+  margin-top: 14px;
+}
+
+.roadmap-chart svg {
+  width: 100%;
+  height: 118px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.roadmap-chart line {
+  stroke: rgba(255, 255, 255, 0.06);
+}
+
+.roadmap-chart .roadmap-required {
+  fill: none;
+  stroke: rgba(180, 180, 176, 0.42);
+  stroke-width: 0.8;
+  stroke-dasharray: 4 6;
+}
+
+.roadmap-chart .roadmap-current {
+  fill: none;
+  stroke: rgba(255, 75, 11, 0.7);
+  stroke-width: 0.75;
+}
+
+.roadmap-chart text {
+  fill: var(--muted);
+  font-size: 9px;
+  font-weight: 430;
+}
+
+.roadmap-ai {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.roadmap-actions {
+  margin-top: 12px;
 }
 
 .performance-chart-panel {
@@ -850,6 +996,37 @@ dialog {
   padding-right: 4px;
 }
 
+.period-week-list {
+  display: grid;
+  gap: 10px;
+}
+
+.period-week {
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.period-week-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.period-week-head strong {
+  color: #e6e2dc;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.period-week-head span {
+  color: var(--orange);
+  font-size: 11px;
+  font-weight: 480;
+}
+
 .period-empty {
   margin: 18px 0 0;
   color: var(--muted);
@@ -959,11 +1136,11 @@ dialog {
 .activity em {
   display: block;
   margin-top: 6px;
-  color: rgba(248, 243, 232, 0.9);
+  color: #f3efe8;
   font-size: 10px;
   line-height: 1.25;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 430;
   text-transform: uppercase;
   opacity: 0.88;
 }
@@ -1040,6 +1217,79 @@ dialog {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+.dashboard-settings {
+  margin-top: 18px;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 16px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.settings-header h3 {
+  margin: 5px 0 0;
+  color: #dedbd4;
+  font-size: 24px;
+  font-weight: 520;
+}
+
+.tests-field {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.tests-field legend {
+  padding: 0 6px;
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.tests-grid {
+  display: grid;
+  grid-template-columns: 0.8fr 0.8fr minmax(0, 1.4fr);
+  gap: 10px;
+}
+
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+textarea {
+  width: 100%;
+  min-height: 130px;
+  resize: vertical;
+  padding: 10px 12px;
+  color: var(--heading);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.26);
+}
+
+.ai-settings-panel {
+  margin-top: 18px;
+}
+
+.ai-settings-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.35fr) auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.ai-toggle {
+  min-height: 42px;
 }
 
 select {
@@ -1422,12 +1672,42 @@ dialog::backdrop {
   .focus-projection-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .roadmap-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ai-settings-form,
+  .tests-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
   .menu-toggle,
   .shell.rail-collapsed .menu-toggle {
     left: 14px;
+  }
+
+  .menu-toggle::before,
+  .shell.rail-collapsed .menu-toggle::before {
+    content: "";
+  }
+
+  .menu-toggle span {
+    display: block;
+  }
+
+  .shell.menu-open .menu-toggle {
+    left: calc(min(84vw, 320px) + 10px);
+  }
+
+  .shell.menu-open .menu-toggle::before {
+    content: "\2039";
+  }
+
+  .shell.menu-open .menu-toggle span {
+    display: none;
   }
 
   .shell,
@@ -1442,7 +1722,7 @@ dialog::backdrop {
     left: 0;
     width: min(84vw, 320px);
     height: 100vh;
-    padding: 72px 18px 18px;
+    padding: 28px 18px 18px;
     transform: translateX(-105%);
     transition: transform 180ms ease;
     z-index: 35;
@@ -1533,7 +1813,8 @@ dialog::backdrop {
   }
 
   .hero-actions,
-  .toolbar {
+  .toolbar,
+  .settings-header {
     display: grid;
     grid-template-columns: 1fr;
     align-items: stretch;
@@ -1645,7 +1926,9 @@ dialog::backdrop {
   }
 
   .focus-projection-head,
-  .focus-projection-grid {
+  .focus-projection-grid,
+  .roadmap-head,
+  .roadmap-grid {
     grid-template-columns: 1fr;
   }
 

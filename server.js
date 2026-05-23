@@ -28,11 +28,13 @@ const APP_VERSION = process.env.APP_VERSION || process.env.CAPROVER_GIT_COMMIT_S
 const SECRET_MASK = "********";
 const STRAVA_REQUIRED_ACTIVITY_SCOPES = ["activity:read", "activity:read_all"];
 const FOCUS_DISTANCES = new Set([800, 1500, 3000, 5000, 10000, 15000, 21000, 42000]);
+const USER_ROLES = new Set(["admin", "manager", "coach", "athlete"]);
+const DEFAULT_OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 
 const pool = DATABASE_URL && Pool
-  ? new Pool({
+  ?new Pool({
       connectionString: DATABASE_URL,
-      ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined
+      ssl: process.env.DATABASE_SSL === "true" ?{ rejectUnauthorized: false } : undefined
     })
   : null;
 
@@ -290,6 +292,15 @@ function sanitizeIntegrations(integrations) {
   return copy;
 }
 
+function sanitizeSettings(settings = {}) {
+  return {
+    openaiEnabled: Boolean(settings.openai_enabled || settings.openaiEnabled),
+    openaiModel: settings.openai_model || settings.openaiModel || DEFAULT_OPENAI_MODEL,
+    hasOpenaiApiKey: Boolean(settings.openai_api_key || settings.openaiApiKey),
+    openaiApiKey: settings.openai_api_key || settings.openaiApiKey ?SECRET_MASK : ""
+  };
+}
+
 function sendJson(res, status, payload) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
@@ -306,8 +317,8 @@ function redirect(res, location) {
 function sendFile(res, filePath) {
   fs.readFile(filePath, (error, content) => {
     if (error) {
-      res.writeHead(error.code === "ENOENT" ? 404 : 500, { "Content-Type": "text/plain; charset=utf-8" });
-      res.end(error.code === "ENOENT" ? "Arquivo não encontrado." : "Erro interno.");
+      res.writeHead(error.code === "ENOENT" ?404 : 500, { "Content-Type": "text/plain; charset=utf-8" });
+      res.end(error.code === "ENOENT" ?"Arquivo não encontrado." : "Erro interno.");
       return;
     }
 
@@ -382,6 +393,55 @@ async function getTenant(slug = DEFAULT_TENANT_SLUG) {
   return created.rows[0];
 }
 
+async function getAppSettings(tenantId) {
+  if (!pool) {
+    const settings = readJson(path.join(DATA_DIR, "settings.json"), {});
+    return sanitizeSettings(settings);
+  }
+  const result = await query("SELECT * FROM app_settings WHERE tenant_id = $1 LIMIT 1", [tenantId]);
+  const row = result.rows[0] || {
+    openai_enabled: false,
+    openai_model: DEFAULT_OPENAI_MODEL,
+    openai_api_key: ""
+  };
+  return sanitizeSettings(row);
+}
+
+async function getRawAppSettings(tenantId) {
+  if (!pool) return readJson(path.join(DATA_DIR, "settings.json"), {});
+  const result = await query("SELECT * FROM app_settings WHERE tenant_id = $1 LIMIT 1", [tenantId]);
+  return result.rows[0] || {};
+}
+
+async function saveAppSettings(tenantId, input = {}) {
+  const existing = await getRawAppSettings(tenantId);
+  const openaiEnabled = Boolean(input.openaiEnabled);
+  const openaiModel = String(input.openaiModel || existing.openai_model || existing.openaiModel || DEFAULT_OPENAI_MODEL).trim() || DEFAULT_OPENAI_MODEL;
+  const incomingKey = String(input.openaiApiKey || "").trim();
+  const openaiApiKey = incomingKey && incomingKey !== SECRET_MASK
+    ?incomingKey
+    : existing.openai_api_key || existing.openaiApiKey || "";
+
+  if (!pool) {
+    const settings = { openaiEnabled, openaiModel, openaiApiKey };
+    writeJson(path.join(DATA_DIR, "settings.json"), settings);
+    return sanitizeSettings(settings);
+  }
+
+  const result = await query(
+    `INSERT INTO app_settings (tenant_id, openai_enabled, openai_model, openai_api_key)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT (tenant_id)
+     DO UPDATE SET openai_enabled = EXCLUDED.openai_enabled,
+                   openai_model = EXCLUDED.openai_model,
+                   openai_api_key = EXCLUDED.openai_api_key,
+                   updated_at = now()
+     RETURNING *`,
+    [tenantId, openaiEnabled, openaiModel, openaiApiKey || null]
+  );
+  return sanitizeSettings(result.rows[0]);
+}
+
 async function ensureDefaultAdmin(tenantId) {
   if (!pool || !DEFAULT_ADMIN_EMAIL || !DEFAULT_ADMIN_PASSWORD) return;
   const adminResult = await query(
@@ -428,8 +488,8 @@ async function ensureTenantIntegrations(tenantId, athleteUserId = null) {
           integration.enabled,
           integration.connected,
           JSON.stringify(integration.credentials),
-          integration.token ? JSON.stringify(integration.token) : null,
-          integration.athlete ? JSON.stringify(integration.athlete) : null
+          integration.token ?JSON.stringify(integration.token) : null,
+          integration.athlete ?JSON.stringify(integration.athlete) : null
         ]
       );
     }
@@ -473,7 +533,7 @@ async function migrateGlobalStravaTokenToAthlete(tenantId, athleteUserId) {
       Boolean(globalIntegration.connected),
       JSON.stringify(mergeCredentials(globalIntegration.credentials, row.credentials)),
       JSON.stringify(globalIntegration.token),
-      globalIntegration.athlete ? JSON.stringify(globalIntegration.athlete) : null,
+      globalIntegration.athlete ?JSON.stringify(globalIntegration.athlete) : null,
       row.id
     ]
   );
@@ -501,6 +561,9 @@ async function getPrimaryAthleteId(tenantId) {
 }
 
 function formatAthlete(row) {
+  const tests3000 = Array.isArray(row.tests_3000)
+    ?row.tests_3000
+    : parseJsonObject(row.tests_3000);
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -513,17 +576,37 @@ function formatAthlete(row) {
     coachId: row.coach_user_id || "",
     coachName: row.coach_name || "",
     coachEmail: row.coach_email || "",
-    age: row.age == null ? "" : Number(row.age),
-    weightKg: row.weight_kg == null ? "" : Number(row.weight_kg),
-    heightCm: row.height_cm == null ? "" : Number(row.height_cm),
-    focusDistanceM: row.focus_distance_m == null ? "" : Number(row.focus_distance_m),
-    targetTimeSeconds: row.target_time_seconds == null ? "" : Number(row.target_time_seconds),
-    targetTime: row.target_time_seconds == null ? "" : formatDuration(row.target_time_seconds),
-    targetDate: row.target_date ? formatDateOnly(row.target_date) : "",
-    bestTimeSeconds: row.best_time_seconds == null ? "" : Number(row.best_time_seconds),
-    bestTime: row.best_time_seconds == null ? "" : formatDuration(row.best_time_seconds),
+    age: row.age == null ?"" : Number(row.age),
+    weightKg: row.weight_kg == null ?"" : Number(row.weight_kg),
+    heightCm: row.height_cm == null ?"" : Number(row.height_cm),
+    focusDistanceM: row.focus_distance_m == null ?"" : Number(row.focus_distance_m),
+    targetTimeSeconds: row.target_time_seconds == null ?"" : Number(row.target_time_seconds),
+    targetTime: row.target_time_seconds == null ?"" : formatDuration(row.target_time_seconds),
+    targetDate: row.target_date ?formatDateOnly(row.target_date) : "",
+    bestTimeSeconds: row.best_time_seconds == null ?"" : Number(row.best_time_seconds),
+    bestTime: row.best_time_seconds == null ?"" : formatDuration(row.best_time_seconds),
+    historyNotes: row.history_notes || "",
+    tests3000: Array.isArray(tests3000) ?tests3000.map((test) => ({
+      date: test.date || "",
+      timeSeconds: test.timeSeconds == null ?"" : Number(test.timeSeconds),
+      time: test.timeSeconds == null ?"" : formatDuration(test.timeSeconds),
+      notes: test.notes || ""
+    })) : [],
     createdAt: row.created_at
   };
+}
+
+function validateTests3000(value) {
+  const input = Array.isArray(value) ?value : [];
+  return input.slice(0, 3).map((item) => {
+    const date = String(item.date || "").trim();
+    const seconds = parseTimeToSeconds(item.time || item.timeSeconds);
+    const notes = String(item.notes || "").trim().slice(0, 220);
+    if (!date && !seconds && !notes) return null;
+    if (!date || Number.isNaN(new Date(`${date}T00:00:00`).getTime())) throw new Error("Informe uma data valida para cada teste de 3000 m.");
+    if (!seconds) throw new Error("Informe o tempo de cada teste de 3000 m.");
+    return { date, timeSeconds: seconds, notes };
+  }).filter(Boolean);
 }
 
 function parseTimeToSeconds(value) {
@@ -541,7 +624,7 @@ function parseTimeToSeconds(value) {
 
 function formatUser(row) {
   if (!row) return null;
-  const role = String(row.email || "").toLowerCase() === DEFAULT_ADMIN_EMAIL ? "admin" : row.role;
+  const role = String(row.email || "").toLowerCase() === DEFAULT_ADMIN_EMAIL ?"admin" : row.role;
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -627,6 +710,7 @@ async function listAthletes(tenantId, user = null) {
     `SELECT u.id, u.tenant_id, u.role, u.name, u.email, u.whatsapp, u.created_at,
             ap.age, ap.weight_kg, ap.height_cm, ap.team_id, ap.coach_user_id,
             ap.focus_distance_m, ap.target_time_seconds, ap.target_date, ap.best_time_seconds,
+            ap.history_notes, ap.tests_3000,
             t.name AS team_name,
             c.name AS coach_name,
             c.email AS coach_email
@@ -648,21 +732,25 @@ async function canAccessAthlete(tenantId, user, athleteUserId) {
   return visible.some((athlete) => String(athlete.id) === String(athleteUserId));
 }
 
-function validateAthlete(input) {
+function validateAthlete(input, actorUser = null) {
   const name = String(input.name || "").trim();
   const email = String(input.email || "").trim().toLowerCase();
   const whatsapp = String(input.whatsapp || "").trim();
-  const age = input.age === "" || input.age == null ? null : Number(input.age);
-  const weightKg = input.weightKg === "" || input.weightKg == null ? null : Number(input.weightKg);
-  const heightCm = input.heightCm === "" || input.heightCm == null ? null : Number(input.heightCm);
+  const age = input.age === "" || input.age == null ?null : Number(input.age);
+  const weightKg = input.weightKg === "" || input.weightKg == null ?null : Number(input.weightKg);
+  const heightCm = input.heightCm === "" || input.heightCm == null ?null : Number(input.heightCm);
   const teamName = String(input.teamName || "").trim();
   const coachName = String(input.coachName || "").trim();
   const coachEmail = String(input.coachEmail || "").trim().toLowerCase();
   const password = String(input.password || "").trim();
-  const focusDistanceM = input.focusDistanceM === "" || input.focusDistanceM == null ? null : Number(input.focusDistanceM);
+  const focusDistanceM = input.focusDistanceM === "" || input.focusDistanceM == null ?null : Number(input.focusDistanceM);
   const targetTimeSeconds = parseTimeToSeconds(input.targetTime || input.targetTimeSeconds);
   const bestTimeSeconds = parseTimeToSeconds(input.bestTime || input.bestTimeSeconds);
   const targetDate = String(input.targetDate || "").trim();
+  const historyNotes = String(input.historyNotes || "").trim().slice(0, 4000);
+  const tests3000 = validateTests3000(input.tests3000);
+  const requestedRole = String(input.role || "athlete").trim();
+  const role = actorUser?.role === "admin" && USER_ROLES.has(requestedRole) ?requestedRole : "athlete";
 
   if (!name) throw new Error("Informe o nome do atleta.");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Informe um e-mail válido.");
@@ -686,7 +774,10 @@ function validateAthlete(input) {
     focusDistanceM,
     targetTimeSeconds,
     targetDate: targetDate || null,
-    bestTimeSeconds
+    bestTimeSeconds,
+    historyNotes,
+    tests3000,
+    role
   };
 }
 
@@ -720,8 +811,8 @@ async function ensureCoach(tenantId, name, email) {
   return result.rows[0].id;
 }
 
-async function createAthlete(tenantId, input) {
-  const athlete = validateAthlete(input);
+async function createAthlete(tenantId, input, actorUser = null) {
+  const athlete = validateAthlete(input, actorUser);
   if (!pool) {
     const athletes = readJson(ATHLETES_FILE, []);
     const existingIndex = athletes.findIndex((item) => item.email === athlete.email);
@@ -729,7 +820,7 @@ async function createAthlete(tenantId, input) {
     const record = {
       id: crypto.randomUUID(),
       tenantId,
-      role: "athlete",
+      role: athlete.role,
       ...athlete,
       teamName: athlete.teamName || "",
       coachName: athlete.coachName || "",
@@ -780,24 +871,26 @@ async function createAthlete(tenantId, input) {
       );
       coachId = coachResult.rows[0].id;
     }
-    const passwordHash = athlete.password ? hashPassword(athlete.password) : null;
+    const passwordHash = athlete.password ?hashPassword(athlete.password) : null;
     const userResult = await client.query(
       `INSERT INTO users (tenant_id, role, name, email, whatsapp, password_hash)
-       VALUES ($1, 'athlete', $2, $3, $4, $5)
+       VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (tenant_id, email)
        DO UPDATE SET name = EXCLUDED.name,
                      whatsapp = EXCLUDED.whatsapp,
+                     role = EXCLUDED.role,
                      password_hash = COALESCE(EXCLUDED.password_hash, users.password_hash)
        RETURNING *`,
-      [tenantId, athlete.name, athlete.email, athlete.whatsapp, passwordHash]
+      [tenantId, athlete.role, athlete.name, athlete.email, athlete.whatsapp, passwordHash]
     );
     const user = userResult.rows[0];
     await client.query(
       `INSERT INTO athlete_profiles (
          user_id, team_id, coach_user_id, age, weight_kg, height_cm,
-         focus_distance_m, target_time_seconds, target_date, best_time_seconds
+         focus_distance_m, target_time_seconds, target_date, best_time_seconds,
+         history_notes, tests_3000
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (user_id)
        DO UPDATE SET team_id = EXCLUDED.team_id,
                      coach_user_id = EXCLUDED.coach_user_id,
@@ -808,6 +901,8 @@ async function createAthlete(tenantId, input) {
                      target_time_seconds = EXCLUDED.target_time_seconds,
                      target_date = EXCLUDED.target_date,
                      best_time_seconds = EXCLUDED.best_time_seconds,
+                     history_notes = EXCLUDED.history_notes,
+                     tests_3000 = EXCLUDED.tests_3000,
                      updated_at = now()`,
       [
         user.id,
@@ -819,7 +914,9 @@ async function createAthlete(tenantId, input) {
         athlete.focusDistanceM,
         athlete.targetTimeSeconds,
         athlete.targetDate,
-        athlete.bestTimeSeconds
+        athlete.bestTimeSeconds,
+        athlete.historyNotes,
+        JSON.stringify(athlete.tests3000)
       ]
     );
     await client.query("COMMIT");
@@ -833,8 +930,8 @@ async function createAthlete(tenantId, input) {
   }
 }
 
-async function updateAthlete(tenantId, athleteUserId, input) {
-  const athlete = validateAthlete(input);
+async function updateAthlete(tenantId, athleteUserId, input, actorUser = null) {
+  const athlete = validateAthlete(input, actorUser);
   if (!pool) {
     const athletes = readJson(ATHLETES_FILE, []);
     const index = athletes.findIndex((item) => String(item.id) === String(athleteUserId));
@@ -844,6 +941,7 @@ async function updateAthlete(tenantId, athleteUserId, input) {
     athletes[index] = {
       ...athletes[index],
       ...athlete,
+      role: athlete.role || athletes[index].role,
       teamName: athlete.teamName || "",
       coachName: athlete.coachName || "",
       coachEmail: athlete.coachEmail || ""
@@ -899,15 +997,16 @@ async function updateAthlete(tenantId, athleteUserId, input) {
       );
       coachId = coachResult.rows[0].id;
     }
-    const passwordHash = athlete.password ? hashPassword(athlete.password) : null;
+    const passwordHash = athlete.password ?hashPassword(athlete.password) : null;
     await client.query(
       `UPDATE users
           SET name = $1,
               email = $2,
               whatsapp = $3,
-              password_hash = COALESCE($4, password_hash)
-        WHERE tenant_id = $5 AND id = $6`,
-      [athlete.name, athlete.email, athlete.whatsapp, passwordHash, tenantId, athleteUserId]
+              role = CASE WHEN $4 THEN $5 ELSE role END,
+              password_hash = COALESCE($6, password_hash)
+        WHERE tenant_id = $7 AND id = $8`,
+      [athlete.name, athlete.email, athlete.whatsapp, actorUser?.role === "admin", athlete.role, passwordHash, tenantId, athleteUserId]
     );
     await client.query(
       `UPDATE athlete_profiles
@@ -920,8 +1019,10 @@ async function updateAthlete(tenantId, athleteUserId, input) {
               target_time_seconds = $7,
               target_date = $8,
               best_time_seconds = $9,
+              history_notes = $10,
+              tests_3000 = $11,
               updated_at = now()
-        WHERE user_id = $10`,
+        WHERE user_id = $12`,
       [
         teamId,
         coachId,
@@ -932,6 +1033,8 @@ async function updateAthlete(tenantId, athleteUserId, input) {
         athlete.targetTimeSeconds,
         athlete.targetDate,
         athlete.bestTimeSeconds,
+        athlete.historyNotes,
+        JSON.stringify(athlete.tests3000),
         athleteUserId
       ]
     );
@@ -986,7 +1089,7 @@ async function getIntegrations(tenantId, athleteUserId = null) {
   if (!pool) return readJson(INTEGRATIONS_FILE, defaultIntegrations());
   await ensureTenantIntegrations(tenantId, athleteUserId);
   const globalRows = athleteUserId
-    ? await query(
+    ?await query(
         `SELECT provider, credentials
            FROM integrations
           WHERE tenant_id = $1 AND athlete_user_id IS NULL`,
@@ -1059,8 +1162,8 @@ async function saveIntegration(tenantId, athleteUserId, provider, patch) {
         next.enabled,
         next.connected,
         JSON.stringify(next.credentials || {}),
-        next.token ? JSON.stringify(next.token) : null,
-        next.athlete ? JSON.stringify(next.athlete) : null,
+        next.token ?JSON.stringify(next.token) : null,
+        next.athlete ?JSON.stringify(next.athlete) : null,
         next.oauthState || null,
         existing.rows[0].id
       ]
@@ -1078,8 +1181,8 @@ async function saveIntegration(tenantId, athleteUserId, provider, patch) {
       next.enabled,
       next.connected,
       JSON.stringify(next.credentials || {}),
-      next.token ? JSON.stringify(next.token) : null,
-      next.athlete ? JSON.stringify(next.athlete) : null,
+      next.token ?JSON.stringify(next.token) : null,
+      next.athlete ?JSON.stringify(next.athlete) : null,
       next.oauthState || null
     ]
   );
@@ -1092,7 +1195,7 @@ function activityRowToApi(row) {
   const movingTimeSeconds = safeNumber(raw.moving_time, raw.elapsed_time);
   const distanceMeters = safeNumber(raw.distance);
   const bestEfforts = Array.isArray(raw.best_efforts)
-    ? raw.best_efforts.map((effort) => ({
+    ?raw.best_efforts.map((effort) => ({
         name: effort.name || "",
         distanceMeters: safeNumber(effort.distance),
         elapsedTimeSeconds: safeNumber(effort.elapsed_time, effort.moving_time),
@@ -1127,7 +1230,7 @@ function parseJsonObject(value) {
   if (typeof value === "object") return value;
   try {
     const parsed = JSON.parse(value);
-    return parsed && typeof parsed === "object" ? parsed : {};
+    return parsed && typeof parsed === "object" ?parsed : {};
   } catch {
     return {};
   }
@@ -1156,13 +1259,13 @@ function splitRunSignals(activity) {
     const fastest = Math.max(...speeds);
     return {
       splitCount: speeds.length,
-      variability: mean ? Math.sqrt(variance) / mean : 0,
-      fastestRatio: mean ? fastest / mean : 1,
+      variability: mean ?Math.sqrt(variance) / mean : 0,
+      fastestRatio: mean ?fastest / mean : 1,
       fastestPace: formatPace(1000, 1000 / fastest)
     };
   }
 
-  const splits = Array.isArray(activity.splits_metric) ? activity.splits_metric : [];
+  const splits = Array.isArray(activity.splits_metric) ?activity.splits_metric : [];
   const speeds = splits
     .map((split) => safeNumber(split.average_speed) || (safeNumber(split.distance) / safeNumber(split.moving_time)))
     .filter((speed) => Number.isFinite(speed) && speed > 0);
@@ -1176,8 +1279,8 @@ function splitRunSignals(activity) {
   const fastest = Math.max(...speeds);
   return {
     splitCount: speeds.length,
-    variability: mean ? Math.sqrt(variance) / mean : 0,
-    fastestRatio: mean ? fastest / mean : 1,
+    variability: mean ?Math.sqrt(variance) / mean : 0,
+    fastestRatio: mean ?fastest / mean : 1,
     fastestPace: formatPace(1000, 1000 / fastest)
   };
 }
@@ -1199,28 +1302,28 @@ function calculateRunAnalysis(activity = {}, row = {}) {
   const isRun = /run/i.test(type);
   const movingTime = safeNumber(activity.moving_time, activity.elapsed_time);
   const distanceMeters = safeNumber(activity.distance);
-  const durationMinutes = movingTime ? movingTime / 60 : 0;
+  const durationMinutes = movingTime ?movingTime / 60 : 0;
   const durationHours = durationMinutes / 60;
-  const distanceKm = distanceMeters ? distanceMeters / 1000 : 0;
+  const distanceKm = distanceMeters ?distanceMeters / 1000 : 0;
   const elevationGain = safeNumber(activity.total_elevation_gain);
-  const elevationPerKm = distanceKm ? elevationGain / distanceKm : 0;
+  const elevationPerKm = distanceKm ?elevationGain / distanceKm : 0;
   const avgHr = safeNumber(activity.average_heartrate);
   const maxHr = safeNumber(activity.max_heartrate);
   const relativeEffort = safeNumber(activity.suffer_score, activity.relative_effort);
   const thresholdHr = safeNumber(process.env.RUN_THRESHOLD_HR, process.env.DEFAULT_THRESHOLD_HR, 170);
   const { splitCount, variability, fastestRatio, fastestPace } = splitRunSignals(activity);
 
-  const hrIntensity = avgHr ? clamp(avgHr / thresholdHr, 0.45, 1.28) : 0;
-  const hrTss = durationHours && hrIntensity ? durationHours * (hrIntensity ** 2) * 100 : 0;
-  const durationTss = durationHours ? durationHours * 62 : 0;
-  const stravaTss = relativeEffort ? relativeEffort * 1.08 : 0;
+  const hrIntensity = avgHr ?clamp(avgHr / thresholdHr, 0.45, 1.28) : 0;
+  const hrTss = durationHours && hrIntensity ?durationHours * (hrIntensity ** 2) * 100 : 0;
+  const durationTss = durationHours ?durationHours * 62 : 0;
+  const stravaTss = relativeEffort ?relativeEffort * 1.08 : 0;
   const spikeBonus = clamp(((fastestRatio - 1.12) * 38) + (variability * 72), 0, 42);
   const elevationBonus = clamp(elevationPerKm * 0.16, 0, 18);
-  const maxHrBonus = maxHr && thresholdHr ? clamp(((maxHr / thresholdHr) - 1) * 45, 0, 24) : 0;
+  const maxHrBonus = maxHr && thresholdHr ?clamp(((maxHr / thresholdHr) - 1) * 45, 0, 24) : 0;
   const baseTss = Math.max(hrTss, stravaTss, durationTss);
   const tss = Math.round(clamp(baseTss + spikeBonus + elevationBonus + maxHrBonus, 1, 320));
   const aggressionScore = Math.round(clamp(
-    (tss * 0.72) + (spikeBonus * 1.2) + (relativeEffort ? relativeEffort * 0.18 : 0) + elevationBonus,
+    (tss * 0.72) + (spikeBonus * 1.2) + (relativeEffort ?relativeEffort * 0.18 : 0) + elevationBonus,
     1,
     100
   ));
@@ -1240,15 +1343,15 @@ function calculateRunAnalysis(activity = {}, row = {}) {
     tss,
     aggressionScore,
     characteristic,
-    intensityFactor: hrIntensity ? hrIntensity.toFixed(2) : "",
-    relativeEffort: relativeEffort ? Math.round(relativeEffort) : "",
+    intensityFactor: hrIntensity ?hrIntensity.toFixed(2) : "",
+    relativeEffort: relativeEffort ?Math.round(relativeEffort) : "",
     splitCount,
     splitVariability: `${Math.round(variability * 100)}%`,
-    fastestRatio: fastestRatio ? fastestRatio.toFixed(2) : "",
+    fastestRatio: fastestRatio ?fastestRatio.toFixed(2) : "",
     fastestPace,
-    elevationPerKm: distanceKm ? `${Math.round(elevationPerKm)} m/km` : "",
+    elevationPerKm: distanceKm ?`${Math.round(elevationPerKm)} m/km` : "",
     note: isRun
-      ? "Estimativa proprietaria para corrida baseada em Strava, FC, duracao, elevacao e variacao dos splits."
+      ?"Estimativa proprietaria para corrida baseada em Strava, FC, duracao, elevacao e variacao dos splits."
       : "Atividade fora do escopo principal de corrida."
   };
 }
@@ -1265,7 +1368,7 @@ function formatDateOnly(value) {
 
 async function listActivities(tenantId, athleteUserId = null) {
   if (!pool) return readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
-  const params = athleteUserId ? [tenantId, athleteUserId] : [tenantId];
+  const params = athleteUserId ?[tenantId, athleteUserId] : [tenantId];
   const result = await query(
     `SELECT provider,
             provider_activity_id,
@@ -1282,7 +1385,7 @@ async function listActivities(tenantId, athleteUserId = null) {
             raw
        FROM activities
       WHERE tenant_id = $1
-        ${athleteUserId ? "AND athlete_user_id = $2" : ""}
+        ${athleteUserId ?"AND athlete_user_id = $2" : ""}
       ORDER BY activity_date ASC`,
     params
   );
@@ -1408,14 +1511,14 @@ function mapStravaActivity(activity) {
   return {
     id: `strava-${activity.id}`,
     providerId: String(activity.id),
-    date: Number.isNaN(date.getTime()) ? new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10),
+    date: Number.isNaN(date.getTime()) ?new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10),
     title: activity.name || "Atividade Strava",
     source: "Strava",
     type: activity.sport_type || activity.type || "Run",
     description: [
       activity.description,
-      activity.total_elevation_gain ? `Elevação ${Math.round(activity.total_elevation_gain)} m` : "",
-      activity.average_heartrate ? `FC média ${Math.round(activity.average_heartrate)} bpm` : ""
+      activity.total_elevation_gain ?`Elevação ${Math.round(activity.total_elevation_gain)} m` : "",
+      activity.average_heartrate ?`FC média ${Math.round(activity.average_heartrate)} bpm` : ""
     ].filter(Boolean).join(" | ") || "Atividade importada do Strava.",
     distance: formatDistance(activity.distance),
     duration: formatDuration(activity.moving_time || activity.elapsed_time),
@@ -1606,6 +1709,62 @@ async function testStravaConnection(tenantId, athleteUserId) {
   };
 }
 
+function openaiTextFromResponse(payload) {
+  if (payload.output_text) return String(payload.output_text);
+  const chunks = [];
+  for (const item of payload.output || []) {
+    for (const content of item.content || []) {
+      if (content.text) chunks.push(content.text);
+    }
+  }
+  return chunks.join("\n").trim();
+}
+
+async function generateAiProjection(tenantId, input = {}) {
+  const settings = await getRawAppSettings(tenantId);
+  const apiKey = settings.openai_api_key || settings.openaiApiKey || process.env.OPENAI_API_KEY || "";
+  const model = settings.openai_model || settings.openaiModel || DEFAULT_OPENAI_MODEL;
+  const enabled = Boolean(settings.openai_enabled || settings.openaiEnabled || process.env.OPENAI_API_KEY);
+  if (!enabled || !apiKey) {
+    return {
+      ok: false,
+      model,
+      text: "IA externa nao configurada. A probabilidade exibida usa o modelo local 11RUN com volume, 11TSS, consistencia, testes de 3000 m, historico e distancia ate a prova."
+    };
+  }
+
+  const prompt = [
+    "Voce e um cientista de performance em corrida. Analise apenas corrida, nunca ciclismo.",
+    "Responda em portugues do Brasil, com tom tecnico, curto e acionavel.",
+    "Nao invente dados. Use a probabilidade local como ancora e ajuste apenas se os sinais justificarem.",
+    "Inclua: probabilidade em %, principais fatores, riscos e uma recomendacao objetiva.",
+    "Dados estruturados:",
+    JSON.stringify(input, null, 2)
+  ].join("\n");
+
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model,
+      input: prompt,
+      max_output_tokens: 420
+    })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw httpError(payload.error?.message || `OpenAI respondeu HTTP ${response.status}.`, response.status);
+  }
+  return {
+    ok: true,
+    model,
+    text: openaiTextFromResponse(payload) || "A IA nao retornou texto para esta analise."
+  };
+}
+
 async function handleStravaCallback(url, res) {
   const decodedState = decodeStravaState(url.searchParams.get("state"));
   const tenantSlug = decodedState.tenant || url.searchParams.get("tenant") || DEFAULT_TENANT_SLUG;
@@ -1659,7 +1818,7 @@ async function handleStravaCallback(url, res) {
       athlete: payload.athlete || null,
       oauthState: null
     });
-    const athleteParam = athleteUserId ? `&athlete=${encodeURIComponent(athleteUserId)}` : "";
+    const athleteParam = athleteUserId ?`&athlete=${encodeURIComponent(athleteUserId)}` : "";
     redirect(res, `/#configuracao?strava=connected${athleteParam}`);
   } catch (exchangeError) {
     redirect(res, `/#configuracao?strava=error&message=${encodeURIComponent(exchangeError.message)}`);
@@ -1671,7 +1830,7 @@ async function contextFromReq(req) {
   const user = await getSessionUser(req, tenant.id);
   const athleteIdFromHeader = req.headers["x-athlete-id"] || null;
   const athleteUserId = user?.role === "athlete"
-    ? user.id
+    ?user.id
     : athleteIdFromHeader || await getPrimaryAthleteId(tenant.id);
   if (user && athleteUserId && !(await canAccessAthlete(tenant.id, user, athleteUserId))) {
     const error = new Error("Usuário sem permissão para acessar este atleta.");
@@ -1703,7 +1862,7 @@ function requireRole(user, roles) {
 async function handleApi(req, res, url) {
   try {
     if (req.method === "GET" && url.pathname === "/api/health") {
-      sendJson(res, 200, { ok: true, database: pool ? "postgres" : "json", publicBaseUrl: PUBLIC_BASE_URL, version: APP_VERSION });
+      sendJson(res, 200, { ok: true, database: pool ?"postgres" : "json", publicBaseUrl: PUBLIC_BASE_URL, version: APP_VERSION });
       return;
     }
 
@@ -1762,10 +1921,10 @@ async function handleApi(req, res, url) {
     if (req.method === "POST" && url.pathname === "/api/athletes") {
       const tenant = await getTenant(tenantSlugFromReq(req));
       const user = await getSessionUser(req, tenant.id);
-      requireRole(user, ["admin", "manager", "coach"]);
+      requireUser(user);
       await ensureUserAthleteProfile(tenant.id, user);
       const body = await readRequestBody(req);
-      const athlete = await createAthlete(tenant.id, body);
+      const athlete = await createAthlete(tenant.id, body, user);
       sendJson(res, 201, { athlete, athletes: await listAthletes(tenant.id, user) });
       return;
     }
@@ -1774,13 +1933,14 @@ async function handleApi(req, res, url) {
     if (athleteRoute && req.method === "PUT") {
       const tenant = await getTenant(tenantSlugFromReq(req));
       const user = await getSessionUser(req, tenant.id);
-      requireRole(user, ["admin", "manager", "coach"]);
+      requireUser(user);
       const athleteUserId = decodeURIComponent(athleteRoute[1]);
-      if (!(await canAccessAthlete(tenant.id, user, athleteUserId))) {
+      const canEdit = ["admin", "manager", "coach"].includes(user.role) || String(user.id) === String(athleteUserId);
+      if (!canEdit || !(await canAccessAthlete(tenant.id, user, athleteUserId))) {
         throw httpError("Usuário sem permissão para editar este atleta.", 403);
       }
       const body = await readRequestBody(req);
-      const athlete = await updateAthlete(tenant.id, athleteUserId, body);
+      const athlete = await updateAthlete(tenant.id, athleteUserId, body, user);
       sendJson(res, 200, { athlete, athletes: await listAthletes(tenant.id, user) });
       return;
     }
@@ -1802,6 +1962,23 @@ async function handleApi(req, res, url) {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
       sendJson(res, 200, sanitizeIntegrations(await getIntegrations(tenant.id, athleteUserId)));
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/settings") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
+      requireRole(user, ["admin"]);
+      sendJson(res, 200, await getAppSettings(tenant.id));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/settings") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
+      requireRole(user, ["admin"]);
+      const body = await readRequestBody(req);
+      sendJson(res, 200, await saveAppSettings(tenant.id, body));
       return;
     }
 
@@ -1829,7 +2006,7 @@ async function handleApi(req, res, url) {
       const { tenant, user } = await contextFromReq(req);
       requireUser(user);
       const athleteUserId = user.role === "athlete"
-        ? user.id
+        ?user.id
         : url.searchParams.get("athlete") || await getPrimaryAthleteId(tenant.id);
       if (!(await canAccessAthlete(tenant.id, user, athleteUserId))) {
         const error = new Error("Usuário sem permissão para conectar este atleta.");
@@ -1878,12 +2055,23 @@ async function handleApi(req, res, url) {
       return;
     }
 
+    if (req.method === "POST" && url.pathname === "/api/ai/projection") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      if (body.athleteId && !(await canAccessAthlete(tenant.id, user, body.athleteId))) {
+        throw httpError("Usuario sem permissao para analisar este atleta.", 403);
+      }
+      sendJson(res, 200, await generateAiProjection(tenant.id, { ...body, athleteUserId }));
+      return;
+    }
+
     if (req.method === "POST" && url.pathname === "/api/sync") {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
       const body = await readRequestBody(req);
       const days = Number(body.days || 30);
-      const providers = Array.isArray(body.providers) ? body.providers.map((item) => String(item).toLowerCase()) : [];
+      const providers = Array.isArray(body.providers) ?body.providers.map((item) => String(item).toLowerCase()) : [];
       const result = [];
       const warnings = [];
       if (providers.includes("strava")) result.push(...await syncStrava(tenant.id, athleteUserId, days));
@@ -1914,7 +2102,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   const pathname = decodeURIComponent(url.pathname);
-  const requestedPath = pathname === "/" ? "/index.html" : pathname;
+  const requestedPath = pathname === "/" ?"/index.html" : pathname;
   const safePath = path.normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
   const filePath = path.join(ROOT, safePath);
 

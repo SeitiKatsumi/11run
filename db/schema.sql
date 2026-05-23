@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS athlete_profiles (
   target_time_seconds INTEGER,
   target_date DATE,
   best_time_seconds INTEGER,
+  history_notes TEXT,
+  tests_3000 JSONB NOT NULL DEFAULT '[]',
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -86,6 +88,14 @@ CREATE TABLE IF NOT EXISTS activities (
   UNIQUE (tenant_id, provider, provider_activity_id)
 );
 
+CREATE TABLE IF NOT EXISTS app_settings (
+  tenant_id UUID PRIMARY KEY REFERENCES tenants(id) ON DELETE CASCADE,
+  openai_api_key TEXT,
+  openai_model TEXT,
+  openai_enabled BOOLEAN NOT NULL DEFAULT false,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS team_id UUID REFERENCES teams(id) ON DELETE SET NULL;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS coach_user_id UUID REFERENCES users(id) ON DELETE SET NULL;
@@ -93,6 +103,8 @@ ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS focus_distance_m INTEGER;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS target_time_seconds INTEGER;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS target_date DATE;
 ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS best_time_seconds INTEGER;
+ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS history_notes TEXT;
+ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS tests_3000 JSONB NOT NULL DEFAULT '[]';
 
 CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role);
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_team ON athlete_profiles(team_id);
