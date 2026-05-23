@@ -553,6 +553,18 @@ dialog {
     var(--panel);
 }
 
+.panel-collapse-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.performance-chart-panel.is-collapsed {
+  margin-bottom: 12px;
+}
+
 .focus-projection-head {
   display: flex;
   justify-content: space-between;

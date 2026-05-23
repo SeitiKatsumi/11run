@@ -10,7 +10,22 @@
   appSettings: null,
   aiProjection: null,
   editingAthleteId: "",
-  syncing: false
+  syncing: false,
+  collapsedPanels: (() => {
+    const defaults = {
+      focusProjection: true,
+      focusRoadmap: true,
+      performanceChart: true
+    };
+    try {
+      const raw = localStorage.getItem("collapsedPanels");
+      if (!raw) return defaults;
+      const parsed = JSON.parse(raw);
+      return { ...defaults, ...(parsed && typeof parsed === "object" ?parsed : {}) };
+    } catch {
+      return defaults;
+    }
+  })()
 };
 
 const APP_VERSION_FALLBACK = "local-ui";
@@ -146,6 +161,46 @@ function toggleMenu() {
 
 function closeMobileMenu() {
   if (isMobileLayout()) setMenuOpen(false);
+}
+
+function isPanelCollapsed(key) {
+  return Boolean(state.collapsedPanels?.[key]);
+}
+
+function setPanelCollapsed(key, collapsed) {
+  state.collapsedPanels = state.collapsedPanels || {};
+  state.collapsedPanels[key] = Boolean(collapsed);
+  localStorage.setItem("collapsedPanels", JSON.stringify(state.collapsedPanels));
+}
+
+function mountCollapsibleSection(panel, key, label) {
+  if (!panel) return;
+  let content = panel.querySelector(":scope > .panel-collapse-content");
+  if (!content) {
+    content = document.createElement("div");
+    content.className = "panel-collapse-content";
+    const nodes = Array.from(panel.childNodes);
+    nodes.forEach((node) => {
+      if (node.nodeType === 1 && node.classList.contains("panel-collapse-control")) return;
+      content.appendChild(node);
+    });
+    panel.appendChild(content);
+  }
+  let control = panel.querySelector(":scope > .panel-collapse-control");
+  if (!control) {
+    control = document.createElement("div");
+    control.className = "panel-collapse-control";
+    control.innerHTML = `
+      <span class="kicker">${escapeHtml(label)}</span>
+      <button class="secondary-action compact" type="button" data-toggle-panel="${escapeHtml(key)}">Abrir</button>
+    `;
+    panel.insertBefore(control, panel.firstChild);
+  }
+  const collapsed = isPanelCollapsed(key);
+  panel.classList.toggle("is-collapsed", collapsed);
+  content.hidden = collapsed;
+  const button = control.querySelector(`[data-toggle-panel="${key}"]`);
+  if (button) button.textContent = collapsed ?"Abrir" : "Fechar";
 }
 
 async function api(path, options = {}) {
@@ -442,6 +497,7 @@ function renderFocusProjection() {
         <p>Informe distância, tempo alvo e data no cadastro para ativar a projeção.</p>
       </div>
     `;
+    mountCollapsibleSection(target, "focusProjection", "Projeção da prova foco");
     return;
   }
 
@@ -481,6 +537,7 @@ function renderFocusProjection() {
       <div><span>Modelo</span><strong>Riegel + 11TSS</strong><p>corridas reais e best efforts do Strava</p></div>
     </div>
   `;
+  mountCollapsibleSection(target, "focusProjection", "Projeção da prova foco");
 }
 
 function collect3000Tests(athlete) {
@@ -596,6 +653,7 @@ function renderFocusRoadmap() {
         <p>A projeção usa 11TSS, volume, consistência, testes de 3000 m e histórico do atleta.</p>
       </div>
     `;
+    mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva até a prova");
     return;
   }
   const width = 920;
@@ -636,6 +694,7 @@ function renderFocusRoadmap() {
     <p class="roadmap-ai">${escapeHtml(aiText)}</p>
     <div class="roadmap-actions"><button class="secondary-action compact" type="button" data-refresh-ai>Atualizar análise IA</button></div>
   `;
+  mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva até a prova");
 }
 
 function renderAthleteFocusHistory() {
@@ -764,6 +823,15 @@ function linePath(points) {
 function renderPerformanceChart() {
   const target = document.querySelector("#performanceChart");
   if (!target) return;
+  const panel = document.querySelector(".performance-chart-panel");
+  const collapsed = isPanelCollapsed("performanceChart");
+  if (panel) panel.classList.toggle("is-collapsed", collapsed);
+  const toggle = document.querySelector('[data-toggle-panel="performanceChart"]');
+  if (toggle) toggle.textContent = collapsed ?"Abrir" : "Fechar";
+  if (collapsed) {
+    target.innerHTML = "";
+    return;
+  }
 
   const { series, label, unit } = aggregatePerformanceSeries();
   const width = 920;
@@ -1649,6 +1717,13 @@ calendar.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", async (event) => {
+  const panelToggle = event.target.closest("[data-toggle-panel]");
+  if (panelToggle) {
+    const key = panelToggle.dataset.togglePanel;
+    setPanelCollapsed(key, !isPanelCollapsed(key));
+    renderCalendar();
+    return;
+  }
   const editButton = event.target.closest("[data-edit-athlete]");
   if (editButton) {
     editAthlete(editButton.dataset.editAthlete);
