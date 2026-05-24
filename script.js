@@ -1,4 +1,4 @@
-ï»¿const state = {
+const state = {
   view: "home",
   calendarView: "month",
   cursor: new Date(),
@@ -12,6 +12,7 @@
   appSettings: null,
   aiProjection: null,
   editingAthleteId: "",
+  editingAdminUserId: "",
   adminMode: "athlete",
   expandedAdminUserId: "",
   syncing: false,
@@ -19,6 +20,7 @@
     const defaults = {
       focusProjection: true,
       focusRoadmap: true,
+      goalForm: true,
       performanceChart: true
     };
     try {
@@ -52,14 +54,14 @@ const providerDefinitions = {
   garmin: {
     name: "Garmin Connect",
     mark: "G",
-    status: "API oficial exige aprovaÃ§Ã£o",
-    strategy: "O caminho correto Ã© o Garmin Connect Developer Program. Para atividades, solicite Activity API/Activity Export. Sem aprovaÃ§Ã£o, nÃ£o existe API pÃºblica oficial para puxar o Garmin Connect diretamente.",
+    status: "API oficial exige aprovação",
+    strategy: "O caminho correto é o Garmin Connect Developer Program. Para atividades, solicite Activity API/Activity Export. Sem aprovação, não existe API pública oficial para puxar o Garmin Connect diretamente.",
     fields: [
       ["clientId", "Consumer Key / Client ID"],
       ["clientSecret", "Consumer Secret / Client Secret", "password"],
       ["redirectUri", "Redirect URI"],
-      ["permissions", "PermissÃµes solicitadas"],
-      ["webhookUrl", "Webhook de notificaÃ§Ã£o"],
+      ["permissions", "Permissões solicitadas"],
+      ["webhookUrl", "Webhook de notificação"],
       ["environment", "Ambiente"]
     ],
     docs: "https://developer.garmin.com/gc-developer-program/overview/"
@@ -67,14 +69,14 @@ const providerDefinitions = {
   coros: {
     name: "COROS",
     mark: "C",
-    status: "Acesso restrito por aplicaÃ§Ã£o",
-    strategy: "A COROS pede submissÃ£o de aplicaÃ§Ã£o/API. AtÃ© aprovar, a alternativa prÃ¡tica Ã© importar via Strava, TrainingPeaks, Intervals.icu ou arquivo FIT.",
+    status: "Acesso restrito por aplicação",
+    strategy: "A COROS pede submissão de aplicação/API. Até aprovar, a alternativa prática é importar via Strava, TrainingPeaks, Intervals.icu ou arquivo FIT.",
     fields: [
-      ["apiApplicationStatus", "Status da aplicaÃ§Ã£o API"],
+      ["apiApplicationStatus", "Status da aplicação API"],
       ["partnerClientId", "Partner Client ID"],
       ["partnerClientSecret", "Partner Client Secret", "password"],
       ["redirectUri", "Redirect URI"],
-      ["fallbackProvider", "Fallback de sincronizaÃ§Ã£o"],
+      ["fallbackProvider", "Fallback de sincronização"],
       ["fallbackApiKey", "Fallback API Key", "password"]
     ],
     docs: "https://support.coros.com/hc/en-us/articles/17085887816340-Submitting-an-API-Application"
@@ -82,8 +84,8 @@ const providerDefinitions = {
   polar: {
     name: "Polar AccessLink",
     mark: "P",
-    status: "OAuth oficial disponÃ­vel",
-    strategy: "Polar AccessLink usa Client ID/Secret, OAuth e depois registro do usuÃ¡rio para transaÃ§Ãµes de exercÃ­cios. HistÃ³rico anterior ao consentimento pode ser limitado.",
+    status: "OAuth oficial disponível",
+    strategy: "Polar AccessLink usa Client ID/Secret, OAuth e depois registro do usuário para transações de exercícios. Histórico anterior ao consentimento pode ser limitado.",
     fields: [
       ["clientId", "Client ID"],
       ["clientSecret", "Client Secret", "password"],
@@ -111,6 +113,7 @@ const providerDefinitions = {
 };
 
 const weekdayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+const weekdayNamesMonday = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
 const monthNames = ["Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 const focusDistanceLabels = {
   800: "800 m",
@@ -206,7 +209,7 @@ function mountCollapsibleSection(panel, key, label) {
   panel.classList.toggle("is-collapsed", collapsed);
   content.hidden = collapsed;
   const button = control.querySelector(`.secondary-action[data-toggle-panel="${key}"]`);
-  if (button) button.textContent = collapsed ?"Expandir painel" : "Ocultar painel";
+  if (button) button.textContent = collapsed ?"Expandir painel" : "Fechar painel";
 }
 
 async function api(path, options = {}) {
@@ -261,6 +264,10 @@ function addDays(date, amount) {
 
 function startOfWeek(date) {
   return addDays(date, -date.getDay());
+}
+
+function startOfMondayWeek(date) {
+  return addDays(date, -((date.getDay() + 6) % 7));
 }
 
 function setView(view) {
@@ -501,10 +508,10 @@ function renderFocusProjection() {
       <div class="focus-projection-empty">
         <span>Prova foco</span>
         <strong>Defina a prova foco do atleta</strong>
-        <p>Informe distÃ¢ncia, tempo alvo e data no cadastro para ativar a projeÃ§Ã£o.</p>
+        <p>Informe distância, tempo alvo e data no cadastro para ativar a projeção.</p>
       </div>
     `;
-    mountCollapsibleSection(target, "focusProjection", "ProjeÃ§Ã£o da prova foco");
+    mountCollapsibleSection(target, "focusProjection", "Projeção da prova foco");
     return;
   }
 
@@ -527,24 +534,24 @@ function renderFocusProjection() {
     : "sem tempos importados";
   const dateLabel = athlete.targetDate
     ?new Date(`${athlete.targetDate}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
-    : "data nÃ£o definida";
+    : "data não definida";
 
   target.innerHTML = `
     <div class="focus-projection-head">
       <div>
-        <p class="kicker">ProjeÃ§Ã£o da prova foco</p>
+        <p class="kicker">Projeção da prova foco</p>
         <h3>${escapeHtml(focusDistanceLabels[focusMeters] || `${focusMeters} m`)}</h3>
       </div>
       <strong>${escapeHtml(projectedSeconds ?formatDurationSeconds(projectedSeconds) : "--")}</strong>
     </div>
     <div class="focus-projection-grid">
       <div><span>Tempo alvo</span><strong>${escapeHtml(targetSeconds ?formatDurationSeconds(targetSeconds) : "--")}</strong><p>${escapeHtml(dateLabel)}</p></div>
-      <div><span>DiferenÃ§a</span><strong>${escapeHtml(gapLabel)}</strong><p>comparado com a projeÃ§Ã£o atual</p></div>
+      <div><span>Diferença</span><strong>${escapeHtml(gapLabel)}</strong><p>comparado com a projeção atual</p></div>
       <div><span>Melhor 90 dias</span><strong>${escapeHtml(bestRecentLabel)}</strong><p>${escapeHtml(`tempos: ${recentTimesLabel}`)}</p></div>
       <div><span>Modelo</span><strong>Riegel + 11TSS</strong><p>corridas reais e best efforts do Strava</p></div>
     </div>
   `;
-  mountCollapsibleSection(target, "focusProjection", "ProjeÃ§Ã£o da prova foco");
+  mountCollapsibleSection(target, "focusProjection", "Projeção da prova foco");
 }
 
 function collect3000Tests(athlete) {
@@ -655,12 +662,12 @@ function renderFocusRoadmap() {
   if (!athlete || !model.focusMeters || !model.targetSeconds || !model.targetDate) {
     target.innerHTML = `
       <div class="focus-projection-empty">
-        <span>Caminho atÃ© a prova</span>
+        <span>Caminho até a prova</span>
         <strong>Configure prova foco, tempo alvo e data</strong>
-        <p>A projeÃ§Ã£o usa 11TSS, volume, consistÃªncia, testes de 3000 m e histÃ³rico do atleta.</p>
+        <p>A projeção usa 11TSS, volume, consistência, testes de 3000 m e histórico do atleta.</p>
       </div>
     `;
-    mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva atÃ© a prova");
+    mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva até a prova");
     return;
   }
   const width = 920;
@@ -672,20 +679,20 @@ function renderFocusRoadmap() {
   const startX = pad.left;
   const todayX = model.daysToRace ?startX + Math.min(1, Math.max(0, 0)) * (endX - startX) : startX;
   const targetLabel = model.targetDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-  const aiText = state.aiProjection?.text || "A anÃ¡lise preditiva considera carga 11TSS, distribuiÃ§Ã£o de intensidade, regularidade, recÃªncia dos testes de 3000 m e histÃ³rico clÃ­nico/operacional informado.";
+  const aiText = state.aiProjection?.text || "A análise preditiva considera carga 11TSS, distribuição de intensidade, regularidade, recência dos testes de 3000 m e histórico clínico/operacional informado.";
   target.innerHTML = `
     <div class="roadmap-head">
       <div>
-        <p class="kicker">Rota preditiva atÃ© a prova</p>
-        <h3>${escapeHtml(focusDistanceLabels[model.focusMeters] || `${model.focusMeters} m`)}: projeÃ§Ã£o atual para tempo alvo</h3>
+        <p class="kicker">Rota preditiva até a prova</p>
+        <h3>${escapeHtml(focusDistanceLabels[model.focusMeters] || `${model.focusMeters} m`)}: projeção atual para tempo alvo</h3>
       </div>
       <div class="probability-badge"><strong>${model.probability || "--"}%</strong><span>probabilidade</span></div>
     </div>
     <div class="roadmap-grid">
-      <div class="roadmap-metric"><span>ProjeÃ§Ã£o atual</span><strong>${escapeHtml(formatDurationSeconds(model.currentSeconds))}</strong><p>${escapeHtml(model.status)}</p></div>
+      <div class="roadmap-metric"><span>Projeção atual</span><strong>${escapeHtml(formatDurationSeconds(model.currentSeconds))}</strong><p>${escapeHtml(model.status)}</p></div>
       <div class="roadmap-metric"><span>Tempo alvo</span><strong>${escapeHtml(formatDurationSeconds(model.targetSeconds))}</strong><p>${escapeHtml(targetLabel)} - ${model.daysToRace} dias</p></div>
-      <div class="roadmap-metric"><span>Ganho necessÃ¡rio</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong><p>${escapeHtml(formatDurationSeconds(model.requiredPerWeek))} por semana</p></div>
-      <div class="roadmap-metric"><span>Base recente</span><strong>${escapeHtml(formatKm(model.volume30))}</strong><p>${model.weeklySessions.toFixed(1)} sessÃµes/semana ${model.historyRisk ?"- atenÃ§Ã£o ao histÃ³rico" : ""}</p></div>
+      <div class="roadmap-metric"><span>Ganho necessário</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong><p>${escapeHtml(formatDurationSeconds(model.requiredPerWeek))} por semana</p></div>
+      <div class="roadmap-metric"><span>Base recente</span><strong>${escapeHtml(formatKm(model.volume30))}</strong><p>${model.weeklySessions.toFixed(1)} sessões/semana ${model.historyRisk ?"- atenção ao histórico" : ""}</p></div>
     </div>
     <div class="roadmap-chart">
       <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Caminho preditivo ate a prova">
@@ -699,9 +706,9 @@ function renderFocusRoadmap() {
       </svg>
     </div>
     <p class="roadmap-ai">${escapeHtml(aiText)}</p>
-    <div class="roadmap-actions"><button class="secondary-action compact" type="button" data-refresh-ai>Atualizar anÃ¡lise IA</button></div>
+    <div class="roadmap-actions"><button class="secondary-action compact" type="button" data-refresh-ai>Atualizar análise IA</button></div>
   `;
-  mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva atÃ© a prova");
+  mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva até a prova");
 }
 
 function goalAsAthlete(goal) {
@@ -783,9 +790,9 @@ function renderGoalCard(goal, resultMode = false) {
       </div>
       <div class="goal-metrics">
         <div><span>Tempo alvo</span><strong>${escapeHtml(formatDurationSeconds(targetSeconds))}</strong></div>
-        <div><span>DiferenÃ§a</span><strong>${escapeHtml(gapLabel)}</strong></div>
+        <div><span>Diferença</span><strong>${escapeHtml(gapLabel)}</strong></div>
         <div><span>Probabilidade</span><strong>${model.probability || "--"}%</strong></div>
-        <div><span>Ganho necessÃ¡rio</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong></div>
+        <div><span>Ganho necessário</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong></div>
       </div>
       <div class="goal-route">
         <svg viewBox="0 0 560 70" role="img" aria-label="Rota preditiva do objetivo">
@@ -802,6 +809,7 @@ function renderGoalCard(goal, resultMode = false) {
 }
 
 function renderGoals() {
+  applyPanelCollapse(document.querySelector("#goalForm"), "goalForm", "Novo objetivo", "Adicionar prova foco");
   const activeTarget = document.querySelector("#goalList");
   const resultTarget = document.querySelector("#goalResults");
   if (!activeTarget || !resultTarget) return;
@@ -813,7 +821,7 @@ function renderGoals() {
     : `<div class="empty-state">Nenhum objetivo ativo. Adicione uma prova foco para gerar a rota preditiva.</div>`;
   resultTarget.innerHTML = results.length
     ?results.map((goal) => renderGoalCard(goal, true)).join("")
-    : `<div class="empty-state">Objetivos vencidos aparecerÃ£o aqui com a anÃ¡lise do resultado versus meta.</div>`;
+    : `<div class="empty-state">Objetivos vencidos aparecerão aqui com a análise do resultado versus meta.</div>`;
 }
 
 function setGoalMessage(message, error = false) {
@@ -853,11 +861,11 @@ function renderAthleteFocusHistory() {
   const tests = collect3000Tests(athlete);
   const times = tests.map((item) => `
     <strong>${escapeHtml(formatDurationSeconds(item.seconds))}</strong>
-    <small>${escapeHtml(item.source || "teste")} Â· ${escapeHtml(item.date ?item.date.toLocaleDateString("pt-BR") : "")}</small>
+    <small>${escapeHtml(item.source || "teste")} · ${escapeHtml(item.date ?item.date.toLocaleDateString("pt-BR") : "")}</small>
   `).join("");
   target.innerHTML = `
-    <span>Ãšltimos 3 testes de 3000 m (flag/manual/auto)</span>
-    <div>${times || "<p>Nenhum teste de 3000 m disponÃ­vel.</p>"}</div>
+    <span>Últimos 3 testes de 3000 m (flag/manual/auto)</span>
+    <div>${times || "<p>Nenhum teste de 3000 m disponível.</p>"}</div>
   `;
 }
 
@@ -883,26 +891,6 @@ function render3000ActivityPicker() {
   ].join("");
 }
 
-function renderHeroMetrics() {
-  const target = document.querySelector("#heroMetrics");
-  if (!target) return;
-
-  const last30 = activitiesSince(30);
-  const last7 = activitiesSince(7);
-  const km30 = last30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
-  const km7 = last7.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
-  const averageWeeklyKm = km30 / 4.285;
-  const trend = averageWeeklyKm ?Math.round((km7 / averageWeeklyKm) * 100) : 0;
-  const status = !last30.length ?"Sem dados" : trend > 135 ?"AtenÃ§Ã£o" : trend < 55 ?"Baixa carga" : "EstÃ¡vel";
-  const statusDetail = !last30.length ?"importe atividades" : `${trend}% da mÃ©dia recente`;
-
-  target.innerHTML = `
-    <div><span>30 dias</span><strong>${escapeHtml(formatKm(km30))}</strong><small>${last30.length} sessÃµes</small></div>
-    <div><span>Semana</span><strong>${escapeHtml(formatKm(km7))}</strong><small>${last7.length} sessÃµes</small></div>
-    <div><span>Status</span><strong>${escapeHtml(status)}</strong><small>${escapeHtml(statusDetail)}</small></div>
-  `;
-}
-
 function renderTrainingInsights() {
   const target = document.querySelector("#trainingInsights");
   if (!target) return;
@@ -911,9 +899,9 @@ function renderTrainingInsights() {
   const last7 = activitiesSince(7);
   if (!last30.length) {
     target.innerHTML = `
-      <article><span>DistribuiÃ§Ã£o</span><strong>Sem dados</strong><p>Importe atividades reais do atleta selecionado.</p></article>
-      <article><span>Risco</span><strong>Sem dados</strong><p>A avaliaÃ§Ã£o depende do histÃ³rico importado.</p></article>
-      <article><span>PrÃ³xima aÃ§Ã£o</span><strong>Conectar fonte</strong><p>Conecte Strava ou outra plataforma antes de gerar recomendaÃ§Ãµes.</p></article>
+      <article><span>Distribuição</span><strong>Sem dados</strong><p>Importe atividades reais do atleta selecionado.</p></article>
+      <article><span>Risco</span><strong>Sem dados</strong><p>A avaliação depende do histórico importado.</p></article>
+      <article><span>Próxima ação</span><strong>Conectar fonte</strong><p>Conecte Strava ou outra plataforma antes de gerar recomendações.</p></article>
     `;
     return;
   }
@@ -927,17 +915,17 @@ function renderTrainingInsights() {
   const weeklyAverage = km30 / 4.285;
   const ratio = weeklyAverage ?km7 / weeklyAverage : 0;
   const risk = ratio > 1.35 ?"Alto" : ratio < 0.55 ?"Baixa carga" : "Controlado";
-  const action = risk === "Alto" ?"Reduzir carga" : risk === "Baixa carga" ?"Retomar volume" : "Manter progressÃ£o";
+  const action = risk === "Alto" ?"Reduzir carga" : risk === "Baixa carga" ?"Retomar volume" : "Manter progressão";
   const detail = risk === "Alto"
-    ?"A semana atual estÃ¡ acima da mÃ©dia recente."
+    ?"A semana atual está acima da média recente."
     : risk === "Baixa carga"
-      ?"A semana atual estÃ¡ abaixo da mÃ©dia recente."
-      : "A semana estÃ¡ compatÃ­vel com o histÃ³rico recente.";
+      ?"A semana atual está abaixo da média recente."
+      : "A semana está compatível com o histórico recente.";
 
   target.innerHTML = `
-    <article><span>DistribuiÃ§Ã£o</span><strong>${easy} / ${moderate} / ${hard}</strong><p>Leve, moderado e intenso nos Ãºltimos 30 dias.</p></article>
+    <article><span>Distribuição</span><strong>${easy} / ${moderate} / ${hard}</strong><p>Leve, moderado e intenso nos últimos 30 dias.</p></article>
     <article><span>Risco</span><strong>${escapeHtml(risk)}</strong><p>${escapeHtml(detail)}</p></article>
-    <article><span>PrÃ³xima aÃ§Ã£o</span><strong>${escapeHtml(action)}</strong><p>Baseado em ${last30.length} atividades importadas.</p></article>
+    <article><span>Próxima ação</span><strong>${escapeHtml(action)}</strong><p>Baseado em ${last30.length} atividades importadas.</p></article>
   `;
 }
 
@@ -994,7 +982,7 @@ function renderPerformanceChart() {
   const collapsed = isPanelCollapsed("performanceChart");
   if (panel) panel.classList.toggle("is-collapsed", collapsed);
   const toggle = document.querySelector('[data-toggle-panel="performanceChart"]');
-  if (toggle) toggle.textContent = collapsed ?"Abrir" : "Fechar";
+  if (toggle) toggle.textContent = collapsed ?"Expandir painel" : "Fechar painel";
   if (collapsed) {
     target.innerHTML = "";
     return;
@@ -1084,14 +1072,27 @@ function renderPerformanceChart() {
 
 function renderActivity(activity) {
   const analysis = activity.analysis || {};
+  const feedback = activity.feedback || {};
+  const performancePercent = feedback.performancePercent || feedback.performance || "";
+  const painScore = feedback.painScore ?? feedback.pain ?? "";
+  const painNumber = Number(painScore);
+  const painClass = painScore === "" || Number.isNaN(painNumber)
+    ?""
+    : painNumber <= 3
+      ?"pain-low"
+      : painNumber <= 6
+        ?"pain-mid"
+        : "pain-high";
   const analysisLine = analysis.tss
     ?`<em>${escapeHtml(analysis.standard || "11TSS Advance")} ${escapeHtml(analysis.tss)} - agressao ${escapeHtml(analysis.aggressionScore || "--")} - ${escapeHtml(analysis.characteristic || "")}</em>`
     : "";
+  const feedbackLine = `<small class="activity-feedback"><span>Execução ${escapeHtml(performancePercent || "--")}%</span><span class="${painClass}">Dor ${escapeHtml(painScore === "" ?"—" : painScore)}/10</span></small>`;
   return `
     <button class="activity" data-activity-id="${escapeHtml(activity.id)}" data-source="${escapeHtml(activity.source)}">
       <strong>${escapeHtml(activity.title)}</strong>
       <span>${escapeHtml(activity.source)} - ${escapeHtml(activity.distance)} - ${escapeHtml(activity.description)}</span>
       ${analysisLine}
+      ${feedbackLine}
     </button>
   `;
 }
@@ -1152,7 +1153,7 @@ function renderPeriodWeek(start, end, index) {
         <span>${escapeHtml(start.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }))} - ${escapeHtml(end.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }))}</span>
       </div>
       <div class="period-month-stats">
-        <span>${activities.length} sessÃµes</span>
+        <span>${activities.length} sessões</span>
         <span>${escapeHtml(formatKm(volume))}</span>
         <span>${Math.round(tss)} 11TSS</span>
       </div>
@@ -1171,7 +1172,7 @@ function renderPeriodCalendar() {
   document.querySelector("#calendarEyebrow").textContent = range.label;
   document.querySelector("#calendarTitle").textContent = hasActivitiesInCurrentRange()
     ?"Semanas do ciclo"
-    : "Sem atividades neste perÃ­odo";
+    : "Sem atividades neste período";
 }
 
 function renderCalendar() {
@@ -1183,16 +1184,25 @@ function renderCalendar() {
 
   if (state.calendarView === "month") {
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-    const start = startOfWeek(first);
-    const cells = [];
-    for (let i = 0; i < 42; i += 1) {
-      const day = addDays(start, i);
-      cells.push(renderDayCell(day, day.getMonth() !== cursor.getMonth()));
+    const end = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+    const weekStarts = [];
+    for (let day = startOfMondayWeek(first); day <= end || day.getMonth() === cursor.getMonth(); day = addDays(day, 7)) {
+      weekStarts.push(new Date(day));
+      if (weekStarts.length >= 6) break;
     }
-    calendar.innerHTML = weekdayNames.map((day) => `<div class="weekday">${day}</div>`).join("") + cells.join("");
+    calendar.style.setProperty("--month-weeks", weekStarts.length);
+    const header = `<div class="month-grid-corner"></div>` + weekStarts.map((_, index) => `<div class="month-week-header">Semana ${index + 1}</div>`).join("");
+    const rows = weekdayNamesMonday.map((weekday, index) => `
+      <div class="month-day-label">${weekday}</div>
+      ${weekStarts.map((weekStart) => {
+        const day = addDays(weekStart, index);
+        return renderDayCell(day, day.getMonth() !== cursor.getMonth());
+      }).join("")}
+    `).join("");
+    calendar.innerHTML = header + rows;
     document.querySelector("#calendarEyebrow").textContent = `${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}`;
     document.querySelector("#calendarTitle").textContent = activities.length && !hasActivitiesInCurrentRange()
-      ?`${activities.length} atividades importadas fora deste mÃªs`
+      ?`${activities.length} atividades importadas fora deste mês`
       : "Bloco de performance";
   }
 
@@ -1230,6 +1240,7 @@ function openActivity(activityId) {
   const activity = visibleActivities().find((item) => String(item.id) === String(activityId));
   if (!activity) return;
   const analysis = activity.analysis || {};
+  const feedback = activity.feedback || {};
   const external = activity.externalUrl ?`<a class="detail-link" href="${escapeHtml(activity.externalUrl)}" target="_blank" rel="noreferrer">Abrir atividade original</a>` : "";
   const analysisPanel = analysis.tss ?`
     <div class="analysis-panel">
@@ -1256,17 +1267,48 @@ function openActivity(activityId) {
       <h3>${escapeHtml(activity.title)}</h3>
       <p>${escapeHtml(activity.description)}</p>
       <div class="detail-grid">
-        <div><span class="metric-label">DistÃ¢ncia</span><strong>${escapeHtml(activity.distance)}</strong></div>
+        <div><span class="metric-label">Distância</span><strong>${escapeHtml(activity.distance)}</strong></div>
         <div><span class="metric-label">Tempo</span><strong>${escapeHtml(activity.duration)}</strong></div>
         <div><span class="metric-label">Pace</span><strong>${escapeHtml(activity.pace)}</strong></div>
         <div><span class="metric-label">Carga</span><strong>${escapeHtml(activity.load)}</strong></div>
       </div>
       ${analysisPanel}
+      <div class="activity-feedback-form">
+        <label class="credential-field">
+          <span>Desempenho percebido (%)</span>
+          <input name="performancePercent" type="number" min="0" max="100" value="${escapeHtml(feedback.performancePercent || "")}" />
+        </label>
+        <label class="credential-field">
+          <span>Dores / lesões (0-10)</span>
+          <input name="painScore" type="number" min="0" max="10" value="${escapeHtml(feedback.painScore ?? "")}" />
+        </label>
+        <button class="secondary-action compact" type="button" data-save-activity-feedback="${escapeHtml(activity.id)}">Salvar percepção</button>
+      </div>
       <div class="provider-actions">${testFlagButton}</div>
       ${external}
     </div>
   `;
   dialog.showModal();
+}
+
+async function saveActivityFeedback(activityId) {
+  const wrapper = detail.querySelector(".activity-feedback-form");
+  if (!wrapper) return;
+  const performancePercent = wrapper.querySelector('[name="performancePercent"]')?.value || "";
+  const painScore = wrapper.querySelector('[name="painScore"]')?.value || "";
+  try {
+    const payload = await api("/api/activities/feedback", {
+      method: "POST",
+      body: JSON.stringify({ activityId, performancePercent, painScore })
+    });
+    state.activities = payload.activities || [];
+    renderCalendar();
+    if (dialog.open) openActivity(activityId);
+    setLog(["Percepção da atividade salva."]);
+  } catch (error) {
+    setLog([error.message || "Não foi possível salvar a percepção da atividade."], true);
+    window.alert(error.message || "Não foi possível salvar a percepção da atividade.");
+  }
 }
 
 async function setActivity3000Flag(activityId, enabled) {
@@ -1283,10 +1325,10 @@ async function setActivity3000Flag(activityId, enabled) {
     renderGoals();
     if (dialog.open) openActivity(activityId);
     setLog([enabled ?"Atividade marcada como teste de 3000 m." :"Atividade removida dos testes de 3000 m."]);
-    setAthleteMessage(enabled ?"Teste de 3000 m vinculado Ã  atividade." :"Teste de 3000 m removido da atividade.");
+    setAthleteMessage(enabled ?"Teste de 3000 m vinculado à atividade." :"Teste de 3000 m removido da atividade.");
   } catch (error) {
-    setLog([error.message || "NÃ£o foi possÃ­vel atualizar o teste de 3000 m."], true);
-    window.alert(error.message || "NÃ£o foi possÃ­vel atualizar o teste de 3000 m.");
+    setLog([error.message || "Não foi possível atualizar o teste de 3000 m."], true);
+    window.alert(error.message || "Não foi possível atualizar o teste de 3000 m.");
   }
 }
 
@@ -1298,7 +1340,7 @@ function renderProviders() {
     const credentials = integration.credentials || {};
     const hasStoredToken = integration.token?.access_token === "stored" || integration.token?.refresh_token === "stored";
     const isConnected = Boolean(integration.connected || hasStoredToken);
-    const connected = isConnected ?"Conectado" : "NÃ£o conectado";
+    const connected = isConnected ?"Conectado" : "Não conectado";
     const scope = String(integration.token?.scope || "");
     const stravaScopeWarning = key === "strava" && isConnected && !scope.split(/[,\s]+/).some((item) => item === "activity:read" || item === "activity:read_all")
       ?`<p class="provider-warning">Reconecte aprovando activity:read ou activity:read_all para importar atividades.</p>`
@@ -1364,7 +1406,7 @@ function formatAthleteMeta(athlete) {
 
 function renderAthleteIdentity() {
   const athlete = getActiveAthlete();
-  const name = athlete?.name || "Atleta nÃ£o cadastrado";
+  const name = athlete?.name || "Atleta não cadastrado";
   const sidebarName = document.querySelector("#sidebarAthleteName");
   const activeName = document.querySelector("#activeAthleteName");
   const activeMeta = document.querySelector("#activeAthleteMeta");
@@ -1418,7 +1460,7 @@ async function editCurrentUserProfile() {
     state.goals = goals;
     renderProviders();
     renderCalendar();
-    renderHeroMetrics();
+
     renderTrainingInsights();
   } catch (error) {
     setLog([error.message], true);
@@ -1474,7 +1516,7 @@ function getDirectoryCoaches() {
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 }
 
-function fillSelectOptions(select, options, currentValue = "", emptyLabel = "NÃ£o tenho", valueKey = "name", labelFn = null) {
+function fillSelectOptions(select, options, currentValue = "", emptyLabel = "Não tenho", valueKey = "name", labelFn = null) {
   if (!select) return;
   const value = String(currentValue || "");
   select.innerHTML = `<option value="">${emptyLabel}</option>${options.map((option) => {
@@ -1494,7 +1536,7 @@ function renderDirectoryOptions(athlete = null) {
     document.querySelector("#coachEmailSelect"),
     coaches,
     athlete?.coachEmail || "",
-    "NÃ£o tenho",
+    "Não tenho",
     "email",
     (coach) => `${coach.name} - ${coach.email}`
   );
@@ -1502,7 +1544,7 @@ function renderDirectoryOptions(athlete = null) {
     document.querySelector("#adminCoachEmailSelect"),
     coaches,
     "",
-    "NÃ£o tenho",
+    "Não tenho",
     "email",
     (coach) => `${coach.name} - ${coach.email}`
   );
@@ -1571,7 +1613,7 @@ function renderAthletes() {
         <span>${escapeHtml(athlete.roleLabel || "Atleta")}</span>
         <span>${escapeHtml(athlete.teamName || "Sem equipe")}</span>
         <span>${escapeHtml(athlete.coachName || "Sem treinador")}</span>
-        <span>${escapeHtml(athlete.whatsapp || "WhatsApp nÃ£o informado")}</span>
+        <span>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</span>
       </button>
       ${athlete.isTeamRecord ? "" : `<div class="athlete-item-actions">
         <button class="secondary-action compact" type="button" data-edit-athlete="${escapeHtml(athlete.id)}">Editar</button>
@@ -1581,12 +1623,12 @@ function renderAthletes() {
         <div class="athlete-row-details">
           <p><strong>Perfil:</strong> ${escapeHtml(athlete.roleLabel || athlete.role || "Atleta")}</p>
           <p><strong>Dados:</strong> ${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
-          <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "NÃ£o tenho")}</p>
-          <p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "NÃ£o tenho")}</p>
-          <p><strong>FormaÃ§Ã£o:</strong> ${escapeHtml(profile.education || "--")}</p>
+          <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "Não tenho")}</p>
+          <p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "Não tenho")}</p>
+          <p><strong>Formação:</strong> ${escapeHtml(profile.education || "--")}</p>
           <p><strong>Especialidades:</strong> ${escapeHtml(profile.skills || "--")}</p>
-          <p><strong>ExperiÃªncia:</strong> ${escapeHtml(profile.experience || "--")}</p>
-          <p><strong>CertificaÃ§Ãµes:</strong> ${escapeHtml(profile.certifications || "--")}</p>
+          <p><strong>Experiência:</strong> ${escapeHtml(profile.experience || "--")}</p>
+          <p><strong>Certificações:</strong> ${escapeHtml(profile.certifications || "--")}</p>
           <p><strong>Institucional:</strong> ${escapeHtml(profile.institutionalNotes || "--")}</p>
           <p><strong>Local:</strong> ${escapeHtml(profile.location || "--")}</p>
         </div>
@@ -1611,7 +1653,7 @@ function setSyncLoading(active, title = "Importando atividades", text = "Atualiz
   if (overlay) overlay.hidden = !active;
   if (titleTarget) titleTarget.textContent = title;
   if (textTarget) textTarget.textContent = text;
-  if (kickerTarget) kickerTarget.textContent = progress || "SincronizaÃ§Ã£o";
+  if (kickerTarget) kickerTarget.textContent = progress || "Sincronização";
   document.querySelectorAll("#syncSelected, [data-import-demo]").forEach((button) => {
     button.disabled = active;
     button.classList.toggle("is-loading", active);
@@ -1622,7 +1664,7 @@ async function enrichStravaDescriptions() {
   let updated = 0;
   let remaining = Number.POSITIVE_INFINITY;
   for (let batch = 1; batch <= 30 && remaining > 0; batch += 1) {
-    setSyncLoading(true, "Puxando descriÃ§Ãµes do Strava", `Lote ${batch}: buscando descriÃ§Ãµes completas sem travar o servidor.`, updated ?`${updated} descriÃ§Ãµes atualizadas` : "Detalhando atividades");
+    setSyncLoading(true, "Puxando descrições do Strava", `Lote ${batch}: buscando descrições completas sem travar o servidor.`, updated ?`${updated} descrições atualizadas` : "Detalhando atividades");
     const payload = await api("/api/strava/enrich", {
       method: "POST",
       body: JSON.stringify({ limit: 8 })
@@ -1631,7 +1673,7 @@ async function enrichStravaDescriptions() {
     remaining = Number(payload.remaining || 0);
     state.activities = payload.activities || state.activities;
     renderCalendar();
-    renderHeroMetrics();
+
     renderTrainingInsights();
     if (!payload.updated || !remaining) break;
   }
@@ -1663,7 +1705,7 @@ function historyTimelineRowTemplate(entry = {}) {
   return `
     <article class="history-entry-row">
       <label class="credential-field">
-        <span>InÃ­cio</span>
+        <span>Início</span>
         <input type="date" data-history-start value="${escapeHtml(entry.startDate || "")}" />
       </label>
       <label class="credential-field">
@@ -1671,12 +1713,12 @@ function historyTimelineRowTemplate(entry = {}) {
         <input type="date" data-history-end value="${escapeHtml(entry.endDate || "")}" />
       </label>
       <label class="credential-field">
-        <span>TÃ­tulo / evento</span>
-        <input data-history-title value="${escapeHtml(entry.title || "")}" placeholder="Ex.: Parado por lesÃ£o, retorno progressivo, bloco de base..." />
+        <span>Título / evento</span>
+        <input data-history-title value="${escapeHtml(entry.title || "")}" placeholder="Ex.: Parado por lesão, retorno progressivo, bloco de base..." />
       </label>
       <label class="credential-field">
-        <span>DescriÃ§Ã£o / contexto</span>
-        <input data-history-description value="${escapeHtml(entry.description || "")}" placeholder="Detalhes relevantes para anÃ¡lise futura da IA." />
+        <span>Descrição / contexto</span>
+        <input data-history-description value="${escapeHtml(entry.description || "")}" placeholder="Detalhes relevantes para análise futura da IA." />
       </label>
       <button class="danger-action compact" type="button" data-remove-history-entry>Remover</button>
     </article>
@@ -1763,7 +1805,7 @@ function editAthlete(athleteId, options = {}) {
 async function deleteAthlete(athleteId) {
   const athlete = state.athletes.find((item) => String(item.id) === String(athleteId));
   if (!athlete) return;
-  if (!window.confirm(`Excluir o atleta ${athlete.name}?Esta aÃ§Ã£o remove integraÃ§Ãµes e atividades importadas deste atleta.`)) return;
+  if (!window.confirm(`Excluir o atleta ${athlete.name}?Esta ação remove integrações e atividades importadas deste atleta.`)) return;
   try {
     setAthleteMessage("Excluindo atleta...");
     const payload = await api(`/api/athletes/${encodeURIComponent(athlete.id)}`, { method: "DELETE" });
@@ -1778,9 +1820,9 @@ async function deleteAthlete(athleteId) {
     renderAthleteIdentity();
     renderProviders();
     renderCalendar();
-    renderHeroMetrics();
+
     renderTrainingInsights();
-    resetAthleteForm(`Atleta ${athlete.name} excluÃ­do.`);
+    resetAthleteForm(`Atleta ${athlete.name} excluído.`);
   } catch (error) {
     setAthleteMessage(error.message, true);
     setLog([error.message], true);
@@ -1789,7 +1831,7 @@ async function deleteAthlete(athleteId) {
 
 async function saveProvider(provider) {
   if (!state.selectedAthleteId) {
-    setLog(["Cadastre e selecione um atleta antes de salvar integraÃ§Ãµes."], true);
+    setLog(["Cadastre e selecione um atleta antes de salvar integrações."], true);
     return false;
   }
   const form = document.querySelector(`[data-provider="${provider}"]`);
@@ -1820,15 +1862,15 @@ async function runSync() {
     .map((input) => input.closest(".provider-form").dataset.provider);
   let detailResult = { updated: 0, remaining: 0 };
   try {
-    setSyncLoading(true, "Importando atividades", `Sincronizando Ãºltimos ${days} dias com as fontes ativas.`, "Conectando");
-    setLog([`Sincronizando Ãºltimos ${days} dias...`]);
+    setSyncLoading(true, "Importando atividades", `Sincronizando últimos ${days} dias com as fontes ativas.`, "Conectando");
+    setLog([`Sincronizando últimos ${days} dias...`]);
     const payload = await api("/api/sync", {
       method: "POST",
       body: JSON.stringify({ days, providers })
     });
     state.activities = payload.activities || [];
     renderCalendar();
-    renderHeroMetrics();
+
     renderTrainingInsights();
     if (providers.includes("strava") && state.activities.length) {
       detailResult = await enrichStravaDescriptions();
@@ -1838,10 +1880,10 @@ async function runSync() {
         ?`Importadas/atualizadas: ${payload.imported} atividades reais.`
         : `Nenhuma atividade nova retornada pelas fontes no intervalo de ${days} dias.`,
       state.activities.length ?`Total no banco para este atleta: ${state.activities.length}.` : "Nenhuma atividade salva para este atleta.",
-      detailResult.updated ?`DescriÃ§Ãµes completas atualizadas: ${detailResult.updated}.` : "DescriÃ§Ãµes jÃ¡ estavam atualizadas ou nÃ£o retornaram detalhe adicional.",
-      detailResult.remaining ?`DescriÃ§Ãµes pendentes: ${detailResult.remaining}. Clique novamente para continuar.` : "DescriÃ§Ãµes sincronizadas em lotes.",
+      detailResult.updated ?`Descrições completas atualizadas: ${detailResult.updated}.` : "Descrições já estavam atualizadas ou não retornaram detalhe adicional.",
+      detailResult.remaining ?`Descrições pendentes: ${detailResult.remaining}. Clique novamente para continuar.` : "Descrições sincronizadas em lotes.",
       ...(payload.warnings || []),
-      "CalendÃ¡rio atualizado."
+      "Calendário atualizado."
     ]);
   } catch (error) {
     setLog([error.message], true);
@@ -1856,11 +1898,11 @@ async function testStrava() {
     return;
   }
   try {
-    setLog(["Testando conexÃ£o real com o Strava..."]);
+    setLog(["Testando conexão real com o Strava..."]);
     const payload = await api("/api/strava/test");
     const athlete = payload.athlete || {};
     const name = [athlete.firstname, athlete.lastname].filter(Boolean).join(" ") || athlete.username || "atleta Strava";
-    setLog([`Strava conectado para ${name}. Escopos: ${payload.scope || "nÃ£o informado"}.`]);
+    setLog([`Strava conectado para ${name}. Escopos: ${payload.scope || "não informado"}.`]);
     state.integrations = await api("/api/integrations");
     renderProviders();
   } catch (error) {
@@ -1920,7 +1962,8 @@ function renderAdminMode() {
   });
   const title = document.querySelector("#adminFormTitle");
   if (title) {
-    title.textContent = state.adminMode === "coach" ?"Adicionar treinador" : state.adminMode === "team" ?"Adicionar equipe" : "Adicionar atleta";
+    const action = state.editingAdminUserId ?"Editar" : "Adicionar";
+    title.textContent = state.adminMode === "coach" ?`${action} treinador` : state.adminMode === "team" ?`${action} equipe` : `${action} atleta`;
   }
   const userForm = document.querySelector("#adminUserForm");
   const teamForm = document.querySelector("#teamForm");
@@ -1935,6 +1978,30 @@ function renderAdminMode() {
     field.hidden = !isCoach;
   });
   if (teamForm) teamForm.hidden = !isTeam;
+  const submit = userForm?.querySelector('button[type="submit"]');
+  if (submit) submit.textContent = state.editingAdminUserId ?"Atualizar cadastro" : "Salvar cadastro";
+}
+
+function editAdminUser(athleteId) {
+  const athlete = state.athletes.find((item) => String(item.id) === String(athleteId));
+  const form = document.querySelector("#adminUserForm");
+  if (!athlete || !form) return;
+  state.editingAdminUserId = athlete.id;
+  state.adminMode = athlete.role === "coach" ?"coach" : "athlete";
+  renderAdminMode();
+  const profile = athlete.profileData || {};
+  form.elements.name.value = athlete.name || "";
+  form.elements.email.value = athlete.email || "";
+  form.elements.password.value = "";
+  form.elements.whatsapp.value = athlete.whatsapp || "";
+  form.elements.teamName.value = athlete.teamName || "";
+  form.elements.coachEmail.value = athlete.coachEmail || "";
+  form.elements.education.value = profile.education || "";
+  form.elements.skills.value = profile.skills || "";
+  form.elements.experience.value = profile.experience || "";
+  form.elements.certifications.value = profile.certifications || "";
+  setAdminMessage(`Editando ${athlete.name}.`);
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 async function saveAdminUser(event) {
@@ -1957,9 +2024,10 @@ async function saveAdminUser(event) {
     };
   }
   try {
-    setAdminMessage("Salvando cadastro...");
-    const payload = await api("/api/athletes", {
-      method: "POST",
+    const editingId = state.editingAdminUserId;
+    setAdminMessage(editingId ?"Atualizando cadastro..." : "Salvando cadastro...");
+    const payload = await api(editingId ?`/api/athletes/${editingId}` : "/api/athletes", {
+      method: editingId ?"PUT" : "POST",
       body: JSON.stringify(body)
     });
     state.athletes = payload.athletes || [];
@@ -1969,8 +2037,9 @@ async function saveAdminUser(event) {
     renderAthleteIdentity();
     renderCalendar();
     form.reset();
+    state.editingAdminUserId = "";
     renderAdminMode();
-    setAdminMessage(`${payload.athlete.name} cadastrado com sucesso.`);
+    setAdminMessage(`${payload.athlete.name} ${editingId ?"atualizado" : "cadastrado"} com sucesso.`);
   } catch (error) {
     setAdminMessage(error.message, true);
   }
@@ -2025,7 +2094,7 @@ async function saveAiSettings(event) {
       body: JSON.stringify(body)
     });
     renderAiSettings();
-    document.querySelector("#aiSettingsMessage").textContent = "ConfiguraÃ§Ã£o de IA salva.";
+    document.querySelector("#aiSettingsMessage").textContent = "Configuração de IA salva.";
   } catch (error) {
     document.querySelector("#aiSettingsMessage").textContent = error.message;
   }
@@ -2043,7 +2112,7 @@ async function refreshAiProjection() {
       body: JSON.stringify({ athlete, model, activities: activitiesSince(90).slice(-60) })
     });
   } catch (error) {
-    state.aiProjection = { text: `IA indisponÃ­vel: ${error.message}` };
+    state.aiProjection = { text: `IA indisponível: ${error.message}` };
   }
   renderFocusRoadmap();
 }
@@ -2084,7 +2153,7 @@ async function boot() {
     state.goals = await api("/api/goals");
     await loadSettings();
   } catch (error) {
-    if (error.message === "Login obrigatÃ³rio.") showLogin();
+    if (error.message === "Login obrigatório.") showLogin();
     else {
       showApp();
       renderPermissions();
@@ -2093,7 +2162,7 @@ async function boot() {
       renderAthleteSelector();
       renderAthleteIdentity();
       renderCalendar();
-      renderHeroMetrics();
+
       renderTrainingInsights();
       setLog([`Erro ao carregar dados do banco: ${error.message}`], true);
       if (initialHash === "treinamentos") setView("training");
@@ -2116,15 +2185,15 @@ async function boot() {
   renderAthleteSelector();
   renderAthleteIdentity();
   renderCalendar();
-  renderHeroMetrics();
+
   renderTrainingInsights();
   renderDirectoryOptions(getCurrentUserAthlete());
   renderAdminMode();
   if (state.view === "athlete") editCurrentUserProfile();
 
   if (status.get("strava") === "connected") setLog(["Strava conectado. Clique em Importar e atualizar para puxar as atividades reais."]);
-  if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorizaÃ§Ã£o."}`], true);
-  if (status.get("strava") === "state_error") setLog(["Erro Strava: estado OAuth invÃ¡lido ou expirado. Clique em Conectar Strava novamente."], true);
+  if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorização."}`], true);
+  if (status.get("strava") === "state_error") setLog(["Erro Strava: estado OAuth inválido ou expirado. Clique em Conectar Strava novamente."], true);
 }
 
 if (shell && localStorage.getItem("railCollapsed") === "1") setRailCollapsed(true);
@@ -2199,10 +2268,10 @@ document.querySelector("#athleteSelector").addEventListener("change", async (eve
     state.goals = goals;
     renderProviders();
     renderCalendar();
-    renderHeroMetrics();
+
     renderTrainingInsights();
     const athlete = getActiveAthlete();
-    setLog([`Atleta selecionado: ${athlete?.name || "nenhum"}. IntegraÃ§Ãµes e calendÃ¡rio atualizados.`]);
+    setLog([`Atleta selecionado: ${athlete?.name || "nenhum"}. Integrações e calendário atualizados.`]);
   } catch (error) {
     setLog([error.message], true);
   }
@@ -2223,7 +2292,11 @@ document.addEventListener("click", async (event) => {
   }
   const editButton = event.target.closest("[data-edit-athlete]");
   if (editButton) {
-    editAthlete(editButton.dataset.editAthlete);
+    if (state.view === "settings") {
+      editAdminUser(editButton.dataset.editAthlete);
+    } else {
+      editAthlete(editButton.dataset.editAthlete);
+    }
     return;
   }
   const deleteButton = event.target.closest("[data-delete-athlete]");
@@ -2287,10 +2360,15 @@ document.addEventListener("click", async (event) => {
     const activityId = testFlagButton.getAttribute("data-flag-3000-activity") || testFlagButton.dataset.flag3000Activity;
     const enabled = (testFlagButton.getAttribute("data-flag-enabled") || testFlagButton.dataset.flagEnabled) === "1";
     if (!activityId) {
-      setLog(["NÃ£o foi possÃ­vel identificar a atividade para marcar o teste de 3000 m."], true);
+      setLog(["Não foi possível identificar a atividade para marcar o teste de 3000 m."], true);
       return;
     }
     await setActivity3000Flag(activityId, enabled);
+    return;
+  }
+  const feedbackButton = event.target.closest("[data-save-activity-feedback]");
+  if (feedbackButton) {
+    await saveActivityFeedback(feedbackButton.dataset.saveActivityFeedback);
   }
 });
 
@@ -2304,6 +2382,8 @@ document.querySelector("#coachEmailSelect")?.addEventListener("change", (event) 
 
 document.querySelectorAll("[data-admin-mode]").forEach((button) => {
   button.addEventListener("click", () => {
+    state.editingAdminUserId = "";
+    document.querySelector("#adminUserForm")?.reset();
     state.adminMode = button.dataset.adminMode;
     setAdminMessage("");
     renderAdminMode();
@@ -2321,7 +2401,7 @@ document.querySelector("#teamForm")?.addEventListener("submit", saveTeam);
 });
 document.querySelector("#athleteFilterRole")?.addEventListener("change", renderAthletes);
 document.querySelector("#aiSettingsForm")?.addEventListener("submit", saveAiSettings);
-document.querySelector("#cancelAthleteEdit")?.addEventListener("click", () => resetAthleteForm("EdiÃ§Ã£o cancelada."));
+document.querySelector("#cancelAthleteEdit")?.addEventListener("click", () => resetAthleteForm("Edição cancelada."));
 
 loadAppVersion();
 renderHistoryTimelineEditor([]);

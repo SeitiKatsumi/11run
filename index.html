@@ -67,11 +67,6 @@
                 <button class="secondary-action" data-view-button="athlete">Meu dashboard</button>
               </div>
             </div>
-            <div class="hero-metrics" id="heroMetrics" aria-label="Resumo do atleta">
-              <div><span>30 dias</span><strong>--</strong><small>sem atividades</small></div>
-              <div><span>Semana</span><strong>--</strong><small>0 sessões</small></div>
-              <div><span>Status</span><strong>--</strong><small>aguardando importação</small></div>
-            </div>
           </div>
         </section>
 
@@ -79,7 +74,7 @@
           <header class="page-header">
             <div>
               <p class="kicker">Treinamentos</p>
-              <h2>Calendário de atividades</h2>
+              <h2>Atividades</h2>
             </div>
             <div class="toolbar">
               <div class="segmented calendar-view-switch" role="tablist" aria-label="Visualização do calendário">
@@ -105,7 +100,7 @@
               <div class="chart-legend" aria-label="Legenda do grafico">
                 <span><i class="legend-volume"></i>Volume</span>
                 <span><i class="legend-tss"></i>11TSS</span>
-                <button class="secondary-action compact panel-toggle" type="button" data-toggle-panel="performanceChart">Abrir</button>
+                <button class="secondary-action compact panel-toggle" type="button" data-toggle-panel="performanceChart">Expandir painel</button>
               </div>
             </div>
             <div id="performanceChart" class="performance-chart" aria-live="polite"></div>
@@ -370,41 +365,17 @@
                 <h3>Estratégia técnica por plataforma</h3>
               </div>
               <div id="providerList" class="provider-list"></div>
-            </div>
-
-            <aside class="panel import-log">
-              <div class="section-title">
-                <span>Pipeline</span>
-                <h3>Status da sincronização</h3>
+              <div class="import-log inline-import-log">
+                <div class="section-title">
+                  <span>Pipeline</span>
+                  <h3>Status da sincronização</h3>
+                </div>
+                <ol id="syncLog">
+                  <li>Selecione as fontes e um intervalo para iniciar.</li>
+                </ol>
               </div>
-              <ol id="syncLog">
-                <li>Selecione as fontes e um intervalo para iniciar.</li>
-              </ol>
-            </aside>
-          </section>
-          </section>
-
-          <section class="panel ai-settings-panel admin-only" id="aiSettingsPanel" hidden>
-            <div class="section-title">
-              <span>IA do sistema</span>
-              <h3>Modelo OpenAI para análises</h3>
             </div>
-            <form id="aiSettingsForm" class="ai-settings-form">
-              <label class="credential-field">
-                <span>API key OpenAI</span>
-                <input name="openaiApiKey" type="password" autocomplete="off" />
-              </label>
-              <label class="credential-field">
-                <span>Modelo</span>
-                <input name="openaiModel" placeholder="gpt-4.1-mini" />
-              </label>
-              <label class="provider-toggle ai-toggle">
-                <input name="openaiEnabled" type="checkbox" />
-                Ativar análises com IA
-              </label>
-              <button class="primary-action compact" type="submit">Salvar IA</button>
-              <p id="aiSettingsMessage" class="form-message" aria-live="polite"></p>
-            </form>
+          </section>
           </section>
         </section>
 
@@ -514,6 +485,29 @@
               </form>
               <p id="adminMessage" class="form-message" aria-live="polite"></p>
             </div>
+
+            <section class="panel ai-settings-panel admin-only" id="aiSettingsPanel" hidden>
+              <div class="section-title">
+                <span>IA do sistema</span>
+                <h3>Modelo OpenAI para análises</h3>
+              </div>
+              <form id="aiSettingsForm" class="ai-settings-form">
+                <label class="credential-field">
+                  <span>API key OpenAI</span>
+                  <input name="openaiApiKey" type="password" autocomplete="off" />
+                </label>
+                <label class="credential-field">
+                  <span>Modelo</span>
+                  <input name="openaiModel" placeholder="gpt-4.1-mini" />
+                </label>
+                <label class="provider-toggle ai-toggle">
+                  <input name="openaiEnabled" type="checkbox" />
+                  Ativar análises com IA
+                </label>
+                <button class="primary-action compact" type="submit">Salvar IA</button>
+                <p id="aiSettingsMessage" class="form-message" aria-live="polite"></p>
+              </form>
+            </section>
 
             <aside class="panel athlete-list-panel">
               <div class="section-title">

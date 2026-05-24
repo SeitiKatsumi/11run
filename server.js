@@ -1442,6 +1442,7 @@ function activityRowToApi(row) {
     averageSpeed: safeNumber(raw.average_speed),
     bestEfforts,
     analysis,
+    feedback: raw.feedback || {},
     is3000Test: Boolean(raw?.flags?.is3000Test)
   };
 }
@@ -1672,6 +1673,65 @@ async function flagActivityAs3000Test(tenantId, athleteUserId, activityId, enabl
   return listActivities(tenantId, athleteUserId);
 }
 
+async function updateActivityFeedback(tenantId, athleteUserId, activityId, feedback) {
+  const cleanActivityId = String(activityId || "").trim();
+  if (!cleanActivityId) throw httpError("Atividade inválida.", 400);
+  const performancePercent = feedback.performancePercent === "" || feedback.performancePercent == null
+    ?null
+    : Math.max(0, Math.min(100, Number(feedback.performancePercent)));
+  const painScore = feedback.painScore === "" || feedback.painScore == null
+    ?null
+    : Math.max(0, Math.min(10, Number(feedback.painScore)));
+  if ((performancePercent != null && Number.isNaN(performancePercent)) || (painScore != null && Number.isNaN(painScore))) {
+    throw httpError("Percepção inválida.", 400);
+  }
+
+  if (!pool) {
+    const activities = readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
+    const index = activities.findIndex((item) => String(item.id) === cleanActivityId);
+    if (index < 0) throw httpError("Atividade não encontrada para este atleta.", 404);
+    const item = activities[index];
+    if (athleteUserId && String(item.athleteUserId || "") !== String(athleteUserId)) {
+      throw httpError("Atividade não encontrada para este atleta.", 404);
+    }
+    activities[index] = {
+      ...item,
+      feedback: { performancePercent, painScore },
+      raw: {
+        ...(item.raw || {}),
+        feedback: { performancePercent, painScore }
+      }
+    };
+    writeJson(ACTIVITIES_FILE, activities);
+    return listActivities(tenantId, athleteUserId);
+  }
+
+  const separator = cleanActivityId.indexOf("-");
+  if (separator < 0) throw httpError("Identificador de atividade inválido.", 400);
+  const provider = cleanActivityId.slice(0, separator);
+  const providerActivityId = cleanActivityId.slice(separator + 1);
+  if (!provider || !providerActivityId) throw httpError("Identificador de atividade inválido.", 400);
+
+  const updated = await query(
+    `UPDATE activities
+        SET raw = jsonb_set(
+                  COALESCE(raw, '{}'::jsonb),
+                  '{feedback}',
+                  jsonb_build_object('performancePercent', $5::int, 'painScore', $6::int),
+                  true
+                ),
+            updated_at = now()
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND lower(provider) = lower($3)
+        AND provider_activity_id = $4
+      RETURNING provider_activity_id`,
+    [tenantId, athleteUserId, provider, providerActivityId, performancePercent, painScore]
+  );
+  if (!updated.rows[0]) throw httpError("Atividade não encontrada para este atleta.", 404);
+  return listActivities(tenantId, athleteUserId);
+}
+
 async function resolveAthleteIdFromActivity(tenantId, activityId) {
   const cleanActivityId = String(activityId || "").trim();
   if (!cleanActivityId) return "";
@@ -1707,8 +1767,10 @@ async function upsertActivities(tenantId, athleteUserId, importedActivities) {
       byId.set(String(activity.id), {
         ...activity,
         is3000Test,
+        feedback: current?.feedback || current?.raw?.feedback || activity.feedback || {},
         raw: {
           ...(activity.raw || {}),
+          feedback: current?.raw?.feedback || current?.feedback || activity.feedback || {},
           flags: {
             ...((activity.raw || {}).flags || {}),
             ...(is3000Test ?{ is3000Test: true } : {})
@@ -1749,9 +1811,14 @@ async function upsertActivities(tenantId, athleteUserId, importedActivities) {
                         AND COALESCE(EXCLUDED.raw->>'resource_state', '') <> '3'
                        THEN activities.raw
                        ELSE jsonb_set(
-                         EXCLUDED.raw,
-                         '{flags}',
-                         COALESCE(activities.raw->'flags', '{}'::jsonb) || COALESCE(EXCLUDED.raw->'flags', '{}'::jsonb),
+                         jsonb_set(
+                           EXCLUDED.raw,
+                           '{flags}',
+                           COALESCE(activities.raw->'flags', '{}'::jsonb) || COALESCE(EXCLUDED.raw->'flags', '{}'::jsonb),
+                           true
+                         ),
+                         '{feedback}',
+                         COALESCE(activities.raw->'feedback', EXCLUDED.raw->'feedback', '{}'::jsonb),
                          true
                        )
                      END,
@@ -2356,6 +2423,22 @@ async function handleApi(req, res, url) {
         throw httpError("Usuario sem permissao para alterar esta atividade.", 403);
       }
       const activities = await flagActivityAs3000Test(tenant.id, targetAthleteId, body.activityId, body.enabled);
+      sendJson(res, 200, { ok: true, activities });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/activities/feedback") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      const targetAthleteId = athleteUserId || await resolveAthleteIdFromActivity(tenant.id, body.activityId);
+      if (!targetAthleteId || !(await canAccessAthlete(tenant.id, user, targetAthleteId))) {
+        throw httpError("Usuario sem permissao para alterar esta atividade.", 403);
+      }
+      const activities = await updateActivityFeedback(tenant.id, targetAthleteId, body.activityId, {
+        performancePercent: body.performancePercent,
+        painScore: body.painScore
+      });
       sendJson(res, 200, { ok: true, activities });
       return;
     }

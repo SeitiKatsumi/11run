@@ -428,17 +428,6 @@ h3 {
   font-size: 13px;
 }
 
-.hero-metrics {
-  position: absolute;
-  right: clamp(20px, 4vw, 52px);
-  bottom: clamp(20px, 4vw, 52px);
-  z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(120px, 1fr));
-  gap: 10px;
-}
-
-.hero-metrics div,
 .panel,
 dialog {
   border: 1px solid var(--line);
@@ -448,28 +437,11 @@ dialog {
   backdrop-filter: blur(18px);
 }
 
-.hero-metrics div {
-  padding: 16px;
-}
-
-.hero-metrics span,
 .day-number,
 .metric-label {
   color: var(--muted);
   font-size: 12px;
   font-weight: 650;
-}
-
-.hero-metrics strong {
-  display: block;
-  margin: 8px 0 4px;
-  font-size: 24px;
-  color: var(--heading);
-  font-weight: 650;
-}
-
-.hero-metrics small {
-  color: var(--soft);
 }
 
 .page-header {
@@ -533,6 +505,10 @@ dialog {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
   gap: 18px;
+}
+
+.settings-grid {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .admin-management-grid {
@@ -1250,7 +1226,9 @@ dialog {
 }
 
 .calendar-month {
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: 56px repeat(var(--month-weeks, 5), minmax(180px, 1fr));
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .calendar-week {
@@ -1267,6 +1245,25 @@ dialog {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+.month-grid-corner,
+.month-week-header,
+.month-day-label {
+  min-height: 28px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 540;
+  text-transform: uppercase;
+}
+
+.month-week-header {
+  display: flex;
+  align-items: center;
+}
+
+.month-day-label {
+  padding-top: 12px;
 }
 
 .day {
@@ -1332,6 +1329,43 @@ dialog {
   font-weight: 430;
   text-transform: uppercase;
   opacity: 0.88;
+}
+
+.activity-feedback {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  color: #f3efe8;
+  font-size: 10px;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.activity-feedback span {
+  margin: 0;
+  color: #f3efe8;
+  opacity: 0.9;
+}
+
+.activity-feedback .pain-low {
+  color: #67d68a;
+}
+
+.activity-feedback .pain-mid {
+  color: #f0c765;
+}
+
+.activity-feedback .pain-high {
+  color: #ff6a5a;
+}
+
+.activity-feedback-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 14px;
 }
 
 .activity[data-source="Garmin"] {
@@ -1786,6 +1820,12 @@ input[type="checkbox"] {
   line-height: 1.65;
 }
 
+.inline-import-log {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
 .import-log ol.is-error {
   color: #ffb3bd;
 }
@@ -2137,14 +2177,6 @@ dialog::backdrop {
     width: 100%;
   }
 
-  .hero-metrics {
-    position: relative;
-    right: auto;
-    bottom: auto;
-    grid-template-columns: 1fr;
-    padding: 0 18px 24px;
-  }
-
   .page-header {
     display: block;
     padding-top: 8px;
@@ -2169,41 +2201,39 @@ dialog::backdrop {
 
   .toolbar .calendar-view-switch,
   .calendar-tools .calendar-view-switch {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: hidden;
+    gap: 4px;
     width: 100%;
     max-width: 100%;
-    scrollbar-width: none;
-  }
-
-  .toolbar .calendar-view-switch::-webkit-scrollbar,
-  .calendar-tools .calendar-view-switch::-webkit-scrollbar {
-    display: none;
+    padding: 3px;
   }
 
   .toolbar .calendar-view-switch button,
   .calendar-tools .calendar-view-switch button {
-    min-width: 92px;
+    min-width: 0;
+    height: 34px;
+    padding: 0 5px;
+    font-size: 11px;
+    letter-spacing: 0;
     white-space: nowrap;
-    flex: 0 0 auto;
   }
 
   .toolbar .period-nav,
   .calendar-tools .period-nav {
-    display: inline-flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
     gap: 8px;
-    justify-content: flex-end;
-    align-self: flex-end;
   }
 
   .toolbar .period-nav .icon-button,
   .calendar-tools .period-nav .icon-button {
-    width: 40px;
-    min-width: 40px;
-    height: 40px;
+    width: 100%;
+    min-width: 0;
+    height: 36px;
+    font-size: 18px;
   }
 
   .calendar-top,
@@ -2215,9 +2245,8 @@ dialog::backdrop {
 
   .calendar-tools {
     margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 8px;
   }
 
@@ -2233,11 +2262,14 @@ dialog::backdrop {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .calendar-month,
   .calendar-week,
   .calendar-period,
   .calendar-semester {
     grid-template-columns: 1fr;
+  }
+
+  .calendar-month {
+    min-width: 760px;
   }
 
   .weekday {
@@ -2277,10 +2309,6 @@ dialog::backdrop {
     width: 100%;
   }
 
-  .hero-metrics div {
-    padding: 14px;
-  }
-
   .chart-stats {
     grid-template-columns: 1fr;
   }
@@ -2306,22 +2334,19 @@ dialog::backdrop {
     gap: 6px;
   }
 
-  .toolbar .period-nav {
-    justify-content: flex-end;
-  }
-
   .toolbar .calendar-view-switch button,
   .calendar-tools .calendar-view-switch button {
-    min-width: 86px;
-    padding: 0 10px;
-    font-size: 15px;
+    min-width: 0;
+    height: 32px;
+    padding: 0 3px;
+    font-size: 10px;
   }
 
   .calendar-tools {
     gap: 6px;
   }
 
-  .calendar-tools .period-nav {
-    justify-content: flex-end;
+  .activity-feedback-form {
+    grid-template-columns: 1fr;
   }
 }
