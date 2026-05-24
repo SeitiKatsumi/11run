@@ -2204,18 +2204,18 @@ dialog::backdrop {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     overflow: hidden;
-    gap: 4px;
+    gap: 2px;
     width: 100%;
     max-width: 100%;
-    padding: 3px;
+    padding: 2px;
   }
 
   .toolbar .calendar-view-switch button,
   .calendar-tools .calendar-view-switch button {
     min-width: 0;
-    height: 34px;
-    padding: 0 5px;
-    font-size: 11px;
+    height: 30px;
+    padding: 0 2px;
+    font-size: 9px;
     letter-spacing: 0;
     white-space: nowrap;
   }
@@ -2248,6 +2248,8 @@ dialog::backdrop {
     display: grid;
     grid-template-columns: 1fr;
     gap: 8px;
+    width: 100%;
+    overflow: hidden;
   }
 
   .calendar-tools [data-import-demo] {
@@ -2269,7 +2271,37 @@ dialog::backdrop {
   }
 
   .calendar-month {
-    min-width: 760px;
+    grid-template-columns: 40px repeat(var(--month-weeks, 5), minmax(0, 1fr));
+    min-width: 0;
+    overflow-x: hidden;
+    gap: 5px;
+  }
+
+  .month-grid-corner,
+  .month-week-header,
+  .month-day-label {
+    min-height: 22px;
+    font-size: 8px;
+  }
+
+  .calendar-month .day {
+    padding: 7px;
+    min-height: 110px;
+  }
+
+  .calendar-month .activity {
+    padding: 8px;
+    border-radius: 6px;
+  }
+
+  .calendar-month .activity strong {
+    font-size: 10px;
+  }
+
+  .calendar-month .activity span,
+  .calendar-month .activity small {
+    font-size: 8px;
+    line-height: 1.35;
   }
 
   .weekday {
@@ -2337,13 +2369,27 @@ dialog::backdrop {
   .toolbar .calendar-view-switch button,
   .calendar-tools .calendar-view-switch button {
     min-width: 0;
-    height: 32px;
+    height: 28px;
     padding: 0 3px;
-    font-size: 10px;
+    font-size: 8px;
   }
 
   .calendar-tools {
     gap: 6px;
+  }
+
+  .calendar-month {
+    grid-template-columns: 30px repeat(var(--month-weeks, 5), minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .calendar-month .day {
+    padding: 6px;
+    min-height: 96px;
+  }
+
+  .calendar-month .activity {
+    padding: 7px;
   }
 
   .activity-feedback-form {

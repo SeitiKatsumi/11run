@@ -4,6 +4,7 @@ const state = {
   cursor: new Date(),
   activities: [],
   goals: [],
+  language: localStorage.getItem("appLanguage") || "pt-BR",
   integrations: {},
   directory: { teams: [], coaches: [] },
   athletes: [],
@@ -21,7 +22,8 @@ const state = {
       focusProjection: true,
       focusRoadmap: true,
       goalForm: true,
-      performanceChart: true
+      performanceChart: true,
+      dashboardIntegrations: true
     };
     try {
       const raw = localStorage.getItem("collapsedPanels");
@@ -36,6 +38,127 @@ const state = {
 
 const APP_VERSION_FALLBACK = "local-ui";
 const SECRET_MASK = "********";
+const languageOptions = {
+  "pt-BR": "Portugu√™s do Brasil",
+  "pt-PT": "Portugu√™s de Portugal",
+  en: "English",
+  es: "Espa√±ol",
+  fr: "Fran√ßais",
+  de: "Deutsch",
+  ja: "Êó•Êú¨Ë™û",
+  zh: "‰∏≠Êñá",
+  sw: "Kiswahili"
+};
+const translations = {
+  "pt-BR": {
+    "nav.home": "HOME",
+    "nav.dashboard": "MEU DASHBOARD",
+    "nav.training": "TREINAMENTOS",
+    "nav.goals": "OBJETIVOS",
+    "nav.preferences": "PREFER√äNCIAS",
+    "nav.settings": "CONFIGURA√á√ïES",
+    "profile.language": "Idioma",
+    "profile.expand": "Expandir painel",
+    "profile.collapse": "Fechar painel",
+    "profile.close": "Fechar"
+  },
+  "pt-PT": {
+    "nav.home": "IN√çCIO",
+    "nav.dashboard": "O MEU DASHBOARD",
+    "nav.training": "TREINOS",
+    "nav.goals": "OBJETIVOS",
+    "nav.preferences": "PREFER√äNCIAS",
+    "nav.settings": "CONFIGURA√á√ïES",
+    "profile.language": "Idioma",
+    "profile.expand": "Expandir painel",
+    "profile.collapse": "Fechar painel",
+    "profile.close": "Fechar"
+  },
+  en: {
+    "nav.home": "HOME",
+    "nav.dashboard": "MY DASHBOARD",
+    "nav.training": "TRAINING",
+    "nav.goals": "GOALS",
+    "nav.preferences": "PREFERENCES",
+    "nav.settings": "SETTINGS",
+    "profile.language": "Language",
+    "profile.expand": "Expand panel",
+    "profile.collapse": "Close panel",
+    "profile.close": "Close"
+  },
+  es: {
+    "nav.home": "INICIO",
+    "nav.dashboard": "MI DASHBOARD",
+    "nav.training": "ENTRENAMIENTOS",
+    "nav.goals": "OBJETIVOS",
+    "nav.preferences": "PREFERENCIAS",
+    "nav.settings": "CONFIGURACI√ìN",
+    "profile.language": "Idioma",
+    "profile.expand": "Expandir panel",
+    "profile.collapse": "Cerrar panel",
+    "profile.close": "Cerrar"
+  },
+  fr: {
+    "nav.home": "ACCUEIL",
+    "nav.dashboard": "MON DASHBOARD",
+    "nav.training": "ENTRA√éNEMENTS",
+    "nav.goals": "OBJECTIFS",
+    "nav.preferences": "PR√âF√âRENCES",
+    "nav.settings": "PARAM√àTRES",
+    "profile.language": "Langue",
+    "profile.expand": "D√©velopper le panneau",
+    "profile.collapse": "Fermer le panneau",
+    "profile.close": "Fermer"
+  },
+  de: {
+    "nav.home": "START",
+    "nav.dashboard": "MEIN DASHBOARD",
+    "nav.training": "TRAINING",
+    "nav.goals": "ZIELE",
+    "nav.preferences": "EINSTELLUNGEN",
+    "nav.settings": "VERWALTUNG",
+    "profile.language": "Sprache",
+    "profile.expand": "Panel erweitern",
+    "profile.collapse": "Panel schlie√üen",
+    "profile.close": "Schlie√üen"
+  },
+  ja: {
+    "nav.home": "„Éõ„Éº„É†",
+    "nav.dashboard": "„Éû„Ç§„ÉÄ„ÉÉ„Ç∑„É•„Éú„Éº„Éâ",
+    "nav.training": "„Éà„É¨„Éº„Éã„É≥„Ç∞",
+    "nav.goals": "ÁõÆÊ®ô",
+    "nav.preferences": "Ë®≠ÂÆö",
+    "nav.settings": "ÁÆ°ÁêÜË®≠ÂÆö",
+    "profile.language": "Ë®ÄË™û",
+    "profile.expand": "„Éë„Éç„É´„ÇíÂ±ïÈñã",
+    "profile.collapse": "„Éë„Éç„É´„ÇíÈñâ„Åò„Çã",
+    "profile.close": "Èñâ„Åò„Çã"
+  },
+  zh: {
+    "nav.home": "È¶ñÈ°µ",
+    "nav.dashboard": "ÊàëÁöÑ‰ª™Ë°®Áõò",
+    "nav.training": "ËÆ≠ÁªÉ",
+    "nav.goals": "ÁõÆÊ†á",
+    "nav.preferences": "ÂÅèÂ•ΩËÆæÁΩÆ",
+    "nav.settings": "ËÆæÁΩÆ",
+    "profile.language": "ËØ≠Ë®Ä",
+    "profile.expand": "Â±ïÂºÄÈù¢Êùø",
+    "profile.collapse": "ÂÖ≥Èó≠Èù¢Êùø",
+    "profile.close": "ÂÖ≥Èó≠"
+  },
+  sw: {
+    "nav.home": "NYUMBANI",
+    "nav.dashboard": "DASHIBODI YANGU",
+    "nav.training": "MAZOEZI",
+    "nav.goals": "MALENGO",
+    "nav.preferences": "MAPENDELEO",
+    "nav.settings": "MIPANGILIO",
+    "profile.language": "Lugha",
+    "profile.expand": "Panua paneli",
+    "profile.collapse": "Funga paneli",
+    "profile.close": "Funga"
+  }
+};
 
 const providerDefinitions = {
   strava: {
@@ -54,14 +177,14 @@ const providerDefinitions = {
   garmin: {
     name: "Garmin Connect",
     mark: "G",
-    status: "API oficial exige aprovaÁ„o",
-    strategy: "O caminho correto È o Garmin Connect Developer Program. Para atividades, solicite Activity API/Activity Export. Sem aprovaÁ„o, n„o existe API p˙blica oficial para puxar o Garmin Connect diretamente.",
+    status: "API oficial exige aprova√ß√£o",
+    strategy: "O caminho correto √© o Garmin Connect Developer Program. Para atividades, solicite Activity API/Activity Export. Sem aprova√ß√£o, n√£o existe API p√∫blica oficial para puxar o Garmin Connect diretamente.",
     fields: [
       ["clientId", "Consumer Key / Client ID"],
       ["clientSecret", "Consumer Secret / Client Secret", "password"],
       ["redirectUri", "Redirect URI"],
-      ["permissions", "Permissıes solicitadas"],
-      ["webhookUrl", "Webhook de notificaÁ„o"],
+      ["permissions", "Permiss√µes solicitadas"],
+      ["webhookUrl", "Webhook de notifica√ß√£o"],
       ["environment", "Ambiente"]
     ],
     docs: "https://developer.garmin.com/gc-developer-program/overview/"
@@ -69,14 +192,14 @@ const providerDefinitions = {
   coros: {
     name: "COROS",
     mark: "C",
-    status: "Acesso restrito por aplicaÁ„o",
-    strategy: "A COROS pede submiss„o de aplicaÁ„o/API. AtÈ aprovar, a alternativa pr·tica È importar via Strava, TrainingPeaks, Intervals.icu ou arquivo FIT.",
+    status: "Acesso restrito por aplica√ß√£o",
+    strategy: "A COROS pede submiss√£o de aplica√ß√£o/API. At√© aprovar, a alternativa pr√°tica √© importar via Strava, TrainingPeaks, Intervals.icu ou arquivo FIT.",
     fields: [
-      ["apiApplicationStatus", "Status da aplicaÁ„o API"],
+      ["apiApplicationStatus", "Status da aplica√ß√£o API"],
       ["partnerClientId", "Partner Client ID"],
       ["partnerClientSecret", "Partner Client Secret", "password"],
       ["redirectUri", "Redirect URI"],
-      ["fallbackProvider", "Fallback de sincronizaÁ„o"],
+      ["fallbackProvider", "Fallback de sincroniza√ß√£o"],
       ["fallbackApiKey", "Fallback API Key", "password"]
     ],
     docs: "https://support.coros.com/hc/en-us/articles/17085887816340-Submitting-an-API-Application"
@@ -84,8 +207,8 @@ const providerDefinitions = {
   polar: {
     name: "Polar AccessLink",
     mark: "P",
-    status: "OAuth oficial disponÌvel",
-    strategy: "Polar AccessLink usa Client ID/Secret, OAuth e depois registro do usu·rio para transaÁıes de exercÌcios. HistÛrico anterior ao consentimento pode ser limitado.",
+    status: "OAuth oficial dispon√≠vel",
+    strategy: "Polar AccessLink usa Client ID/Secret, OAuth e depois registro do usu√°rio para transa√ß√µes de exerc√≠cios. Hist√≥rico anterior ao consentimento pode ser limitado.",
     fields: [
       ["clientId", "Client ID"],
       ["clientSecret", "Client Secret", "password"],
@@ -114,7 +237,7 @@ const providerDefinitions = {
 
 const weekdayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 const weekdayNamesMonday = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
-const monthNames = ["Janeiro", "Fevereiro", "Marco", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const monthNames = ["Janeiro", "Fevereiro", "Mar√ßo", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 const focusDistanceLabels = {
   800: "800 m",
   1500: "1500 m",
@@ -201,7 +324,7 @@ function mountCollapsibleSection(panel, key, label) {
       <button class="panel-toggle-text" type="button" data-toggle-panel="${escapeHtml(key)}" aria-label="Alternar painel ${escapeHtml(label)}">
         <span class="kicker">${escapeHtml(label)}</span>
       </button>
-      <button class="secondary-action compact" type="button" data-toggle-panel="${escapeHtml(key)}">Expandir painel</button>
+      <button class="secondary-action compact" type="button" data-toggle-panel="${escapeHtml(key)}">${escapeHtml(t("profile.expand"))}</button>
     `;
     panel.insertBefore(control, panel.firstChild);
   }
@@ -209,7 +332,22 @@ function mountCollapsibleSection(panel, key, label) {
   panel.classList.toggle("is-collapsed", collapsed);
   content.hidden = collapsed;
   const button = control.querySelector(`.secondary-action[data-toggle-panel="${key}"]`);
-  if (button) button.textContent = collapsed ?"Expandir painel" : "Fechar painel";
+  if (button) button.textContent = collapsed ?t("profile.expand") : t("profile.collapse");
+}
+
+function applyPanelCollapse(panel, key, label) {
+  mountCollapsibleSection(panel, key, label);
+}
+
+function t(key) {
+  return translations[state.language]?.[key] || translations["pt-BR"][key] || key;
+}
+
+function applyI18n() {
+  document.documentElement.lang = state.language;
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    node.textContent = t(node.dataset.i18n);
+  });
 }
 
 async function api(path, options = {}) {
@@ -276,8 +414,18 @@ function setView(view) {
   document.querySelectorAll("[data-view]").forEach((section) => section.classList.toggle("is-visible", section.dataset.view === view));
   document.querySelectorAll("[data-view-link]").forEach((link) => link.classList.toggle("is-active", link.dataset.viewLink === view));
   if (view === "athlete") editCurrentUserProfile();
-  location.hash = view === "training" ?"treinamentos" : view === "goals" ?"objetivos" : view === "athlete" ?"dashboard" : view === "settings" ?"configuracoes" : "home";
+  if (view === "dashboard") renderDashboard();
+  location.hash = view === "training" ?"treinamentos" : view === "goals" ?"objetivos" : view === "athlete" ?"preferencias" : view === "settings" ?"configuracoes" : view === "dashboard" ?"dashboard" : "home";
   closeMobileMenu();
+}
+
+function viewFromHash(hash) {
+  if (hash === "treinamentos") return "training";
+  if (hash === "objetivos") return "goals";
+  if (hash === "dashboard") return "dashboard";
+  if (hash === "configuracoes" || hash === "configuracao") return "settings";
+  if (hash === "atleta" || hash === "preferencias") return "athlete";
+  return "home";
 }
 
 function syncCalendarViewButtons() {
@@ -508,10 +656,10 @@ function renderFocusProjection() {
       <div class="focus-projection-empty">
         <span>Prova foco</span>
         <strong>Defina a prova foco do atleta</strong>
-        <p>Informe dist‚ncia, tempo alvo e data no cadastro para ativar a projeÁ„o.</p>
+        <p>Informe dist√¢ncia, tempo alvo e data no cadastro para ativar a proje√ß√£o.</p>
       </div>
     `;
-    mountCollapsibleSection(target, "focusProjection", "ProjeÁ„o da prova foco");
+    mountCollapsibleSection(target, "focusProjection", "Proje√ß√£o da prova foco");
     return;
   }
 
@@ -534,24 +682,24 @@ function renderFocusProjection() {
     : "sem tempos importados";
   const dateLabel = athlete.targetDate
     ?new Date(`${athlete.targetDate}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
-    : "data n„o definida";
+    : "data n√£o definida";
 
   target.innerHTML = `
     <div class="focus-projection-head">
       <div>
-        <p class="kicker">ProjeÁ„o da prova foco</p>
+        <p class="kicker">Proje√ß√£o da prova foco</p>
         <h3>${escapeHtml(focusDistanceLabels[focusMeters] || `${focusMeters} m`)}</h3>
       </div>
       <strong>${escapeHtml(projectedSeconds ?formatDurationSeconds(projectedSeconds) : "--")}</strong>
     </div>
     <div class="focus-projection-grid">
       <div><span>Tempo alvo</span><strong>${escapeHtml(targetSeconds ?formatDurationSeconds(targetSeconds) : "--")}</strong><p>${escapeHtml(dateLabel)}</p></div>
-      <div><span>DiferenÁa</span><strong>${escapeHtml(gapLabel)}</strong><p>comparado com a projeÁ„o atual</p></div>
+      <div><span>Diferen√ßa</span><strong>${escapeHtml(gapLabel)}</strong><p>comparado com a proje√ß√£o atual</p></div>
       <div><span>Melhor 90 dias</span><strong>${escapeHtml(bestRecentLabel)}</strong><p>${escapeHtml(`tempos: ${recentTimesLabel}`)}</p></div>
       <div><span>Modelo</span><strong>Riegel + 11TSS</strong><p>corridas reais e best efforts do Strava</p></div>
     </div>
   `;
-  mountCollapsibleSection(target, "focusProjection", "ProjeÁ„o da prova foco");
+  mountCollapsibleSection(target, "focusProjection", "Proje√ß√£o da prova foco");
 }
 
 function collect3000Tests(athlete) {
@@ -561,14 +709,20 @@ function collect3000Tests(athlete) {
     .map((test) => ({
       date: test.date ?new Date(`${test.date}T00:00:00`) : null,
       seconds: Number(test.timeSeconds),
-      source: `MANUAL: ${test.notes || "teste 3000"}`
+      source: `Manual: ${test.notes || "teste 3000"}`,
+      origin: "Manual",
+      title: test.notes || "Teste de 3000 m",
+      details: "Cadastro manual"
     }));
   const flaggedActivities = visibleActivities()
     .filter((activity) => isRunningActivity(activity) && activity.is3000Test)
     .map((activity) => ({
       date: activityDate(activity),
       seconds: parseDurationSeconds(activity.duration),
-      source: `FLAG: ${activity.title}`
+      source: `Strava: ${activity.title}`,
+      origin: "Strava",
+      title: activity.title || "Teste de 3000 m",
+      details: `${activity.distance || "--"} ¬∑ ${activity.duration || "--"} ¬∑ ${activity.description || "atividade importada"}`
     }))
     .filter((test) => test.seconds);
   const fromActivities = visibleActivities()
@@ -580,7 +734,10 @@ function collect3000Tests(athlete) {
         .map((effort) => ({
           date: activityDate(activity),
           seconds: Number(effort.movingTimeSeconds || effort.elapsedTimeSeconds || 0),
-          source: `AUTO: ${activity.title}`
+          source: `Strava auto: ${activity.title}`,
+          origin: "Strava auto",
+          title: activity.title || "Teste de 3000 m",
+          details: `${activity.distance || "--"} ¬∑ ${activity.duration || "--"} ¬∑ melhor esfor√ßo importado`
         }));
     })
     .filter((test) => test.seconds);
@@ -662,12 +819,12 @@ function renderFocusRoadmap() {
   if (!athlete || !model.focusMeters || !model.targetSeconds || !model.targetDate) {
     target.innerHTML = `
       <div class="focus-projection-empty">
-        <span>Caminho atÈ a prova</span>
+        <span>Caminho at√© a prova</span>
         <strong>Configure prova foco, tempo alvo e data</strong>
-        <p>A projeÁ„o usa 11TSS, volume, consistÍncia, testes de 3000 m e histÛrico do atleta.</p>
+        <p>A proje√ß√£o usa 11TSS, volume, consist√™ncia, testes de 3000 m e hist√≥rico do atleta.</p>
       </div>
     `;
-    mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva atÈ a prova");
+    mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva at√© a prova");
     return;
   }
   const width = 920;
@@ -679,20 +836,20 @@ function renderFocusRoadmap() {
   const startX = pad.left;
   const todayX = model.daysToRace ?startX + Math.min(1, Math.max(0, 0)) * (endX - startX) : startX;
   const targetLabel = model.targetDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-  const aiText = state.aiProjection?.text || "A an·lise preditiva considera carga 11TSS, distribuiÁ„o de intensidade, regularidade, recÍncia dos testes de 3000 m e histÛrico clÌnico/operacional informado.";
+  const aiText = state.aiProjection?.text || "A an√°lise preditiva considera carga 11TSS, distribui√ß√£o de intensidade, regularidade, rec√™ncia dos testes de 3000 m e hist√≥rico cl√≠nico/operacional informado.";
   target.innerHTML = `
     <div class="roadmap-head">
       <div>
-        <p class="kicker">Rota preditiva atÈ a prova</p>
-        <h3>${escapeHtml(focusDistanceLabels[model.focusMeters] || `${model.focusMeters} m`)}: projeÁ„o atual para tempo alvo</h3>
+        <p class="kicker">Rota preditiva at√© a prova</p>
+        <h3>${escapeHtml(focusDistanceLabels[model.focusMeters] || `${model.focusMeters} m`)}: proje√ß√£o atual para tempo alvo</h3>
       </div>
       <div class="probability-badge"><strong>${model.probability || "--"}%</strong><span>probabilidade</span></div>
     </div>
     <div class="roadmap-grid">
-      <div class="roadmap-metric"><span>ProjeÁ„o atual</span><strong>${escapeHtml(formatDurationSeconds(model.currentSeconds))}</strong><p>${escapeHtml(model.status)}</p></div>
+      <div class="roadmap-metric"><span>Proje√ß√£o atual</span><strong>${escapeHtml(formatDurationSeconds(model.currentSeconds))}</strong><p>${escapeHtml(model.status)}</p></div>
       <div class="roadmap-metric"><span>Tempo alvo</span><strong>${escapeHtml(formatDurationSeconds(model.targetSeconds))}</strong><p>${escapeHtml(targetLabel)} - ${model.daysToRace} dias</p></div>
-      <div class="roadmap-metric"><span>Ganho necess·rio</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong><p>${escapeHtml(formatDurationSeconds(model.requiredPerWeek))} por semana</p></div>
-      <div class="roadmap-metric"><span>Base recente</span><strong>${escapeHtml(formatKm(model.volume30))}</strong><p>${model.weeklySessions.toFixed(1)} sessıes/semana ${model.historyRisk ?"- atenÁ„o ao histÛrico" : ""}</p></div>
+      <div class="roadmap-metric"><span>Ganho necess√°rio</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong><p>${escapeHtml(formatDurationSeconds(model.requiredPerWeek))} por semana</p></div>
+      <div class="roadmap-metric"><span>Base recente</span><strong>${escapeHtml(formatKm(model.volume30))}</strong><p>${model.weeklySessions.toFixed(1)} sess√µes/semana ${model.historyRisk ?"- aten√ß√£o ao hist√≥rico" : ""}</p></div>
     </div>
     <div class="roadmap-chart">
       <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Caminho preditivo ate a prova">
@@ -706,9 +863,9 @@ function renderFocusRoadmap() {
       </svg>
     </div>
     <p class="roadmap-ai">${escapeHtml(aiText)}</p>
-    <div class="roadmap-actions"><button class="secondary-action compact" type="button" data-refresh-ai>Atualizar an·lise IA</button></div>
+    <div class="roadmap-actions"><button class="secondary-action compact" type="button" data-refresh-ai>Atualizar an√°lise IA</button></div>
   `;
-  mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva atÈ a prova");
+  mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva at√© a prova");
 }
 
 function goalAsAthlete(goal) {
@@ -732,7 +889,7 @@ function isPastGoal(goal) {
 }
 
 function goalDateLabel(goal) {
-  if (!goal.raceDate) return "data nao definida";
+  if (!goal.raceDate) return "data n√£o definida";
   return new Date(`${goal.raceDate}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
@@ -776,7 +933,7 @@ function renderGoalCard(goal, resultMode = false) {
   const analysis = resultMode
     ?actualSeconds
       ?`Resultado ${detectedResult ?`detectado em ${detectedResult.title}` : "registrado"}: ${gapLabel}.`
-      : "Data da prova vencida. Registre o resultado para gerar a analise versus objetivo."
+      : "Data da prova vencida. Registre o resultado para gerar a an√°lise versus objetivo."
     : `${model.status || "Dados insuficientes"} - ${model.probability || 0}% de probabilidade.`;
   return `
     <article class="goal-card ${resultMode ?"goal-card-result" : ""}">
@@ -790,9 +947,9 @@ function renderGoalCard(goal, resultMode = false) {
       </div>
       <div class="goal-metrics">
         <div><span>Tempo alvo</span><strong>${escapeHtml(formatDurationSeconds(targetSeconds))}</strong></div>
-        <div><span>DiferenÁa</span><strong>${escapeHtml(gapLabel)}</strong></div>
+        <div><span>Diferen√ßa</span><strong>${escapeHtml(gapLabel)}</strong></div>
         <div><span>Probabilidade</span><strong>${model.probability || "--"}%</strong></div>
-        <div><span>Ganho necess·rio</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong></div>
+        <div><span>Ganho necess√°rio</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong></div>
       </div>
       <div class="goal-route">
         <svg viewBox="0 0 560 70" role="img" aria-label="Rota preditiva do objetivo">
@@ -821,7 +978,7 @@ function renderGoals() {
     : `<div class="empty-state">Nenhum objetivo ativo. Adicione uma prova foco para gerar a rota preditiva.</div>`;
   resultTarget.innerHTML = results.length
     ?results.map((goal) => renderGoalCard(goal, true)).join("")
-    : `<div class="empty-state">Objetivos vencidos aparecer„o aqui com a an·lise do resultado versus meta.</div>`;
+    : `<div class="empty-state">Objetivos vencidos aparecer√£o aqui com a an√°lise do resultado versus meta.</div>`;
 }
 
 function setGoalMessage(message, error = false) {
@@ -837,6 +994,7 @@ async function saveGoal(event) {
     setGoalMessage("Selecione um atleta antes de criar objetivos.", true);
     return;
   }
+  if (!window.confirm("Confirmar cria√ß√£o deste objetivo?")) return;
   const form = event.currentTarget;
   const body = Object.fromEntries(new FormData(form).entries());
   try {
@@ -848,9 +1006,10 @@ async function saveGoal(event) {
     state.goals = payload.goals || [];
     form.reset();
     renderGoals();
+    renderDashboard();
     setGoalMessage("Objetivo salvo.");
   } catch (error) {
-    setGoalMessage(error.message || "Nao foi possivel salvar o objetivo.", true);
+    setGoalMessage(error.message || "N√£o foi poss√≠vel salvar o objetivo.", true);
   }
 }
 
@@ -861,11 +1020,11 @@ function renderAthleteFocusHistory() {
   const tests = collect3000Tests(athlete);
   const times = tests.map((item) => `
     <strong>${escapeHtml(formatDurationSeconds(item.seconds))}</strong>
-    <small>${escapeHtml(item.source || "teste")} ∑ ${escapeHtml(item.date ?item.date.toLocaleDateString("pt-BR") : "")}</small>
+    <small>${escapeHtml(item.title || item.source || "teste")} ¬∑ ${escapeHtml(item.date ?item.date.toLocaleDateString("pt-BR") : "")} ¬∑ ${escapeHtml(item.origin || "Manual")}</small>
   `).join("");
   target.innerHTML = `
-    <span>⁄ltimos 3 testes de 3000 m (flag/manual/auto)</span>
-    <div>${times || "<p>Nenhum teste de 3000 m disponÌvel.</p>"}</div>
+    <span>√öltimos 3 testes de 3000 m (flag/manual/auto)</span>
+    <div>${times || "<p>Nenhum teste de 3000 m dispon√≠vel.</p>"}</div>
   `;
 }
 
@@ -899,9 +1058,9 @@ function renderTrainingInsights() {
   const last7 = activitiesSince(7);
   if (!last30.length) {
     target.innerHTML = `
-      <article><span>DistribuiÁ„o</span><strong>Sem dados</strong><p>Importe atividades reais do atleta selecionado.</p></article>
-      <article><span>Risco</span><strong>Sem dados</strong><p>A avaliaÁ„o depende do histÛrico importado.</p></article>
-      <article><span>PrÛxima aÁ„o</span><strong>Conectar fonte</strong><p>Conecte Strava ou outra plataforma antes de gerar recomendaÁıes.</p></article>
+      <article><span>Distribui√ß√£o</span><strong>Sem dados</strong><p>Importe atividades reais do atleta selecionado.</p></article>
+      <article><span>Risco</span><strong>Sem dados</strong><p>A avalia√ß√£o depende do hist√≥rico importado.</p></article>
+      <article><span>Pr√≥xima a√ß√£o</span><strong>Conectar fonte</strong><p>Conecte Strava ou outra plataforma antes de gerar recomenda√ß√µes.</p></article>
     `;
     return;
   }
@@ -915,18 +1074,249 @@ function renderTrainingInsights() {
   const weeklyAverage = km30 / 4.285;
   const ratio = weeklyAverage ?km7 / weeklyAverage : 0;
   const risk = ratio > 1.35 ?"Alto" : ratio < 0.55 ?"Baixa carga" : "Controlado";
-  const action = risk === "Alto" ?"Reduzir carga" : risk === "Baixa carga" ?"Retomar volume" : "Manter progress„o";
+  const action = risk === "Alto" ?"Reduzir carga" : risk === "Baixa carga" ?"Retomar volume" : "Manter progress√£o";
   const detail = risk === "Alto"
-    ?"A semana atual est· acima da mÈdia recente."
+    ?"A semana atual est√° acima da m√©dia recente."
     : risk === "Baixa carga"
-      ?"A semana atual est· abaixo da mÈdia recente."
-      : "A semana est· compatÌvel com o histÛrico recente.";
+      ?"A semana atual est√° abaixo da m√©dia recente."
+      : "A semana est√° compat√≠vel com o hist√≥rico recente.";
 
   target.innerHTML = `
-    <article><span>DistribuiÁ„o</span><strong>${easy} / ${moderate} / ${hard}</strong><p>Leve, moderado e intenso nos ˙ltimos 30 dias.</p></article>
+    <article><span>Distribui√ß√£o</span><strong>${easy} / ${moderate} / ${hard}</strong><p>Leve, moderado e intenso nos √∫ltimos 30 dias.</p></article>
     <article><span>Risco</span><strong>${escapeHtml(risk)}</strong><p>${escapeHtml(detail)}</p></article>
-    <article><span>PrÛxima aÁ„o</span><strong>${escapeHtml(action)}</strong><p>Baseado em ${last30.length} atividades importadas.</p></article>
+    <article><span>Pr√≥xima a√ß√£o</span><strong>${escapeHtml(action)}</strong><p>Baseado em ${last30.length} atividades importadas.</p></article>
   `;
+}
+
+function renderDashboard() {
+  const highlightTarget = document.querySelector("#dashboardHighlights");
+  const testTarget = document.querySelector("#dashboardTests");
+  const typeTarget = document.querySelector("#dashboardTypes");
+  const goalTarget = document.querySelector("#dashboardGoals");
+  if (!highlightTarget || !testTarget || !typeTarget || !goalTarget) return;
+
+  const recent = activitiesSince(30).filter(isRunningActivity);
+  const week = activitiesSince(7).filter(isRunningActivity);
+  const volume30 = recent.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss30 = recent.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const bestLoad = [...recent].sort((a, b) => activityTss(b) - activityTss(a))[0];
+  const athlete = getActiveAthlete();
+  const tests = collect3000Tests(athlete);
+  const types = recent.reduce((acc, activity) => {
+    const key = activity.trainingType || activity.feedback?.trainingType || "Treino";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const activeGoals = (state.goals || []).filter((goal) => !isPastGoal(goal));
+
+  highlightTarget.innerHTML = `
+    <article class="dashboard-metric-card"><span>Volume 30 dias</span><strong>${escapeHtml(formatKm(volume30))}</strong><p>${recent.length} atividades importadas</p></article>
+    <article class="dashboard-metric-card"><span>Volume semanal</span><strong>${escapeHtml(formatKm(week.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0)))}</strong><p>${week.length} sess√µes nos √∫ltimos 7 dias</p></article>
+    <article class="dashboard-metric-card"><span>11TSS 30 dias</span><strong>${Math.round(tss30)}</strong><p>Carga acumulada recente</p></article>
+    <article class="dashboard-metric-card"><span>Destaque</span><strong>${escapeHtml(bestLoad?.title || "--")}</strong><p>${bestLoad ?`${activityTss(bestLoad)} 11TSS` : "Sem atividade recente"}</p></article>
+  `;
+
+  testTarget.innerHTML = tests.length
+    ?tests.map((test, index) => `
+      <article class="timeline-card">
+        <span>Teste ${index + 1}</span>
+        <strong>${escapeHtml(formatDurationSeconds(test.seconds))}</strong>
+        <p>${escapeHtml(test.source || "teste 3000 m")}</p>
+        <small>${escapeHtml(test.date ?test.date.toLocaleDateString("pt-BR") : "sem data")}</small>
+      </article>
+    `).join("")
+    : `<div class="empty-state">Nenhum teste de 3000 m marcado ou importado.</div>`;
+
+  typeTarget.innerHTML = Object.keys(types).length
+    ?Object.entries(types).map(([type, count]) => `<article class="type-pill"><span>${escapeHtml(type)}</span><strong>${count}</strong></article>`).join("")
+    : `<div class="empty-state">Classifique treinos para alimentar a distribui√ß√£o.</div>`;
+
+  goalTarget.innerHTML = activeGoals.length
+    ?activeGoals.slice(0, 4).map((goal) => {
+      const model = buildFocusModel(goalAsAthlete(goal));
+      return `<article class="dashboard-goal-card"><span>${escapeHtml(focusDistanceLabels[goal.distanceM] || `${goal.distanceM} m`)}</span><strong>${escapeHtml(goal.title)}</strong><p>${model.probability || "--"}% - ${escapeHtml(goalDateLabel(goal))}</p></article>`;
+    }).join("")
+    : `<div class="empty-state">Crie objetivos para acompanhar status e rota preditiva.</div>`;
+}
+
+function profileLanguageOptions() {
+  return Object.entries(languageOptions)
+    .map(([value, label]) => `<option value="${escapeHtml(value)}" ${value === state.language ?"selected" : ""}>${escapeHtml(label)}</option>`)
+    .join("");
+}
+
+function openProfileDialog() {
+  const target = document.querySelector("#profileDialogContent");
+  const modal = document.querySelector("#profileDialog");
+  const athlete = getActiveAthlete();
+  if (!target || !modal) return;
+  target.innerHTML = `
+    <section class="modal-panel is-compact" id="profileModalPanel">
+      <div class="section-title">
+        <span>Prefer√™ncias</span>
+        <h3>Meu perfil</h3>
+      </div>
+      <div class="profile-summary">
+        <strong>${escapeHtml(athlete?.name || state.currentUser?.name || "Usu√°rio")}</strong>
+        <p>${escapeHtml(formatAthleteMeta(athlete))}</p>
+      </div>
+      <label class="credential-field">
+        <span>${escapeHtml(t("profile.language"))}</span>
+        <select id="languageSelect">${profileLanguageOptions()}</select>
+      </label>
+      <div class="modal-expanded-content">
+        <p>E-mail: ${escapeHtml(athlete?.email || state.currentUser?.email || "--")}</p>
+        <p>Equipe: ${escapeHtml(athlete?.teamName || "N√£o tenho")}</p>
+        <p>Treinador: ${escapeHtml(athlete?.coachName || "N√£o tenho")}</p>
+      </div>
+      <div class="provider-actions">
+        <button class="secondary-action compact" type="button" data-expand-profile>${escapeHtml(t("profile.expand"))}</button>
+      </div>
+    </section>
+  `;
+  modal.showModal();
+}
+
+function openHistoryDialog() {
+  const target = document.querySelector("#historyDialogContent");
+  const modal = document.querySelector("#historyDialog");
+  const tests = collect3000Tests(getActiveAthlete());
+  if (!target || !modal) return;
+  target.innerHTML = `
+    <section class="modal-panel">
+      <div class="section-title">
+        <span>Hist√≥rico</span>
+        <h3>√öltimos 3 testes de 3000 m</h3>
+      </div>
+      <div class="timeline-list">
+        ${tests.length ?tests.map((test) => `
+          <article class="timeline-card">
+            <span>${escapeHtml(test.origin || "Manual")}</span>
+            <strong>${escapeHtml(formatDurationSeconds(test.seconds))}</strong>
+            <p>${escapeHtml(test.title || "Teste de 3000 m")}</p>
+            <small>${escapeHtml(test.details || "")}</small>
+            <small>${escapeHtml(test.date ?test.date.toLocaleDateString("pt-BR") : "sem data")}</small>
+          </article>
+        `).join("") : `<div class="empty-state">Nenhum teste de 3000 m dispon√≠vel.</div>`}
+      </div>
+    </section>
+  `;
+  modal.showModal();
+}
+
+function workoutRows(count) {
+  return Array.from({ length: count }, (_, index) => `
+    <div class="workout-row" data-workout-row>
+      <label class="credential-field"><span>Data</span><input name="date" type="date" /></label>
+      <label class="credential-field"><span>T√≠tulo</span><input name="title" placeholder="Treino ${index + 1}" /></label>
+      <label class="credential-field"><span>Dist√¢ncia</span><input name="distance" placeholder="8 km" /></label>
+      <label class="credential-field"><span>Descri√ß√£o</span><input name="description" placeholder="Objetivo, ritmo, observa√ß√µes" /></label>
+      <label class="credential-field"><span>Tipo</span><select name="trainingType"><option>Treino</option><option>Longo</option><option>Recupera√ß√£o</option><option>Prova</option><option>Teste</option></select></label>
+    </div>
+  `).join("");
+}
+
+function addDaysToInputDate(value, days) {
+  const base = value ?new Date(`${value}T00:00:00`) : new Date();
+  if (Number.isNaN(base.getTime())) return dateKey(new Date());
+  base.setDate(base.getDate() + days);
+  return dateKey(base);
+}
+
+function syncWorkoutDates() {
+  const form = document.querySelector("#workoutBuilderForm");
+  if (!form || form.dataset.mode === "audio") return;
+  const rows = Array.from(form.querySelectorAll("[data-workout-row]"));
+  if (!rows.length) return;
+  const startInput = form.elements.startDate;
+  const endInput = form.elements.endDate;
+  const startDate = startInput?.value || dateKey(new Date());
+  if (startInput && !startInput.value) startInput.value = startDate;
+  rows.forEach((row, index) => {
+    const dateInput = row.querySelector('input[name="date"]');
+    if (dateInput) dateInput.value = addDaysToInputDate(startDate, index);
+  });
+  if (endInput) endInput.value = addDaysToInputDate(startDate, rows.length - 1);
+}
+
+function openWorkoutDialog() {
+  const target = document.querySelector("#workoutDialogContent");
+  const modal = document.querySelector("#workoutDialog");
+  if (!target || !modal) return;
+  target.innerHTML = `
+    <section class="modal-panel">
+      <div class="section-title">
+        <span>Treinamentos</span>
+        <h3>Adicionar treino</h3>
+      </div>
+      <div class="segmented workout-mode-switch">
+        <button class="is-active" type="button" data-workout-mode="single">Avulso</button>
+        <button type="button" data-workout-mode="week">Semana</button>
+        <button type="button" data-workout-mode="month">M√™s</button>
+        <button type="button" data-workout-mode="audio">√Åudio</button>
+      </div>
+      <form id="workoutBuilderForm" class="workout-builder-form" data-mode="single">
+        <div class="workout-range">
+          <label class="credential-field"><span>Data de in√≠cio</span><input name="startDate" type="date" /></label>
+          <label class="credential-field"><span>Data de fim</span><input name="endDate" type="date" /></label>
+        </div>
+        <div id="workoutRows" class="workout-day-list">${workoutRows(1)}</div>
+        <div id="audioWorkoutArea" class="audio-workout-area" hidden>
+          <label class="credential-field wide-field">
+            <span>√Åudio ou transcri√ß√£o</span>
+            <textarea name="audioNotes" rows="4" placeholder="Arquitetura preparada para transcri√ß√£o. Por enquanto, cole ou descreva o treino para salvar como rascunho estruturado."></textarea>
+          </label>
+        </div>
+        <button class="primary-action compact" type="submit">Salvar treino</button>
+        <p class="form-message" id="workoutBuilderMessage"></p>
+      </form>
+    </section>
+  `;
+  modal.showModal();
+  applyWorkoutMode("single");
+}
+
+function applyWorkoutMode(mode) {
+  const form = document.querySelector("#workoutBuilderForm");
+  const rows = document.querySelector("#workoutRows");
+  const audio = document.querySelector("#audioWorkoutArea");
+  if (!form || !rows || !audio) return;
+  form.dataset.mode = mode;
+  document.querySelectorAll("[data-workout-mode]").forEach((button) => button.classList.toggle("is-active", button.dataset.workoutMode === mode));
+  const count = mode === "week" ?7 : mode === "month" ?30 : 1;
+  rows.hidden = mode === "audio";
+  audio.hidden = mode !== "audio";
+  rows.innerHTML = workoutRows(count);
+  syncWorkoutDates();
+}
+
+async function saveManualWorkout(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const mode = form.dataset.mode || "single";
+  if (!window.confirm(mode === "week" ?"Confirmar cria√ß√£o da semana de treinos?" : mode === "month" ?"Confirmar cria√ß√£o do m√™s de treinos?" : "Confirmar cadastro deste treino?")) return;
+  const message = document.querySelector("#workoutBuilderMessage");
+  const rows = Array.from(form.querySelectorAll("[data-workout-row]"));
+  const activities = mode === "audio"
+    ?[{ date: form.elements.startDate?.value || dateKey(new Date()), title: "Treino por √°udio", description: form.elements.audioNotes?.value || "Entrada preparada para transcri√ß√£o futura.", trainingType: "Treino" }]
+    : rows.map((row) => Object.fromEntries(new FormData(row).entries())).filter((item) => item.date || item.title || item.description);
+  if (!activities.length) {
+    if (message) message.textContent = "Informe pelo menos um treino.";
+    return;
+  }
+  try {
+    if (message) message.textContent = "Salvando treinos...";
+    const payload = await api("/api/activities/manual", {
+      method: "POST",
+      body: JSON.stringify({ mode, activities })
+    });
+    state.activities = payload.activities || [];
+    renderCalendar();
+    renderDashboard();
+    if (message) message.textContent = "Treinos salvos.";
+  } catch (error) {
+    if (message) message.textContent = error.message || "N√£o foi poss√≠vel salvar os treinos.";
+  }
 }
 
 function activityTss(activity) {
@@ -982,7 +1372,7 @@ function renderPerformanceChart() {
   const collapsed = isPanelCollapsed("performanceChart");
   if (panel) panel.classList.toggle("is-collapsed", collapsed);
   const toggle = document.querySelector('[data-toggle-panel="performanceChart"]');
-  if (toggle) toggle.textContent = collapsed ?"Expandir painel" : "Fechar painel";
+  if (toggle) toggle.textContent = collapsed ?t("profile.expand") : t("profile.collapse");
   if (collapsed) {
     target.innerHTML = "";
     return;
@@ -1037,12 +1427,12 @@ function renderPerformanceChart() {
 
   target.innerHTML = `
     <div class="chart-stats">
-      <div><span>Periodo</span><strong>${escapeHtml(label)}</strong></div>
+      <div><span>Per√≠odo</span><strong>${escapeHtml(label)}</strong></div>
       <div><span>Volume</span><strong>${escapeHtml(formatKm(totalVolume))}</strong></div>
       <div><span>11TSS</span><strong>${Math.round(totalTss)}</strong></div>
-      <div><span>Sessoes</span><strong>${totalSessions}</strong></div>
+      <div><span>Sess√µes</span><strong>${totalSessions}</strong></div>
     </div>
-    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Grafico de volume e 11TSS">
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Gr√°fico de volume e 11TSS">
       <defs>
         <linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stop-color="#ff4b0b" stop-opacity="0.07" />
@@ -1066,7 +1456,7 @@ function renderPerformanceChart() {
       <text x="${width - padding.right}" y="16" text-anchor="end">11TSS</text>
       <g class="chart-labels">${labels}</g>
     </svg>
-    ${hasData ?"" : `<p class="chart-empty">Importe atividades do Strava para visualizar a evolucao de volume e 11TSS.</p>`}
+    ${hasData ?"" : `<p class="chart-empty">Importe atividades do Strava para visualizar a evolu√ß√£o de volume e 11TSS.</p>`}
   `;
 }
 
@@ -1084,14 +1474,16 @@ function renderActivity(activity) {
         ?"pain-mid"
         : "pain-high";
   const analysisLine = analysis.tss
-    ?`<em>${escapeHtml(analysis.standard || "11TSS Advance")} ${escapeHtml(analysis.tss)} - agressao ${escapeHtml(analysis.aggressionScore || "--")} - ${escapeHtml(analysis.characteristic || "")}</em>`
+    ?`<em>${escapeHtml(analysis.standard || "11TSS Advance")} ${escapeHtml(analysis.tss)} - agress√£o ${escapeHtml(analysis.aggressionScore || "--")} - ${escapeHtml(analysis.characteristic || "")}</em>`
     : "";
-  const feedbackLine = `<small class="activity-feedback"><span>ExecuÁ„o ${escapeHtml(performancePercent || "--")}%</span><span class="${painClass}">Dor ${escapeHtml(painScore === "" ?"ó" : painScore)}/10</span></small>`;
+  const feedbackLine = `<small class="activity-feedback"><span>Execu√ß√£o ${escapeHtml(performancePercent || "--")}%</span><span class="${painClass}">Dor ${escapeHtml(painScore === "" ?"‚Äî" : painScore)}/10</span></small>`;
+  const trainingType = activity.trainingType || feedback.trainingType || "";
   return `
     <button class="activity" data-activity-id="${escapeHtml(activity.id)}" data-source="${escapeHtml(activity.source)}">
       <strong>${escapeHtml(activity.title)}</strong>
       <span>${escapeHtml(activity.source)} - ${escapeHtml(activity.distance)} - ${escapeHtml(activity.description)}</span>
       ${analysisLine}
+      ${trainingType ?`<small class="activity-type">${escapeHtml(trainingType)}</small>` : ""}
       ${feedbackLine}
     </button>
   `;
@@ -1120,14 +1512,14 @@ function renderPeriodMonth(monthDate) {
   const tss = activities.reduce((sum, activity) => sum + activityTss(activity), 0);
   const list = activities.length
     ?activities.slice(0, 8).map(renderActivity).join("")
-    : `<p class="period-empty">Sem atividades importadas neste mes.</p>`;
+    : `<p class="period-empty">Sem atividades importadas neste m√™s.</p>`;
 
   return `
     <section class="period-month">
       <div class="period-month-head">
         <div>
           <span>${monthNames[monthDate.getMonth()]} ${monthDate.getFullYear()}</span>
-          <strong>${activities.length} sessoes</strong>
+          <strong>${activities.length} sess√µes</strong>
         </div>
         <div class="period-month-stats">
           <span>${escapeHtml(formatKm(volume))}</span>
@@ -1153,7 +1545,7 @@ function renderPeriodWeek(start, end, index) {
         <span>${escapeHtml(start.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }))} - ${escapeHtml(end.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }))}</span>
       </div>
       <div class="period-month-stats">
-        <span>${activities.length} sessıes</span>
+        <span>${activities.length} sess√µes</span>
         <span>${escapeHtml(formatKm(volume))}</span>
         <span>${Math.round(tss)} 11TSS</span>
       </div>
@@ -1172,7 +1564,7 @@ function renderPeriodCalendar() {
   document.querySelector("#calendarEyebrow").textContent = range.label;
   document.querySelector("#calendarTitle").textContent = hasActivitiesInCurrentRange()
     ?"Semanas do ciclo"
-    : "Sem atividades neste perÌodo";
+    : "Sem atividades neste per√≠odo";
 }
 
 function renderCalendar() {
@@ -1202,7 +1594,7 @@ function renderCalendar() {
     calendar.innerHTML = header + rows;
     document.querySelector("#calendarEyebrow").textContent = `${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}`;
     document.querySelector("#calendarTitle").textContent = activities.length && !hasActivitiesInCurrentRange()
-      ?`${activities.length} atividades importadas fora deste mÍs`
+      ?`${activities.length} atividades importadas fora deste m√™s`
       : "Bloco de performance";
   }
 
@@ -1241,19 +1633,21 @@ function openActivity(activityId) {
   if (!activity) return;
   const analysis = activity.analysis || {};
   const feedback = activity.feedback || {};
+  const perceivedExertion = activity.perceivedExertion ?? feedback.perceivedExertion ?? "";
+  const trainingType = activity.trainingType || feedback.trainingType || "Treino";
   const external = activity.externalUrl ?`<a class="detail-link" href="${escapeHtml(activity.externalUrl)}" target="_blank" rel="noreferrer">Abrir atividade original</a>` : "";
   const analysisPanel = analysis.tss ?`
     <div class="analysis-panel">
       <span class="kicker">${escapeHtml(analysis.standard || "11TSS Advance")}</span>
-      <h4>${escapeHtml(analysis.characteristic || "Caracteristica do treino")}</h4>
+      <h4>${escapeHtml(analysis.characteristic || "Caracter√≠stica do treino")}</h4>
       <p>${escapeHtml(analysis.note || "")}</p>
       <div class="detail-grid analysis-grid">
         <div><span class="metric-label">TSS estimado</span><strong>${escapeHtml(analysis.tss)}</strong></div>
-        <div><span class="metric-label">Agressao</span><strong>${escapeHtml(analysis.aggressionScore)}</strong></div>
-        <div><span class="metric-label">Variacao de ritmo</span><strong>${escapeHtml(analysis.splitVariability || "--")}</strong></div>
+        <div><span class="metric-label">Agress√£o</span><strong>${escapeHtml(analysis.aggressionScore)}</strong></div>
+        <div><span class="metric-label">Varia√ß√£o de ritmo</span><strong>${escapeHtml(analysis.splitVariability || "--")}</strong></div>
         <div><span class="metric-label">Pace mais forte</span><strong>${escapeHtml(analysis.fastestPace || "--")}</strong></div>
       </div>
-      <p class="analysis-caption">Esforco relativo Strava: ${escapeHtml(analysis.relativeEffort || "--")} - IF por FC: ${escapeHtml(analysis.intensityFactor || "--")} - Splits: ${escapeHtml(analysis.splitCount || 0)}</p>
+      <p class="analysis-caption">Esfor√ßo relativo Strava: ${escapeHtml(analysis.relativeEffort || "--")} - IF por FC: ${escapeHtml(analysis.intensityFactor || "--")} - Splits: ${escapeHtml(analysis.splitCount || 0)}</p>
     </div>
   ` : "";
   const testFlagButton = `
@@ -1267,22 +1661,36 @@ function openActivity(activityId) {
       <h3>${escapeHtml(activity.title)}</h3>
       <p>${escapeHtml(activity.description)}</p>
       <div class="detail-grid">
-        <div><span class="metric-label">Dist‚ncia</span><strong>${escapeHtml(activity.distance)}</strong></div>
+        <div><span class="metric-label">Dist√¢ncia</span><strong>${escapeHtml(activity.distance)}</strong></div>
         <div><span class="metric-label">Tempo</span><strong>${escapeHtml(activity.duration)}</strong></div>
         <div><span class="metric-label">Pace</span><strong>${escapeHtml(activity.pace)}</strong></div>
         <div><span class="metric-label">Carga</span><strong>${escapeHtml(activity.load)}</strong></div>
       </div>
       ${analysisPanel}
       <div class="activity-feedback-form">
+        <label class="credential-field wide-field">
+          <span>Descri√ß√£o do treino</span>
+          <textarea name="description" rows="3">${escapeHtml(activity.description || "")}</textarea>
+        </label>
+        <label class="credential-field">
+          <span>Tipo de treino</span>
+          <select name="trainingType">
+            ${["Treino", "Longo", "Recupera√ß√£o", "Prova", "Teste"].map((option) => `<option value="${escapeHtml(option)}" ${option === trainingType ?"selected" : ""}>${escapeHtml(option)}</option>`).join("")}
+          </select>
+        </label>
+        <label class="credential-field">
+          <span>Grau de percep√ß√£o de esfor√ßo</span>
+          <input name="perceivedExertion" type="number" min="0" max="10" value="${escapeHtml(perceivedExertion)}" />
+        </label>
         <label class="credential-field">
           <span>Desempenho percebido (%)</span>
           <input name="performancePercent" type="number" min="0" max="100" value="${escapeHtml(feedback.performancePercent || "")}" />
         </label>
         <label class="credential-field">
-          <span>Dores / lesıes (0-10)</span>
+          <span>Dores / les√µes (0-10)</span>
           <input name="painScore" type="number" min="0" max="10" value="${escapeHtml(feedback.painScore ?? "")}" />
         </label>
-        <button class="secondary-action compact" type="button" data-save-activity-feedback="${escapeHtml(activity.id)}">Salvar percepÁ„o</button>
+        <button class="secondary-action compact" type="button" data-save-activity-feedback="${escapeHtml(activity.id)}">Salvar percep√ß√£o</button>
       </div>
       <div class="provider-actions">${testFlagButton}</div>
       ${external}
@@ -1294,24 +1702,30 @@ function openActivity(activityId) {
 async function saveActivityFeedback(activityId) {
   const wrapper = detail.querySelector(".activity-feedback-form");
   if (!wrapper) return;
+  if (!window.confirm("Confirmar altera√ß√£o deste treino?")) return;
   const performancePercent = wrapper.querySelector('[name="performancePercent"]')?.value || "";
   const painScore = wrapper.querySelector('[name="painScore"]')?.value || "";
+  const perceivedExertion = wrapper.querySelector('[name="perceivedExertion"]')?.value || "";
+  const trainingType = wrapper.querySelector('[name="trainingType"]')?.value || "Treino";
+  const description = wrapper.querySelector('[name="description"]')?.value || "";
   try {
     const payload = await api("/api/activities/feedback", {
       method: "POST",
-      body: JSON.stringify({ activityId, performancePercent, painScore })
+      body: JSON.stringify({ activityId, performancePercent, painScore, perceivedExertion, trainingType, description })
     });
     state.activities = payload.activities || [];
     renderCalendar();
+    renderDashboard();
     if (dialog.open) openActivity(activityId);
-    setLog(["PercepÁ„o da atividade salva."]);
+    setLog(["Percep√ß√£o da atividade salva."]);
   } catch (error) {
-    setLog([error.message || "N„o foi possÌvel salvar a percepÁ„o da atividade."], true);
-    window.alert(error.message || "N„o foi possÌvel salvar a percepÁ„o da atividade.");
+    setLog([error.message || "N√£o foi poss√≠vel salvar a percep√ß√£o da atividade."], true);
+    window.alert(error.message || "N√£o foi poss√≠vel salvar a percep√ß√£o da atividade.");
   }
 }
 
 async function setActivity3000Flag(activityId, enabled) {
+  if (!window.confirm(enabled ?"Confirmar marca√ß√£o como teste de 3000 m?" :"Confirmar remo√ß√£o dos testes de 3000 m?")) return;
   try {
     const payload = await api("/api/activities/flag-3000-test", {
       method: "POST",
@@ -1323,12 +1737,13 @@ async function setActivity3000Flag(activityId, enabled) {
     render3000ActivityPicker();
     renderFocusRoadmap();
     renderGoals();
+    renderDashboard();
     if (dialog.open) openActivity(activityId);
     setLog([enabled ?"Atividade marcada como teste de 3000 m." :"Atividade removida dos testes de 3000 m."]);
-    setAthleteMessage(enabled ?"Teste de 3000 m vinculado ‡ atividade." :"Teste de 3000 m removido da atividade.");
+    setAthleteMessage(enabled ?"Teste de 3000 m vinculado √† atividade." :"Teste de 3000 m removido da atividade.");
   } catch (error) {
-    setLog([error.message || "N„o foi possÌvel atualizar o teste de 3000 m."], true);
-    window.alert(error.message || "N„o foi possÌvel atualizar o teste de 3000 m.");
+    setLog([error.message || "N√£o foi poss√≠vel atualizar o teste de 3000 m."], true);
+    window.alert(error.message || "N√£o foi poss√≠vel atualizar o teste de 3000 m.");
   }
 }
 
@@ -1340,7 +1755,7 @@ function renderProviders() {
     const credentials = integration.credentials || {};
     const hasStoredToken = integration.token?.access_token === "stored" || integration.token?.refresh_token === "stored";
     const isConnected = Boolean(integration.connected || hasStoredToken);
-    const connected = isConnected ?"Conectado" : "N„o conectado";
+    const connected = isConnected ?"Conectado" : "N√£o conectado";
     const scope = String(integration.token?.scope || "");
     const stravaScopeWarning = key === "strava" && isConnected && !scope.split(/[,\s]+/).some((item) => item === "activity:read" || item === "activity:read_all")
       ?`<p class="provider-warning">Reconecte aprovando activity:read ou activity:read_all para importar atividades.</p>`
@@ -1387,6 +1802,7 @@ function renderProviders() {
       </form>
     `;
   }).join("");
+  applyPanelCollapse(document.querySelector("#dashboardIntegrations"), "dashboardIntegrations", "Importa√ß√£o de plataformas");
 }
 
 function getActiveAthlete() {
@@ -1406,7 +1822,7 @@ function formatAthleteMeta(athlete) {
 
 function renderAthleteIdentity() {
   const athlete = getActiveAthlete();
-  const name = athlete?.name || "Atleta n„o cadastrado";
+  const name = athlete?.name || "Atleta n√£o cadastrado";
   const sidebarName = document.querySelector("#sidebarAthleteName");
   const activeName = document.querySelector("#activeAthleteName");
   const activeMeta = document.querySelector("#activeAthleteMeta");
@@ -1516,7 +1932,7 @@ function getDirectoryCoaches() {
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 }
 
-function fillSelectOptions(select, options, currentValue = "", emptyLabel = "N„o tenho", valueKey = "name", labelFn = null) {
+function fillSelectOptions(select, options, currentValue = "", emptyLabel = "N√£o tenho", valueKey = "name", labelFn = null) {
   if (!select) return;
   const value = String(currentValue || "");
   select.innerHTML = `<option value="">${emptyLabel}</option>${options.map((option) => {
@@ -1536,7 +1952,7 @@ function renderDirectoryOptions(athlete = null) {
     document.querySelector("#coachEmailSelect"),
     coaches,
     athlete?.coachEmail || "",
-    "N„o tenho",
+    "N√£o tenho",
     "email",
     (coach) => `${coach.name} - ${coach.email}`
   );
@@ -1544,7 +1960,7 @@ function renderDirectoryOptions(athlete = null) {
     document.querySelector("#adminCoachEmailSelect"),
     coaches,
     "",
-    "N„o tenho",
+    "N√£o tenho",
     "email",
     (coach) => `${coach.name} - ${coach.email}`
   );
@@ -1613,7 +2029,7 @@ function renderAthletes() {
         <span>${escapeHtml(athlete.roleLabel || "Atleta")}</span>
         <span>${escapeHtml(athlete.teamName || "Sem equipe")}</span>
         <span>${escapeHtml(athlete.coachName || "Sem treinador")}</span>
-        <span>${escapeHtml(athlete.whatsapp || "WhatsApp n„o informado")}</span>
+        <span>${escapeHtml(athlete.whatsapp || "WhatsApp n√£o informado")}</span>
       </button>
       ${athlete.isTeamRecord ? "" : `<div class="athlete-item-actions">
         <button class="secondary-action compact" type="button" data-edit-athlete="${escapeHtml(athlete.id)}">Editar</button>
@@ -1623,12 +2039,12 @@ function renderAthletes() {
         <div class="athlete-row-details">
           <p><strong>Perfil:</strong> ${escapeHtml(athlete.roleLabel || athlete.role || "Atleta")}</p>
           <p><strong>Dados:</strong> ${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
-          <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "N„o tenho")}</p>
-          <p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "N„o tenho")}</p>
-          <p><strong>FormaÁ„o:</strong> ${escapeHtml(profile.education || "--")}</p>
+          <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "N√£o tenho")}</p>
+          <p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "N√£o tenho")}</p>
+          <p><strong>Forma√ß√£o:</strong> ${escapeHtml(profile.education || "--")}</p>
           <p><strong>Especialidades:</strong> ${escapeHtml(profile.skills || "--")}</p>
-          <p><strong>ExperiÍncia:</strong> ${escapeHtml(profile.experience || "--")}</p>
-          <p><strong>CertificaÁıes:</strong> ${escapeHtml(profile.certifications || "--")}</p>
+          <p><strong>Experi√™ncia:</strong> ${escapeHtml(profile.experience || "--")}</p>
+          <p><strong>Certifica√ß√µes:</strong> ${escapeHtml(profile.certifications || "--")}</p>
           <p><strong>Institucional:</strong> ${escapeHtml(profile.institutionalNotes || "--")}</p>
           <p><strong>Local:</strong> ${escapeHtml(profile.location || "--")}</p>
         </div>
@@ -1653,7 +2069,7 @@ function setSyncLoading(active, title = "Importando atividades", text = "Atualiz
   if (overlay) overlay.hidden = !active;
   if (titleTarget) titleTarget.textContent = title;
   if (textTarget) textTarget.textContent = text;
-  if (kickerTarget) kickerTarget.textContent = progress || "SincronizaÁ„o";
+  if (kickerTarget) kickerTarget.textContent = progress || "Sincroniza√ß√£o";
   document.querySelectorAll("#syncSelected, [data-import-demo]").forEach((button) => {
     button.disabled = active;
     button.classList.toggle("is-loading", active);
@@ -1664,7 +2080,7 @@ async function enrichStravaDescriptions() {
   let updated = 0;
   let remaining = Number.POSITIVE_INFINITY;
   for (let batch = 1; batch <= 30 && remaining > 0; batch += 1) {
-    setSyncLoading(true, "Puxando descriÁıes do Strava", `Lote ${batch}: buscando descriÁıes completas sem travar o servidor.`, updated ?`${updated} descriÁıes atualizadas` : "Detalhando atividades");
+    setSyncLoading(true, "Puxando descri√ß√µes do Strava", `Lote ${batch}: buscando descri√ß√µes completas sem travar o servidor.`, updated ?`${updated} descri√ß√µes atualizadas` : "Detalhando atividades");
     const payload = await api("/api/strava/enrich", {
       method: "POST",
       body: JSON.stringify({ limit: 8 })
@@ -1705,7 +2121,7 @@ function historyTimelineRowTemplate(entry = {}) {
   return `
     <article class="history-entry-row">
       <label class="credential-field">
-        <span>InÌcio</span>
+        <span>In√≠cio</span>
         <input type="date" data-history-start value="${escapeHtml(entry.startDate || "")}" />
       </label>
       <label class="credential-field">
@@ -1713,12 +2129,12 @@ function historyTimelineRowTemplate(entry = {}) {
         <input type="date" data-history-end value="${escapeHtml(entry.endDate || "")}" />
       </label>
       <label class="credential-field">
-        <span>TÌtulo / evento</span>
-        <input data-history-title value="${escapeHtml(entry.title || "")}" placeholder="Ex.: Parado por les„o, retorno progressivo, bloco de base..." />
+        <span>T√≠tulo / evento</span>
+        <input data-history-title value="${escapeHtml(entry.title || "")}" placeholder="Ex.: Parado por les√£o, retorno progressivo, bloco de base..." />
       </label>
       <label class="credential-field">
-        <span>DescriÁ„o / contexto</span>
-        <input data-history-description value="${escapeHtml(entry.description || "")}" placeholder="Detalhes relevantes para an·lise futura da IA." />
+        <span>Descri√ß√£o / contexto</span>
+        <input data-history-description value="${escapeHtml(entry.description || "")}" placeholder="Detalhes relevantes para an√°lise futura da IA." />
       </label>
       <button class="danger-action compact" type="button" data-remove-history-entry>Remover</button>
     </article>
@@ -1805,7 +2221,7 @@ function editAthlete(athleteId, options = {}) {
 async function deleteAthlete(athleteId) {
   const athlete = state.athletes.find((item) => String(item.id) === String(athleteId));
   if (!athlete) return;
-  if (!window.confirm(`Excluir o atleta ${athlete.name}?Esta aÁ„o remove integraÁıes e atividades importadas deste atleta.`)) return;
+  if (!window.confirm(`Excluir o atleta ${athlete.name}?Esta a√ß√£o remove integra√ß√µes e atividades importadas deste atleta.`)) return;
   try {
     setAthleteMessage("Excluindo atleta...");
     const payload = await api(`/api/athletes/${encodeURIComponent(athlete.id)}`, { method: "DELETE" });
@@ -1822,7 +2238,7 @@ async function deleteAthlete(athleteId) {
     renderCalendar();
 
     renderTrainingInsights();
-    resetAthleteForm(`Atleta ${athlete.name} excluÌdo.`);
+    resetAthleteForm(`Atleta ${athlete.name} exclu√≠do.`);
   } catch (error) {
     setAthleteMessage(error.message, true);
     setLog([error.message], true);
@@ -1831,7 +2247,7 @@ async function deleteAthlete(athleteId) {
 
 async function saveProvider(provider) {
   if (!state.selectedAthleteId) {
-    setLog(["Cadastre e selecione um atleta antes de salvar integraÁıes."], true);
+    setLog(["Cadastre e selecione um atleta antes de salvar integra√ß√µes."], true);
     return false;
   }
   const form = document.querySelector(`[data-provider="${provider}"]`);
@@ -1862,8 +2278,8 @@ async function runSync() {
     .map((input) => input.closest(".provider-form").dataset.provider);
   let detailResult = { updated: 0, remaining: 0 };
   try {
-    setSyncLoading(true, "Importando atividades", `Sincronizando ˙ltimos ${days} dias com as fontes ativas.`, "Conectando");
-    setLog([`Sincronizando ˙ltimos ${days} dias...`]);
+    setSyncLoading(true, "Importando atividades", `Sincronizando √∫ltimos ${days} dias com as fontes ativas.`, "Conectando");
+    setLog([`Sincronizando √∫ltimos ${days} dias...`]);
     const payload = await api("/api/sync", {
       method: "POST",
       body: JSON.stringify({ days, providers })
@@ -1880,10 +2296,10 @@ async function runSync() {
         ?`Importadas/atualizadas: ${payload.imported} atividades reais.`
         : `Nenhuma atividade nova retornada pelas fontes no intervalo de ${days} dias.`,
       state.activities.length ?`Total no banco para este atleta: ${state.activities.length}.` : "Nenhuma atividade salva para este atleta.",
-      detailResult.updated ?`DescriÁıes completas atualizadas: ${detailResult.updated}.` : "DescriÁıes j· estavam atualizadas ou n„o retornaram detalhe adicional.",
-      detailResult.remaining ?`DescriÁıes pendentes: ${detailResult.remaining}. Clique novamente para continuar.` : "DescriÁıes sincronizadas em lotes.",
+      detailResult.updated ?`Descri√ß√µes completas atualizadas: ${detailResult.updated}.` : "Descri√ß√µes j√° estavam atualizadas ou n√£o retornaram detalhe adicional.",
+      detailResult.remaining ?`Descri√ß√µes pendentes: ${detailResult.remaining}. Clique novamente para continuar.` : "Descri√ß√µes sincronizadas em lotes.",
       ...(payload.warnings || []),
-      "Calend·rio atualizado."
+      "Calend√°rio atualizado."
     ]);
   } catch (error) {
     setLog([error.message], true);
@@ -1898,11 +2314,11 @@ async function testStrava() {
     return;
   }
   try {
-    setLog(["Testando conex„o real com o Strava..."]);
+    setLog(["Testando conex√£o real com o Strava..."]);
     const payload = await api("/api/strava/test");
     const athlete = payload.athlete || {};
     const name = [athlete.firstname, athlete.lastname].filter(Boolean).join(" ") || athlete.username || "atleta Strava";
-    setLog([`Strava conectado para ${name}. Escopos: ${payload.scope || "n„o informado"}.`]);
+    setLog([`Strava conectado para ${name}. Escopos: ${payload.scope || "n√£o informado"}.`]);
     state.integrations = await api("/api/integrations");
     renderProviders();
   } catch (error) {
@@ -1990,6 +2406,7 @@ function editAdminUser(athleteId) {
   state.adminMode = athlete.role === "coach" ?"coach" : "athlete";
   renderAdminMode();
   const profile = athlete.profileData || {};
+  if (form.elements.role) form.elements.role.value = athlete.role === "coach" ?"coach" : athlete.role === "admin" ?"admin" : "athlete";
   form.elements.name.value = athlete.name || "";
   form.elements.email.value = athlete.email || "";
   form.elements.password.value = "";
@@ -2094,7 +2511,7 @@ async function saveAiSettings(event) {
       body: JSON.stringify(body)
     });
     renderAiSettings();
-    document.querySelector("#aiSettingsMessage").textContent = "ConfiguraÁ„o de IA salva.";
+    document.querySelector("#aiSettingsMessage").textContent = "Configura√ß√£o de IA salva.";
   } catch (error) {
     document.querySelector("#aiSettingsMessage").textContent = error.message;
   }
@@ -2112,7 +2529,7 @@ async function refreshAiProjection() {
       body: JSON.stringify({ athlete, model, activities: activitiesSince(90).slice(-60) })
     });
   } catch (error) {
-    state.aiProjection = { text: `IA indisponÌvel: ${error.message}` };
+    state.aiProjection = { text: `IA indispon√≠vel: ${error.message}` };
   }
   renderFocusRoadmap();
 }
@@ -2153,7 +2570,7 @@ async function boot() {
     state.goals = await api("/api/goals");
     await loadSettings();
   } catch (error) {
-    if (error.message === "Login obrigatÛrio.") showLogin();
+    if (error.message === "Login obrigat√≥rio.") showLogin();
     else {
       showApp();
       renderPermissions();
@@ -2164,21 +2581,15 @@ async function boot() {
       renderCalendar();
 
       renderTrainingInsights();
+      renderDashboard();
+      applyI18n();
       setLog([`Erro ao carregar dados do banco: ${error.message}`], true);
-      if (initialHash === "treinamentos") setView("training");
-      else if (initialHash === "objetivos") setView("goals");
-      else if (initialHash === "configuracoes" || initialHash === "configuracao") setView("settings");
-      else if (initialHash === "atleta" || initialHash === "dashboard") setView("athlete");
-      else setView("home");
+      setView(viewFromHash(initialHash));
     }
     return;
   }
 
-  if (initialHash === "treinamentos") setView("training");
-  else if (initialHash === "objetivos") setView("goals");
-  else if (initialHash === "configuracoes" || initialHash === "configuracao") setView("settings");
-  else if (initialHash === "atleta" || initialHash === "dashboard") setView("athlete");
-  else setView("home");
+  setView(viewFromHash(initialHash));
   renderPermissions();
   renderProviders();
   renderAthletes();
@@ -2187,13 +2598,15 @@ async function boot() {
   renderCalendar();
 
   renderTrainingInsights();
+  renderDashboard();
+  applyI18n();
   renderDirectoryOptions(getCurrentUserAthlete());
   renderAdminMode();
   if (state.view === "athlete") editCurrentUserProfile();
 
   if (status.get("strava") === "connected") setLog(["Strava conectado. Clique em Importar e atualizar para puxar as atividades reais."]);
-  if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorizaÁ„o."}`], true);
-  if (status.get("strava") === "state_error") setLog(["Erro Strava: estado OAuth inv·lido ou expirado. Clique em Conectar Strava novamente."], true);
+  if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autoriza√ß√£o."}`], true);
+  if (status.get("strava") === "state_error") setLog(["Erro Strava: estado OAuth inv√°lido ou expirado. Clique em Conectar Strava novamente."], true);
 }
 
 if (shell && localStorage.getItem("railCollapsed") === "1") setRailCollapsed(true);
@@ -2271,7 +2684,7 @@ document.querySelector("#athleteSelector").addEventListener("change", async (eve
 
     renderTrainingInsights();
     const athlete = getActiveAthlete();
-    setLog([`Atleta selecionado: ${athlete?.name || "nenhum"}. IntegraÁıes e calend·rio atualizados.`]);
+    setLog([`Atleta selecionado: ${athlete?.name || "nenhum"}. Integra√ß√µes e calend√°rio atualizados.`]);
   } catch (error) {
     setLog([error.message], true);
   }
@@ -2287,11 +2700,52 @@ document.addEventListener("click", async (event) => {
   if (panelToggle) {
     const key = panelToggle.dataset.togglePanel;
     setPanelCollapsed(key, !isPanelCollapsed(key));
+    if (key === "goalForm") {
+      renderGoals();
+      return;
+    }
+    if (key === "dashboardIntegrations") {
+      renderProviders();
+      return;
+    }
     renderCalendar();
+    return;
+  }
+  if (event.target.closest("#openProfileModal")) {
+    openProfileDialog();
+    return;
+  }
+  if (event.target.closest("#openHistoryModal")) {
+    openHistoryDialog();
+    return;
+  }
+  const closeDialogButton = event.target.closest("[data-close-dialog]");
+  if (closeDialogButton) {
+    const dialog = closeDialogButton.closest("dialog");
+    dialog?.close();
+    return;
+  }
+  if (event.target.closest("[data-expand-profile]")) {
+    const panel = document.querySelector("#profileModalPanel");
+    const button = event.target.closest("[data-expand-profile]");
+    const expanded = !panel?.classList.contains("is-expanded");
+    panel?.classList.toggle("is-expanded", expanded);
+    if (button) button.textContent = expanded ? t("profile.collapse") : t("profile.expand");
+    return;
+  }
+  if (event.target.closest("[data-open-workout-builder]")) {
+    openWorkoutDialog();
+    return;
+  }
+  const workoutModeButton = event.target.closest("[data-workout-mode]");
+  if (workoutModeButton) {
+    applyWorkoutMode(workoutModeButton.dataset.workoutMode);
     return;
   }
   const editButton = event.target.closest("[data-edit-athlete]");
   if (editButton) {
+    event.preventDefault();
+    event.stopPropagation();
     if (state.view === "settings") {
       editAdminUser(editButton.dataset.editAthlete);
     } else {
@@ -2301,6 +2755,8 @@ document.addEventListener("click", async (event) => {
   }
   const deleteButton = event.target.closest("[data-delete-athlete]");
   if (deleteButton) {
+    event.preventDefault();
+    event.stopPropagation();
     await deleteAthlete(deleteButton.dataset.deleteAthlete);
     return;
   }
@@ -2357,10 +2813,12 @@ document.addEventListener("click", async (event) => {
   }
   const testFlagButton = event.target.closest("[data-flag-3000-activity]");
   if (testFlagButton) {
+    event.preventDefault();
+    event.stopPropagation();
     const activityId = testFlagButton.getAttribute("data-flag-3000-activity") || testFlagButton.dataset.flag3000Activity;
     const enabled = (testFlagButton.getAttribute("data-flag-enabled") || testFlagButton.dataset.flagEnabled) === "1";
     if (!activityId) {
-      setLog(["N„o foi possÌvel identificar a atividade para marcar o teste de 3000 m."], true);
+      setLog(["N√£o foi poss√≠vel identificar a atividade para marcar o teste de 3000 m."], true);
       return;
     }
     await setActivity3000Flag(activityId, enabled);
@@ -2368,7 +2826,30 @@ document.addEventListener("click", async (event) => {
   }
   const feedbackButton = event.target.closest("[data-save-activity-feedback]");
   if (feedbackButton) {
+    event.preventDefault();
+    event.stopPropagation();
     await saveActivityFeedback(feedbackButton.dataset.saveActivityFeedback);
+    return;
+  }
+});
+
+document.addEventListener("change", (event) => {
+  if (event.target?.id === "languageSelect") {
+    state.language = event.target.value || "pt-BR";
+    localStorage.setItem("appLanguage", state.language);
+    applyI18n();
+    const expandButton = document.querySelector("[data-expand-profile]");
+    const expanded = document.querySelector("#profileModalPanel")?.classList.contains("is-expanded");
+    if (expandButton) expandButton.textContent = expanded ? t("profile.collapse") : t("profile.expand");
+  }
+  if (event.target?.closest("#workoutBuilderForm") && ["startDate", "endDate"].includes(event.target.name)) {
+    syncWorkoutDates();
+  }
+});
+
+document.addEventListener("submit", async (event) => {
+  if (event.target?.id === "workoutBuilderForm") {
+    await saveManualWorkout(event);
   }
 });
 
@@ -2401,7 +2882,7 @@ document.querySelector("#teamForm")?.addEventListener("submit", saveTeam);
 });
 document.querySelector("#athleteFilterRole")?.addEventListener("change", renderAthletes);
 document.querySelector("#aiSettingsForm")?.addEventListener("submit", saveAiSettings);
-document.querySelector("#cancelAthleteEdit")?.addEventListener("click", () => resetAthleteForm("EdiÁ„o cancelada."));
+document.querySelector("#cancelAthleteEdit")?.addEventListener("click", () => resetAthleteForm("Edi√ß√£o cancelada."));
 
 loadAppVersion();
 renderHistoryTimelineEditor([]);

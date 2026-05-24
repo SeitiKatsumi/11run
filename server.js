@@ -1412,6 +1412,9 @@ async function saveIntegration(tenantId, athleteUserId, provider, patch) {
 function activityRowToApi(row) {
   const raw = parseJsonObject(row.raw);
   const analysis = calculateRunAnalysis(raw, row);
+  const feedback = raw.feedback || {};
+  const trainingType = normalizeTrainingType(raw.trainingType || feedback.trainingType || inferTrainingTypeFromActivity(raw));
+  const perceivedExertion = raw.perceivedExertion ?? raw.perceived_exertion ?? feedback.perceivedExertion ?? "";
   const movingTimeSeconds = safeNumber(raw.moving_time, raw.elapsed_time);
   const distanceMeters = safeNumber(raw.distance);
   const bestEfforts = Array.isArray(raw.best_efforts)
@@ -1442,7 +1445,9 @@ function activityRowToApi(row) {
     averageSpeed: safeNumber(raw.average_speed),
     bestEfforts,
     analysis,
-    feedback: raw.feedback || {},
+    feedback,
+    trainingType,
+    perceivedExertion,
     is3000Test: Boolean(raw?.flags?.is3000Test)
   };
 }
@@ -1468,6 +1473,32 @@ function safeNumber(...values) {
 
 function clamp(number, min, max) {
   return Math.min(max, Math.max(min, number));
+}
+
+const TRAINING_TYPE_OPTIONS = ["Treino", "Longo", "Recuperação", "Prova", "Teste"];
+
+function normalizeTrainingType(value, fallback = "Treino") {
+  const text = String(value || "").trim();
+  return TRAINING_TYPE_OPTIONS.includes(text) ?text : fallback;
+}
+
+function normalizeOptionalNumber(value, min, max) {
+  if (value === "" || value == null) return null;
+  const number = Number(value);
+  if (!Number.isFinite(number)) return null;
+  return clamp(number, min, max);
+}
+
+function inferTrainingTypeFromActivity(activity = {}) {
+  const text = `${activity.name || ""} ${activity.title || ""} ${activity.description || ""}`.toLowerCase();
+  const type = String(activity.sport_type || activity.type || "").toLowerCase();
+  const distanceKm = safeNumber(activity.distance) / 1000;
+  if (text.includes("prova") || text.includes("race") || activity.workout_type === 1) return "Prova";
+  if (text.includes("teste") || text.includes("test") || text.includes("3000") || text.includes("3km")) return "Teste";
+  if (text.includes("recuper") || text.includes("regener") || text.includes("leve")) return "Recuperação";
+  if (text.includes("longo") || distanceKm >= 14) return "Longo";
+  if (/run|corrida/i.test(type)) return "Treino";
+  return "Treino";
 }
 
 function splitRunSignals(activity) {
@@ -1509,7 +1540,7 @@ function splitRunSignals(activity) {
 
 function classifyRunAnalysis({ durationMinutes, distanceKm, elevationPerKm, variability, fastestRatio, hrIntensity, aggressionScore }) {
   if (distanceKm >= 14 || durationMinutes >= 75) {
-    if (fastestRatio >= 1.25 || variability >= 0.16) return "Longo com variacao forte";
+    if (fastestRatio >= 1.25 || variability >= 0.16) return "Longo com variação forte";
     return "Longo de resistencia";
   }
   if (elevationPerKm >= 18) return "Subida e forca especifica";
@@ -1573,7 +1604,7 @@ function calculateRunAnalysis(activity = {}, row = {}) {
     fastestPace,
     elevationPerKm: distanceKm ?`${Math.round(elevationPerKm)} m/km` : "",
     note: isRun
-      ?"Estimativa proprietaria para corrida baseada em Strava, FC, duracao, elevacao e variacao dos splits."
+      ?"Estimativa proprietária para corrida baseada em Strava, FC, duração, elevação e variação dos splits."
       : "Atividade fora do escopo principal de corrida."
   };
 }
@@ -1676,13 +1707,14 @@ async function flagActivityAs3000Test(tenantId, athleteUserId, activityId, enabl
 async function updateActivityFeedback(tenantId, athleteUserId, activityId, feedback) {
   const cleanActivityId = String(activityId || "").trim();
   if (!cleanActivityId) throw httpError("Atividade inválida.", 400);
-  const performancePercent = feedback.performancePercent === "" || feedback.performancePercent == null
-    ?null
-    : Math.max(0, Math.min(100, Number(feedback.performancePercent)));
-  const painScore = feedback.painScore === "" || feedback.painScore == null
-    ?null
-    : Math.max(0, Math.min(10, Number(feedback.painScore)));
-  if ((performancePercent != null && Number.isNaN(performancePercent)) || (painScore != null && Number.isNaN(painScore))) {
+  const performancePercent = normalizeOptionalNumber(feedback.performancePercent, 0, 100);
+  const painScore = normalizeOptionalNumber(feedback.painScore, 0, 10);
+  const perceivedExertion = normalizeOptionalNumber(feedback.perceivedExertion, 0, 10);
+  const trainingType = normalizeTrainingType(feedback.trainingType);
+  const description = String(feedback.description || "").trim();
+  if ((feedback.performancePercent !== "" && feedback.performancePercent != null && performancePercent == null)
+    || (feedback.painScore !== "" && feedback.painScore != null && painScore == null)
+    || (feedback.perceivedExertion !== "" && feedback.perceivedExertion != null && perceivedExertion == null)) {
     throw httpError("Percepção inválida.", 400);
   }
 
@@ -1696,10 +1728,16 @@ async function updateActivityFeedback(tenantId, athleteUserId, activityId, feedb
     }
     activities[index] = {
       ...item,
-      feedback: { performancePercent, painScore },
+      description: description || item.description || "",
+      trainingType,
+      perceivedExertion,
+      feedback: { performancePercent, painScore, perceivedExertion, trainingType },
       raw: {
         ...(item.raw || {}),
-        feedback: { performancePercent, painScore }
+        description: description || (item.raw || {}).description,
+        trainingType,
+        perceivedExertion,
+        feedback: { performancePercent, painScore, perceivedExertion, trainingType }
       }
     };
     writeJson(ACTIVITIES_FILE, activities);
@@ -1714,19 +1752,35 @@ async function updateActivityFeedback(tenantId, athleteUserId, activityId, feedb
 
   const updated = await query(
     `UPDATE activities
-        SET raw = jsonb_set(
-                  COALESCE(raw, '{}'::jsonb),
-                  '{feedback}',
-                  jsonb_build_object('performancePercent', $5::int, 'painScore', $6::int),
-                  true
-                ),
+        SET description = CASE WHEN $9::text <> '' THEN $9::text ELSE description END,
+            raw = jsonb_set(
+                    jsonb_set(
+                      jsonb_set(
+                        COALESCE(raw, '{}'::jsonb),
+                        '{feedback}',
+                        jsonb_build_object(
+                          'performancePercent', $5::int,
+                          'painScore', $6::int,
+                          'perceivedExertion', $7::numeric,
+                          'trainingType', $8::text
+                        ),
+                        true
+                      ),
+                      '{trainingType}',
+                      to_jsonb($8::text),
+                      true
+                    ),
+                    '{perceivedExertion}',
+                    COALESCE(to_jsonb($7::numeric), 'null'::jsonb),
+                    true
+                  ),
             updated_at = now()
       WHERE tenant_id = $1
         AND athlete_user_id = $2
         AND lower(provider) = lower($3)
         AND provider_activity_id = $4
       RETURNING provider_activity_id`,
-    [tenantId, athleteUserId, provider, providerActivityId, performancePercent, painScore]
+    [tenantId, athleteUserId, provider, providerActivityId, performancePercent, painScore, perceivedExertion, trainingType, description]
   );
   if (!updated.rows[0]) throw httpError("Atividade não encontrada para este atleta.", 404);
   return listActivities(tenantId, athleteUserId);
@@ -1841,7 +1895,61 @@ async function upsertActivities(tenantId, athleteUserId, importedActivities) {
       ]
     );
   }
-  return listActivities(tenantId);
+  return listActivities(tenantId, athleteUserId);
+}
+
+function parseDistanceToMeters(value) {
+  const text = String(value || "").replace(",", ".").trim();
+  const match = text.match(/(\d+(?:\.\d+)?)/);
+  if (!match) return 0;
+  const number = Number(match[1]);
+  if (!Number.isFinite(number)) return 0;
+  return /m\b/i.test(text) && !/km/i.test(text) ?Math.round(number) : Math.round(number * 1000);
+}
+
+async function createManualActivities(tenantId, athleteUserId, mode, activities) {
+  if (!athleteUserId) throw httpError("Selecione um atleta antes de cadastrar treinos.", 400);
+  const sourceMode = String(mode || "single").trim() || "single";
+  const rows = Array.isArray(activities) ?activities : [];
+  const now = Date.now();
+  const mapped = rows.map((activity, index) => {
+    const date = formatDateOnly(activity.date || new Date());
+    if (!date || Number.isNaN(new Date(`${date}T00:00:00`).getTime())) {
+      throw httpError("Informe uma data válida para todos os treinos.", 400);
+    }
+    const distanceMeters = parseDistanceToMeters(activity.distance);
+    const durationSeconds = parseTimeToSeconds(activity.duration || activity.time || "") || 0;
+    const raw = {
+      manual: true,
+      mode: sourceMode,
+      distance: distanceMeters,
+      moving_time: durationSeconds,
+      elapsed_time: durationSeconds,
+      description: String(activity.description || "").trim(),
+      trainingType: normalizeTrainingType(activity.trainingType),
+      perceivedExertion: normalizeOptionalNumber(activity.perceivedExertion, 0, 10)
+    };
+    const analysis = calculateRunAnalysis(raw);
+    return {
+      id: `manual-${now}-${index}`,
+      providerId: `${now}-${index}`,
+      date,
+      title: String(activity.title || `Treino ${index + 1}`).trim(),
+      source: "Manual",
+      type: "Run",
+      description: raw.description || "Treino cadastrado manualmente.",
+      distance: activity.distance || formatDistance(distanceMeters),
+      duration: durationSeconds ?formatDuration(durationSeconds) : "",
+      pace: durationSeconds && distanceMeters ?formatPace(distanceMeters, durationSeconds) : "",
+      load: String(analysis.aggressionScore || ""),
+      externalUrl: "",
+      raw,
+      analysis
+    };
+  }).filter((activity) => activity.title || activity.description);
+
+  if (!mapped.length) throw httpError("Informe pelo menos um treino.", 400);
+  return upsertActivities(tenantId, athleteUserId, mapped);
 }
 
 function formatDuration(seconds) {
@@ -1899,6 +2007,9 @@ function decodeStravaState(value) {
 function mapStravaActivity(activity) {
   const date = new Date(activity.start_date_local || activity.start_date);
   const analysis = calculateRunAnalysis(activity);
+  const stravaDescription = String(activity.description || "").trim();
+  const trainingType = inferTrainingTypeFromActivity(activity);
+  const perceivedExertion = activity.perceived_exertion ?? activity.perceivedExertion ?? "";
   return {
     id: `strava-${activity.id}`,
     providerId: String(activity.id),
@@ -1907,7 +2018,7 @@ function mapStravaActivity(activity) {
     source: "Strava",
     type: activity.sport_type || activity.type || "Run",
     description: [
-      activity.description,
+      stravaDescription,
       activity.total_elevation_gain ?`Elevação ${Math.round(activity.total_elevation_gain)} m` : "",
       activity.average_heartrate ?`FC média ${Math.round(activity.average_heartrate)} bpm` : ""
     ].filter(Boolean).join(" | ") || "Atividade importada do Strava.",
@@ -1916,7 +2027,7 @@ function mapStravaActivity(activity) {
     load: String(analysis.aggressionScore),
     pace: formatPace(activity.distance, activity.moving_time || activity.elapsed_time),
     externalUrl: `https://www.strava.com/activities/${activity.id}`,
-    raw: activity,
+    raw: { ...activity, trainingType, perceivedExertion },
     analysis
   };
 }
@@ -2049,7 +2160,7 @@ async function enrichStravaActivityDetails(tenantId, athleteUserId, limit = 8) {
         try {
           detail.streams = await stravaFetchJson(`/activities/${row.provider_activity_id}/streams?keys=time,distance,velocity_smooth,heartrate&key_by_type=true`, tenantId, athleteUserId, integration);
         } catch (streamError) {
-          console.warn(`Nao foi possivel buscar streams Strava ${row.provider_activity_id}: ${streamError.message}`);
+          console.warn(`Não foi possível buscar streams Strava ${row.provider_activity_id}: ${streamError.message}`);
         }
       }
       detailed.push(mapStravaActivity(detail));
@@ -2120,14 +2231,14 @@ async function generateAiProjection(tenantId, input = {}) {
     return {
       ok: false,
       model,
-      text: "IA externa nao configurada. A probabilidade exibida usa o modelo local 11RUN com volume, 11TSS, consistencia, testes de 3000 m, historico e distancia ate a prova."
+      text: "IA externa não configurada. A probabilidade exibida usa o modelo local 11RUN com volume, 11TSS, consistência, testes de 3000 m, histórico e distância até a prova."
     };
   }
 
   const prompt = [
     "Voce e um cientista de performance em corrida. Analise apenas corrida, nunca ciclismo.",
     "Responda em portugues do Brasil, com tom tecnico, curto e acionavel.",
-    "Nao invente dados. Use a probabilidade local como ancora e ajuste apenas se os sinais justificarem.",
+    "Não invente dados. Use a probabilidade local como âncora e ajuste apenas se os sinais justificarem.",
     "Inclua: probabilidade em %, principais fatores, riscos e uma recomendacao objetiva.",
     "Dados estruturados:",
     JSON.stringify(input, null, 2)
@@ -2152,7 +2263,7 @@ async function generateAiProjection(tenantId, input = {}) {
   return {
     ok: true,
     model,
-    text: openaiTextFromResponse(payload) || "A IA nao retornou texto para esta analise."
+    text: openaiTextFromResponse(payload) || "A IA não retornou texto para esta análise."
   };
 }
 
@@ -2398,6 +2509,18 @@ async function handleApi(req, res, url) {
       return;
     }
 
+    if (req.method === "POST" && url.pathname === "/api/activities/manual") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      if (!athleteUserId || !(await canAccessAthlete(tenant.id, user, athleteUserId))) {
+        throw httpError("Usuário sem permissão para cadastrar treino deste atleta.", 403);
+      }
+      const body = await readRequestBody(req);
+      const activities = await createManualActivities(tenant.id, athleteUserId, body.mode, body.activities);
+      sendJson(res, 201, { ok: true, activities });
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/goals") {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
@@ -2418,12 +2541,12 @@ async function handleApi(req, res, url) {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
       const body = await readRequestBody(req);
-      const targetAthleteId = athleteUserId || await resolveAthleteIdFromActivity(tenant.id, body.activityId);
-      if (!targetAthleteId || !(await canAccessAthlete(tenant.id, user, targetAthleteId))) {
-        throw httpError("Usuario sem permissao para alterar esta atividade.", 403);
-      }
-      const activities = await flagActivityAs3000Test(tenant.id, targetAthleteId, body.activityId, body.enabled);
-      sendJson(res, 200, { ok: true, activities });
+        const targetAthleteId = athleteUserId || await resolveAthleteIdFromActivity(tenant.id, body.activityId);
+        if (!targetAthleteId || !(await canAccessAthlete(tenant.id, user, targetAthleteId))) {
+          throw httpError("Usuário sem permissão para alterar esta atividade.", 403);
+        }
+        const activities = await flagActivityAs3000Test(tenant.id, targetAthleteId, body.activityId, body.enabled);
+        sendJson(res, 200, { ok: true, activities });
       return;
     }
 
@@ -2431,14 +2554,17 @@ async function handleApi(req, res, url) {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
       const body = await readRequestBody(req);
-      const targetAthleteId = athleteUserId || await resolveAthleteIdFromActivity(tenant.id, body.activityId);
-      if (!targetAthleteId || !(await canAccessAthlete(tenant.id, user, targetAthleteId))) {
-        throw httpError("Usuario sem permissao para alterar esta atividade.", 403);
-      }
-      const activities = await updateActivityFeedback(tenant.id, targetAthleteId, body.activityId, {
-        performancePercent: body.performancePercent,
-        painScore: body.painScore
-      });
+        const targetAthleteId = athleteUserId || await resolveAthleteIdFromActivity(tenant.id, body.activityId);
+        if (!targetAthleteId || !(await canAccessAthlete(tenant.id, user, targetAthleteId))) {
+          throw httpError("Usuário sem permissão para alterar esta atividade.", 403);
+        }
+        const activities = await updateActivityFeedback(tenant.id, targetAthleteId, body.activityId, {
+          performancePercent: body.performancePercent,
+          painScore: body.painScore,
+          perceivedExertion: body.perceivedExertion,
+          trainingType: body.trainingType,
+          description: body.description
+        });
       sendJson(res, 200, { ok: true, activities });
       return;
     }

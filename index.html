@@ -38,11 +38,12 @@
           <span id="appVersion" class="app-version">versão --</span>
         </a>
         <nav>
-          <a href="#home" class="is-active" data-view-link="home"><span class="nav-label">HOME</span></a>
-          <a href="#treinamentos" data-view-link="training"><span class="nav-label">TREINAMENTOS</span></a>
-          <a href="#objetivos" data-view-link="goals"><span class="nav-label">OBJETIVOS</span></a>
-          <a href="#dashboard" data-view-link="athlete"><span class="nav-label">MEU DASHBOARD</span></a>
-          <a href="#configuracoes" class="manager-only" data-view-link="settings" hidden><span class="nav-label">CONFIGURAÇÕES</span></a>
+          <a href="#home" class="is-active" data-view-link="home"><span class="nav-label" data-i18n="nav.home">HOME</span></a>
+          <a href="#dashboard" data-view-link="dashboard"><span class="nav-label" data-i18n="nav.dashboard">MEU DASHBOARD</span></a>
+          <a href="#treinamentos" data-view-link="training"><span class="nav-label" data-i18n="nav.training">TREINAMENTOS</span></a>
+          <a href="#objetivos" data-view-link="goals"><span class="nav-label" data-i18n="nav.goals">OBJETIVOS</span></a>
+          <a href="#preferencias" data-view-link="athlete"><span class="nav-label" data-i18n="nav.preferences">PREFERÊNCIAS</span></a>
+          <a href="#configuracoes" class="manager-only" data-view-link="settings" hidden><span class="nav-label" data-i18n="nav.settings">CONFIGURAÇÕES</span></a>
         </nav>
         <div class="athlete-chip">
           <span>Atleta selecionado</span>
@@ -64,10 +65,49 @@
               <h1>The world's smartest AI-powered training manager.</h1>
               <div class="hero-actions">
                 <button class="primary-action" data-view-button="training">Abrir calendário</button>
-                <button class="secondary-action" data-view-button="athlete">Meu dashboard</button>
+                <button class="secondary-action" data-view-button="dashboard">Meu dashboard</button>
               </div>
             </div>
           </div>
+        </section>
+
+        <section class="view" data-view="dashboard">
+          <header class="page-header">
+            <div>
+              <p class="kicker">Meu dashboard</p>
+              <h2>Performance</h2>
+            </div>
+          </header>
+          <section class="dashboard-grid">
+            <div class="panel dashboard-hero-panel">
+              <div class="section-title">
+                <span>Resumo</span>
+                <h3>Centro de performance</h3>
+              </div>
+              <div id="dashboardHighlights" class="dashboard-highlights"></div>
+            </div>
+            <div class="panel dashboard-panel">
+              <div class="section-title">
+                <span>Testes</span>
+                <h3>Evolução dos 3000 m</h3>
+              </div>
+              <div id="dashboardTests" class="dashboard-tests"></div>
+            </div>
+            <div class="panel dashboard-panel">
+              <div class="section-title">
+                <span>Treinos</span>
+                <h3>Distribuição por tipo</h3>
+              </div>
+              <div id="dashboardTypes" class="dashboard-types"></div>
+            </div>
+            <div class="panel dashboard-panel">
+              <div class="section-title">
+                <span>Objetivos</span>
+                <h3>Status das provas</h3>
+              </div>
+              <div id="dashboardGoals" class="goal-list"></div>
+            </div>
+          </section>
         </section>
 
         <section class="view" data-view="training">
@@ -77,6 +117,7 @@
               <h2>Atividades</h2>
             </div>
             <div class="toolbar">
+              <button class="primary-action compact" type="button" data-open-workout-builder>Adicionar treino</button>
               <div class="segmented calendar-view-switch" role="tablist" aria-label="Visualização do calendário">
                 <button class="is-active" data-calendar-view="month">Mês</button>
                 <button data-calendar-view="week">Semana</button>
@@ -204,8 +245,12 @@
         <section class="view" data-view="athlete">
           <header class="page-header">
             <div>
-              <p class="kicker">Meu dashboard</p>
-              <h2>Perfil e integrações</h2>
+              <p class="kicker">Preferências</p>
+              <h2>Preferências</h2>
+            </div>
+            <div class="toolbar">
+              <button class="secondary-action compact" type="button" id="openProfileModal">Meu perfil</button>
+              <button class="secondary-action compact" type="button" id="openHistoryModal">Histórico</button>
             </div>
           </header>
 
@@ -550,6 +595,21 @@
         <button class="close-button" aria-label="Fechar">x</button>
       </form>
       <div id="activityDetail"></div>
+    </dialog>
+
+    <dialog id="profileDialog" class="profile-dialog">
+      <button class="close-button dialog-fixed-close" type="button" data-close-dialog="profileDialog" aria-label="Fechar">x</button>
+      <div id="profileDialogContent"></div>
+    </dialog>
+
+    <dialog id="historyDialog" class="profile-dialog">
+      <button class="close-button dialog-fixed-close" type="button" data-close-dialog="historyDialog" aria-label="Fechar">x</button>
+      <div id="historyDialogContent"></div>
+    </dialog>
+
+    <dialog id="workoutDialog" class="profile-dialog workout-dialog">
+      <button class="close-button dialog-fixed-close" type="button" data-close-dialog="workoutDialog" aria-label="Fechar">x</button>
+      <div id="workoutDialogContent"></div>
     </dialog>
 
     <div id="syncOverlay" class="sync-overlay" hidden aria-live="polite" aria-busy="true">
