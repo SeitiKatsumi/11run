@@ -961,6 +961,12 @@ function renderGoalCard(goal, resultMode = false) {
       </div>
       <p class="goal-analysis">${escapeHtml(analysis)}</p>
       ${goal.notes ?`<p class="goal-notes">${escapeHtml(goal.notes)}</p>` : ""}
+      ${!resultMode ?`
+        <div class="goal-card-actions">
+          <button class="secondary-action compact" type="button" data-edit-goal="${escapeHtml(goal.id)}">Editar</button>
+          <button class="danger-action compact" type="button" data-delete-goal="${escapeHtml(goal.id)}">Excluir</button>
+        </div>
+      ` : ""}
     </article>
   `;
 }
@@ -994,22 +1000,57 @@ async function saveGoal(event) {
     setGoalMessage("Selecione um atleta antes de criar objetivos.", true);
     return;
   }
-  if (!window.confirm("Confirmar criação deste objetivo?")) return;
   const form = event.currentTarget;
   const body = Object.fromEntries(new FormData(form).entries());
+  const goalId = String(body.goalId || "").trim();
+  delete body.goalId;
+  if (!window.confirm(goalId ?"Confirmar alteração deste objetivo?" :"Confirmar criação deste objetivo?")) return;
   try {
     setGoalMessage("Salvando objetivo...");
-    const payload = await api("/api/goals", {
-      method: "POST",
+    const payload = await api(goalId ?`/api/goals/${encodeURIComponent(goalId)}` : "/api/goals", {
+      method: goalId ?"PUT" : "POST",
       body: JSON.stringify(body)
     });
     state.goals = payload.goals || [];
     form.reset();
+    if (form.goalId) form.goalId.value = "";
     renderGoals();
     renderDashboard();
-    setGoalMessage("Objetivo salvo.");
+    setGoalMessage(goalId ?"Objetivo atualizado." :"Objetivo salvo.");
   } catch (error) {
     setGoalMessage(error.message || "Não foi possível salvar o objetivo.", true);
+  }
+}
+
+function editGoal(goalId) {
+  const goal = (state.goals || []).find((item) => String(item.id) === String(goalId));
+  const form = document.querySelector("#goalForm");
+  if (!goal || !form) return;
+  if (form.goalId) form.goalId.value = goal.id;
+  if (form.title) form.title.value = goal.title || "";
+  if (form.distanceM) form.distanceM.value = goal.distanceM || "";
+  if (form.targetTime) form.targetTime.value = goal.targetTime || formatDurationSeconds(goal.targetTimeSeconds);
+  if (form.raceDate) form.raceDate.value = goal.raceDate || "";
+  if (form.notes) form.notes.value = goal.notes || "";
+  if (isPanelCollapsed("goalForm")) {
+    setPanelCollapsed("goalForm", false);
+    renderGoals();
+  }
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+  setGoalMessage("Editando objetivo.");
+}
+
+async function removeGoal(goalId) {
+  if (!window.confirm("Confirmar exclusao deste objetivo?")) return;
+  try {
+    setGoalMessage("Excluindo objetivo...");
+    const payload = await api(`/api/goals/${encodeURIComponent(goalId)}`, { method: "DELETE" });
+    state.goals = payload.goals || [];
+    renderGoals();
+    renderDashboard();
+    setGoalMessage("Objetivo excluido.");
+  } catch (error) {
+    setGoalMessage(error.message || "Nao foi possivel excluir o objetivo.", true);
   }
 }
 
@@ -1567,6 +1608,32 @@ function renderPeriodCalendar() {
     : "Sem atividades neste período";
 }
 
+function renderMonthWeekHeader(weekStart, index, cursor) {
+  const weekEnd = addDays(weekStart, 6);
+  const weekActivities = visibleActivities().filter((activity) => {
+    const date = activityDate(activity);
+    return date && date >= weekStart && date <= weekEnd && date.getMonth() === cursor.getMonth();
+  });
+  const volume = weekActivities.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss = weekActivities.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const executions = weekActivities
+    .map((activity) => Number(activity.feedback?.performancePercent || 0))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  const execution = executions.length
+    ?`${Math.round(executions.reduce((sum, value) => sum + value, 0) / executions.length)}%`
+    :"--%";
+  return `
+    <div class="month-week-header">
+      <strong>Semana ${index + 1}</strong>
+      <div class="month-week-stats">
+        <span>${volume.toFixed(1)} km</span>
+        <span>${Math.round(tss)} 11TSS</span>
+        <span>${execution} exec.</span>
+      </div>
+    </div>
+  `;
+}
+
 function renderCalendar() {
   syncCalendarViewButtons();
   const cursor = state.cursor;
@@ -1583,7 +1650,7 @@ function renderCalendar() {
       if (weekStarts.length >= 6) break;
     }
     calendar.style.setProperty("--month-weeks", weekStarts.length);
-    const header = `<div class="month-grid-corner"></div>` + weekStarts.map((_, index) => `<div class="month-week-header">Semana ${index + 1}</div>`).join("");
+    const header = `<div class="month-grid-corner"></div>` + weekStarts.map((weekStart, index) => renderMonthWeekHeader(weekStart, index, cursor)).join("");
     const rows = weekdayNamesMonday.map((weekday, index) => `
       <div class="month-day-label">${weekday}</div>
       ${weekStarts.map((weekStart) => {
@@ -2785,6 +2852,18 @@ document.addEventListener("click", async (event) => {
   }
   if (event.target.closest("[data-refresh-ai]")) {
     await refreshAiProjection();
+    return;
+  }
+  const editGoalButton = event.target.closest("[data-edit-goal]");
+  if (editGoalButton) {
+    event.preventDefault();
+    editGoal(editGoalButton.dataset.editGoal);
+    return;
+  }
+  const deleteGoalButton = event.target.closest("[data-delete-goal]");
+  if (deleteGoalButton) {
+    event.preventDefault();
+    await removeGoal(deleteGoalButton.dataset.deleteGoal);
     return;
   }
   if (event.target.closest("#addHistoryEntry")) {

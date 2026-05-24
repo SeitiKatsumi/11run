@@ -1305,6 +1305,90 @@ async function createGoal(tenantId, athleteUserId, input) {
   return formatGoal(result.rows[0]);
 }
 
+async function updateGoal(tenantId, athleteUserId, goalId, input) {
+  if (!athleteUserId) throw httpError("Selecione um atleta antes de editar objetivos.", 400);
+  const cleanGoalId = String(goalId || "").trim();
+  if (!cleanGoalId) throw httpError("Objetivo invalido.", 400);
+  const goal = validateGoal(input);
+  if (!pool) {
+    const goals = readJson(GOALS_FILE, []);
+    const index = goals.findIndex((item) =>
+      String(item.id) === cleanGoalId &&
+      String(item.tenantId) === String(tenantId) &&
+      String(item.athleteUserId) === String(athleteUserId)
+    );
+    if (index < 0) throw httpError("Objetivo nao encontrado.", 404);
+    goals[index] = {
+      ...goals[index],
+      title: goal.title,
+      distanceM: goal.distanceM,
+      targetTimeSeconds: goal.targetTimeSeconds,
+      raceDate: goal.raceDate,
+      notes: goal.notes,
+      actualTimeSeconds: goal.actualTimeSeconds,
+      resultNotes: goal.resultNotes,
+      updatedAt: new Date().toISOString()
+    };
+    writeJson(GOALS_FILE, goals);
+    return formatGoal(goals[index]);
+  }
+  const result = await query(
+    `UPDATE athlete_goals
+        SET title = $4,
+            distance_m = $5,
+            target_time_seconds = $6,
+            race_date = $7,
+            notes = $8,
+            actual_time_seconds = $9,
+            result_notes = $10,
+            updated_at = now()
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND id = $3
+      RETURNING *`,
+    [
+      tenantId,
+      athleteUserId,
+      cleanGoalId,
+      goal.title,
+      goal.distanceM,
+      goal.targetTimeSeconds,
+      goal.raceDate,
+      goal.notes,
+      goal.actualTimeSeconds,
+      goal.resultNotes
+    ]
+  );
+  if (!result.rows[0]) throw httpError("Objetivo nao encontrado.", 404);
+  return formatGoal(result.rows[0]);
+}
+
+async function deleteGoal(tenantId, athleteUserId, goalId) {
+  if (!athleteUserId) throw httpError("Selecione um atleta antes de excluir objetivos.", 400);
+  const cleanGoalId = String(goalId || "").trim();
+  if (!cleanGoalId) throw httpError("Objetivo invalido.", 400);
+  if (!pool) {
+    const goals = readJson(GOALS_FILE, []);
+    const next = goals.filter((item) =>
+      !(String(item.id) === cleanGoalId &&
+        String(item.tenantId) === String(tenantId) &&
+        String(item.athleteUserId) === String(athleteUserId))
+    );
+    if (next.length === goals.length) throw httpError("Objetivo nao encontrado.", 404);
+    writeJson(GOALS_FILE, next);
+    return;
+  }
+  const result = await query(
+    `DELETE FROM athlete_goals
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND id = $3
+      RETURNING id`,
+    [tenantId, athleteUserId, cleanGoalId]
+  );
+  if (!result.rows[0]) throw httpError("Objetivo nao encontrado.", 404);
+}
+
 async function getIntegrations(tenantId, athleteUserId = null) {
   if (!pool) return readJson(INTEGRATIONS_FILE, defaultIntegrations());
   await ensureTenantIntegrations(tenantId, athleteUserId);
@@ -2534,6 +2618,24 @@ async function handleApi(req, res, url) {
       const body = await readRequestBody(req);
       const goal = await createGoal(tenant.id, athleteUserId, body);
       sendJson(res, 201, { goal, goals: await listGoals(tenant.id, athleteUserId) });
+      return;
+    }
+
+    const goalItemMatch = url.pathname.match(/^\/api\/goals\/([^/]+)$/);
+    if (goalItemMatch && req.method === "PUT") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      const goal = await updateGoal(tenant.id, athleteUserId, decodeURIComponent(goalItemMatch[1]), body);
+      sendJson(res, 200, { goal, goals: await listGoals(tenant.id, athleteUserId) });
+      return;
+    }
+
+    if (goalItemMatch && req.method === "DELETE") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      await deleteGoal(tenant.id, athleteUserId, decodeURIComponent(goalItemMatch[1]));
+      sendJson(res, 200, { ok: true, goals: await listGoals(tenant.id, athleteUserId) });
       return;
     }
 

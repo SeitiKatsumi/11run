@@ -38,12 +38,12 @@
           <span id="appVersion" class="app-version">versão --</span>
         </a>
         <nav>
-          <a href="#home" class="is-active" data-view-link="home"><span class="nav-label" data-i18n="nav.home">HOME</span></a>
-          <a href="#dashboard" data-view-link="dashboard"><span class="nav-label" data-i18n="nav.dashboard">MEU DASHBOARD</span></a>
-          <a href="#treinamentos" data-view-link="training"><span class="nav-label" data-i18n="nav.training">TREINAMENTOS</span></a>
-          <a href="#objetivos" data-view-link="goals"><span class="nav-label" data-i18n="nav.goals">OBJETIVOS</span></a>
-          <a href="#preferencias" data-view-link="athlete"><span class="nav-label" data-i18n="nav.preferences">PREFERÊNCIAS</span></a>
-          <a href="#configuracoes" class="manager-only" data-view-link="settings" hidden><span class="nav-label" data-i18n="nav.settings">CONFIGURAÇÕES</span></a>
+          <a href="#home" class="is-active" data-view-link="home"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"></path><path d="M6 10.5V20h12v-9.5"></path><path d="M10 20v-6h4v6"></path></svg></span><span class="nav-label" data-i18n="nav.home">HOME</span></a>
+          <a href="#dashboard" data-view-link="dashboard"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 13a8 8 0 0 1 16 0"></path><path d="M12 13l4-5"></path><path d="M5 17h14"></path><path d="M8 21h8"></path></svg></span><span class="nav-label" data-i18n="nav.dashboard">MEU DASHBOARD</span></a>
+          <a href="#treinamentos" data-view-link="training"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3v4"></path><path d="M17 3v4"></path><path d="M4 8h16"></path><path d="M5 5h14v16H5z"></path><path d="M8 12h3"></path><path d="M13 12h3"></path><path d="M8 16h3"></path></svg></span><span class="nav-label" data-i18n="nav.training">TREINAMENTOS</span></a>
+          <a href="#objetivos" data-view-link="goals"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="4"></circle><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path></svg></span><span class="nav-label" data-i18n="nav.goals">OBJETIVOS</span></a>
+          <a href="#preferencias" data-view-link="athlete"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 21a7 7 0 0 1 14 0"></path></svg></span><span class="nav-label" data-i18n="nav.preferences">PREFERÊNCIAS</span></a>
+          <a href="#configuracoes" class="manager-only" data-view-link="settings" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg></span><span class="nav-label" data-i18n="nav.settings">CONFIGURAÇÕES</span></a>
         </nav>
         <div class="athlete-chip">
           <span>Atleta selecionado</span>
@@ -184,6 +184,7 @@
 
           <section class="goals-grid">
             <form class="panel goal-form" id="goalForm">
+              <input name="goalId" type="hidden" />
               <div class="section-title">
                 <span>Novo objetivo</span>
                 <h3>Adicionar prova foco</h3>
@@ -314,7 +315,7 @@
                     <option value="admin">Super admin</option>
                   </select>
                 </label>
-                <fieldset class="tests-field wide-field">
+                <fieldset class="tests-field wide-field profile-history-block">
                   <legend>Últimos 3 testes de 3000 m</legend>
                   <div class="tests-grid">
                     <label class="credential-field">
@@ -364,17 +365,17 @@
                     <button class="secondary-action compact" id="flagSelected3000" type="button">Marcar atividade como teste 3000 m</button>
                   </div>
                 </fieldset>
-                <label class="credential-field wide-field">
+                <label class="credential-field wide-field profile-history-block">
                   <span>Histórico e comentários cronológicos</span>
                   <textarea name="historyNotes" rows="5" placeholder="Ex.: 10/05 - iniciou bloco de volume; 14/05 - dor leve na panturrilha; 20/05 - teste controlado."></textarea>
                 </label>
-                <fieldset class="history-field wide-field">
+                <fieldset class="history-field wide-field profile-history-block">
                   <legend>Linha do tempo esportiva (com período)</legend>
                   <div id="historyTimelineList" class="history-timeline-list"></div>
                   <button class="secondary-action compact" id="addHistoryEntry" type="button">Adicionar histórico</button>
                 </fieldset>
               </div>
-              <div id="athleteFocusHistory" class="focus-history"></div>
+              <div id="athleteFocusHistory" class="focus-history profile-history-block"></div>
               <div class="form-actions">
                 <button class="primary-action compact" id="athleteSubmitButton" type="submit">Salvar atleta</button>
                 <button class="secondary-action compact" id="cancelAthleteEdit" type="button" hidden>Cancelar edição</button>

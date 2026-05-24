@@ -184,7 +184,7 @@ nav a {
   min-height: 44px;
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 12px;
   padding: 10px 18px;
   color: var(--muted);
   text-decoration: none;
@@ -193,6 +193,26 @@ nav a {
   font-size: 13px;
   font-weight: 520;
   text-transform: uppercase;
+}
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.nav-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 nav a:hover,
@@ -238,6 +258,16 @@ nav a.is-active {
   justify-content: center;
   padding: 10px;
   min-height: 38px;
+}
+
+.shell.rail-collapsed .nav-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.shell.rail-collapsed .nav-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .athlete-chip {
@@ -529,8 +559,24 @@ dialog {
   max-width: 100%;
 }
 
+.admin-create-panel {
+  order: 1;
+}
+
+.athlete-list-panel {
+  order: 2;
+}
+
+.ai-settings-panel {
+  order: 3;
+}
+
 .wide-field {
   grid-column: 1 / -1;
+}
+
+.profile-history-block {
+  display: none !important;
 }
 
 .training-grid-wide {
@@ -901,6 +947,13 @@ dialog {
   border-radius: var(--radius);
 }
 
+.goal-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .goal-route svg {
   display: block;
   width: 100%;
@@ -1258,8 +1311,26 @@ dialog {
 }
 
 .month-week-header {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  padding: 4px 0 7px;
+}
+
+.month-week-header strong {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 620;
+}
+
+.month-week-stats {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 520;
+  text-transform: none;
 }
 
 .month-day-label {
@@ -2120,6 +2191,7 @@ dialog::backdrop {
   nav a {
     justify-content: flex-start;
     padding: 10px 12px;
+    gap: 12px;
   }
 
   .view {
@@ -2282,6 +2354,16 @@ dialog::backdrop {
   .month-day-label {
     min-height: 22px;
     font-size: 8px;
+  }
+
+  .month-week-header strong {
+    font-size: 8px;
+  }
+
+  .month-week-stats {
+    gap: 2px;
+    font-size: 7px;
+    line-height: 1.25;
   }
 
   .calendar-month .day {
