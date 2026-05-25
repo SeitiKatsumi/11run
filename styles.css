@@ -1643,10 +1643,6 @@ dialog {
   background: rgba(255, 255, 255, 0.035);
 }
 
-.calendar-semester {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
 .period-month-head {
   display: flex;
   justify-content: space-between;
@@ -2998,8 +2994,7 @@ dialog::backdrop {
     grid-template-columns: 1fr;
   }
 
-  .calendar-week,
-  .calendar-semester {
+  .calendar-week {
     grid-template-columns: 1fr;
   }
 
