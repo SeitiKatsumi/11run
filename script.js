@@ -1799,6 +1799,17 @@ function renderActivity(activity) {
   `;
 }
 
+function numericSelectOptions(start, end, step, selectedValue, suffix = "") {
+  const selected = String(selectedValue ?? "");
+  const emptySelected = selected === "" ?"selected" : "";
+  const options = [`<option value="" ${emptySelected}>Selecionar</option>`];
+  for (let value = start; value <= end; value += step) {
+    const textValue = String(value);
+    options.push(`<option value="${textValue}" ${selected === textValue ?"selected" : ""}>${textValue}${suffix}</option>`);
+  }
+  return options.join("");
+}
+
 function renderDayCell(date, muted = false) {
   const today = new Date();
   const key = dateKey(date);
@@ -2025,15 +2036,21 @@ function openActivity(activityId) {
         </label>
         <label class="credential-field">
           <span>Grau de percepção de esforço</span>
-          <input name="perceivedExertion" type="number" min="0" max="10" value="${escapeHtml(perceivedExertion)}" />
+          <select name="perceivedExertion">
+            ${numericSelectOptions(1, 10, 1, perceivedExertion)}
+          </select>
         </label>
         <label class="credential-field">
-          <span>Desempenho percebido (%)</span>
-          <input name="performancePercent" type="number" min="0" max="100" value="${escapeHtml(feedback.performancePercent || "")}" />
+          <span>Desempenho em %</span>
+          <select name="performancePercent">
+            ${numericSelectOptions(10, 100, 10, feedback.performancePercent || "", "%")}
+          </select>
         </label>
         <label class="credential-field">
-          <span>Dores / lesões (0-10)</span>
-          <input name="painScore" type="number" min="0" max="10" value="${escapeHtml(feedback.painScore ?? "")}" />
+          <span>Dores / lesões</span>
+          <select name="painScore">
+            ${numericSelectOptions(1, 10, 1, feedback.painScore ?? "")}
+          </select>
         </label>
         <button class="secondary-action compact" type="button" data-save-activity-feedback="${escapeHtml(activity.id)}">Salvar percepção</button>
       </div>
