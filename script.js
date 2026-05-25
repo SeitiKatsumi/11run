@@ -415,6 +415,7 @@ function setView(view) {
   document.querySelectorAll("[data-view-link]").forEach((link) => link.classList.toggle("is-active", link.dataset.viewLink === view));
   if (view === "athlete") editCurrentUserProfile();
   if (view === "dashboard") renderDashboard();
+  if (view === "home") renderHomeMotivation();
   location.hash = view === "training" ?"treinamentos" : view === "goals" ?"objetivos" : view === "athlete" ?"preferencias" : view === "settings" ?"configuracoes" : view === "dashboard" ?"dashboard" : "home";
   closeMobileMenu();
 }
@@ -1564,6 +1565,43 @@ function dashboardTypeChart(types) {
       </div>
     </div>
   `;
+}
+
+function buildHomeMotivation() {
+  const athlete = getActiveAthlete();
+  const activeGoals = (state.goals || []).filter((goal) => !isPastGoal(goal));
+  const nextGoal = activeGoals
+    .map((goal) => ({ goal, raceKey: normalizeDateKey(goal.raceDate) }))
+    .filter((item) => item.raceKey)
+    .sort((a, b) => a.raceKey.localeCompare(b.raceKey))[0]?.goal;
+  const recent = activitiesSince(30).filter(isRunningActivity);
+  const volume30 = recent.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tests = collect3000Tests(athlete);
+  const lastTest = latest3000Test(tests);
+  const athleteName = athlete?.name || state.currentUser?.name || "atleta";
+  const goalText = nextGoal
+    ?`${nextGoal.title || focusDistanceLabels[nextGoal.distanceM] || "próxima prova"} em ${goalDateLabel(nextGoal)}`
+    : "o próximo objetivo";
+  const baseText = recent.length
+    ?`${formatKm(volume30)} nos últimos 30 dias`
+    : "a base que começa hoje";
+  const testText = lastTest
+    ?`último 3000 m em ${formatDurationSeconds(lastTest.seconds)}`
+    : "primeiro teste de 3000 m ainda por registrar";
+  const options = [
+    `${athleteName}, transforme ${baseText} em direção clara para ${goalText}.`,
+    `O ciclo já deixou pistas: ${baseText}, ${testText}. Hoje é sobre consistência inteligente.`,
+    `Treine com precisão: cada sessão recente aproxima ${goalText} de um plano executável.`,
+    `Use o histórico como bússola. ${testText}; o próximo passo é consolidar ${baseText}.`,
+    `O objetivo não pede pressa, pede leitura. ${goalText} começa no treino bem feito de hoje.`
+  ];
+  return options[Math.floor(Math.random() * options.length)];
+}
+
+function renderHomeMotivation() {
+  const target = document.querySelector("#homeMotivation");
+  if (!target) return;
+  target.textContent = buildHomeMotivation();
 }
 
 function latest3000Test(tests) {
