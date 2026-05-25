@@ -1630,7 +1630,9 @@ dialog {
 }
 
 .calendar-period {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 56px repeat(var(--period-weeks, 12), minmax(180px, 1fr));
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .period-month {
@@ -2247,6 +2249,28 @@ select {
   outline: none;
   background: rgba(0, 0, 0, 0.28);
   transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+select,
+select option,
+select optgroup {
+  color-scheme: dark;
+  color: var(--heading) !important;
+  background: #111214 !important;
+  background-color: #111214 !important;
+}
+
+select option:checked {
+  color: #fffaf4 !important;
+  background: #ff4b0b !important;
+  background-color: #ff4b0b !important;
+}
+
+select option:hover,
+select option:focus {
+  color: #fffaf4 !important;
+  background: #2a1a14 !important;
+  background-color: #2a1a14 !important;
 }
 
 .credential-field textarea {
@@ -2975,9 +2999,15 @@ dialog::backdrop {
   }
 
   .calendar-week,
-  .calendar-period,
   .calendar-semester {
     grid-template-columns: 1fr;
+  }
+
+  .calendar-period {
+    grid-template-columns: 40px repeat(var(--period-weeks, 12), minmax(128px, 1fr));
+    min-width: 0;
+    overflow-x: auto;
+    gap: 5px;
   }
 
   .period-month-list {
@@ -3122,6 +3152,11 @@ dialog::backdrop {
 
   .calendar-month {
     grid-template-columns: 30px repeat(var(--month-weeks, 5), minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .calendar-period {
+    grid-template-columns: 30px repeat(var(--period-weeks, 12), minmax(108px, 1fr));
     gap: 4px;
   }
 
