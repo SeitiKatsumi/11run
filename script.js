@@ -1400,7 +1400,7 @@ function activityTss(activity) {
   return Number(activity.analysis?.tss || activity.load || 0);
 }
 
-function dashboardSeries(days = 30) {
+function dashboardSeries(days = 90) {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - days + 1);
@@ -1473,7 +1473,7 @@ function dashboardTrendSvg(series) {
     .map((point, index) => `<circle class="dash-node" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${index % 3 === 0 ?3.2 :2.2}"></circle>`)
     .join("");
   return `
-    <svg class="dashboard-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Volume e 11TSS dos ultimos 30 dias">
+    <svg class="dashboard-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Volume e 11TSS dos ultimos 90 dias">
       <defs>
         <linearGradient id="dashArea" x1="0" x2="1" y1="0" y2="1">
           <stop offset="0%" stop-color="rgba(255,75,11,.34)" />
@@ -1572,16 +1572,23 @@ function dashboardTypeChart(types) {
   `;
 }
 
+function latest3000Test(tests) {
+  return [...tests]
+    .filter((test) => test.date instanceof Date && !Number.isNaN(test.date.getTime()))
+    .sort((a, b) => b.date - a.date)[0] || tests[0] || null;
+}
+
 function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarget) {
-  const recent = activitiesSince(30).filter(isRunningActivity);
-  const week = activitiesSince(7).filter(isRunningActivity);
-  const volume30 = recent.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
-  const weekVolume = week.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
-  const tss30 = recent.reduce((sum, activity) => sum + activityTss(activity), 0);
-  const bestLoad = [...recent].sort((a, b) => activityTss(b) - activityTss(a))[0];
-  const series = dashboardSeries(30);
+  const recent = activitiesSince(90).filter(isRunningActivity);
+  const volume90 = recent.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss90 = recent.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const monthlyAverage = volume90 / 3;
+  const weeklyAverage = volume90 / (90 / 7);
+  const tssAverage = tss90 / 3;
+  const series = dashboardSeries(90);
   const athlete = getActiveAthlete();
   const tests = collect3000Tests(athlete);
+  const lastTest = latest3000Test(tests);
   const types = recent.reduce((acc, activity) => {
     const key = activity.trainingType || activity.feedback?.trainingType || "Treino";
     acc[key] = (acc[key] || 0) + 1;
@@ -1593,7 +1600,7 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
     <div class="dashboard-cockpit">
       <div class="dashboard-orbit" aria-hidden="true">
         <span></span><span></span><span></span>
-        <strong>${Math.round(tss30)}</strong>
+        <strong>${Math.round(tss90)}</strong>
         <small>11TSS</small>
       </div>
       <div class="dashboard-trend">
@@ -1605,10 +1612,10 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
         ${dashboardMiniBars(series)}
       </div>
       <div class="dashboard-metrics">
-        <article class="dashboard-metric-card"><span>Volume 30 dias</span><strong>${escapeHtml(formatKm(volume30))}</strong><p>${recent.length} atividades importadas</p></article>
-        <article class="dashboard-metric-card"><span>Volume semanal</span><strong>${escapeHtml(formatKm(weekVolume))}</strong><p>${week.length} sessoes nos ultimos 7 dias</p></article>
-        <article class="dashboard-metric-card"><span>11TSS 30 dias</span><strong>${Math.round(tss30)}</strong><p>Carga acumulada recente</p></article>
-        <article class="dashboard-metric-card"><span>Destaque</span><strong>${escapeHtml(bestLoad?.title || "--")}</strong><p>${bestLoad ?`${activityTss(bestLoad)} 11TSS` : "Sem atividade recente"}</p></article>
+        <article class="dashboard-metric-card"><span>Volume mensal médio</span><strong>${escapeHtml(formatKm(monthlyAverage))}</strong><p>${recent.length} atividades nos últimos 90 dias</p></article>
+        <article class="dashboard-metric-card"><span>Volume semanal médio</span><strong>${escapeHtml(formatKm(weeklyAverage))}</strong><p>Média calculada em 90 dias</p></article>
+        <article class="dashboard-metric-card"><span>11TSS médio</span><strong>${Math.round(tssAverage)}</strong><p>Média mensal dos últimos 90 dias</p></article>
+        <article class="dashboard-metric-card"><span>Último teste de 3000</span><strong>${escapeHtml(lastTest ?formatDurationSeconds(lastTest.seconds) : "--")}</strong><p>${escapeHtml(lastTest ?`${lastTest.title || lastTest.source || "3000 m"} - ${lastTest.date ?lastTest.date.toLocaleDateString("pt-BR") : "sem data"}` : "Nenhum teste registrado")}</p></article>
       </div>
     </div>
   `;
