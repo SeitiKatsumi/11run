@@ -1502,37 +1502,140 @@ function dashboardMiniBars(series) {
   `;
 }
 
-function dashboardTestSvg(tests) {
+function formatPace(secondsPerKm) {
+  if (!secondsPerKm || !Number.isFinite(secondsPerKm)) return "--";
+  return `${formatDurationSeconds(secondsPerKm)}/km`;
+}
+
+function paceRange(basePace, minFactor, maxFactor) {
+  return `${formatPace(basePace * minFactor)} - ${formatPace(basePace * maxFactor)}`;
+}
+
+function dashboardObjectiveDistance(athlete) {
+  const activeGoals = (state.goals || [])
+    .filter((goal) => !isPastGoal(goal))
+    .map((goal) => ({
+      distanceM: Number(goal.distanceM || 0),
+      dateKey: normalizeDateKey(goal.raceDate)
+    }))
+    .filter((goal) => goal.distanceM && goal.dateKey)
+    .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+  return activeGoals[0]?.distanceM || Number(athlete?.focusDistanceM || 0) || 5000;
+}
+
+function trainingMixForDistance(distanceM) {
+  if (distanceM <= 1500) {
+    return [
+      ["Base leve", 45],
+      ["Ritmo / limiar", 20],
+      ["VO2 e intervalos", 25],
+      ["Tecnica / forca", 10]
+    ];
+  }
+  if (distanceM <= 5000) {
+    return [
+      ["Base leve", 55],
+      ["Ritmo / limiar", 20],
+      ["VO2 e intervalos", 15],
+      ["Longo controlado", 10]
+    ];
+  }
+  if (distanceM <= 10000) {
+    return [
+      ["Base leve", 60],
+      ["Limiar / tempo", 20],
+      ["VO2 e intervalos", 10],
+      ["Longo controlado", 10]
+    ];
+  }
+  if (distanceM <= 21000) {
+    return [
+      ["Base leve", 65],
+      ["Limiar / tempo", 18],
+      ["Longo controlado", 12],
+      ["VO2 e intervalos", 5]
+    ];
+  }
+  return [
+    ["Base leve", 70],
+    ["Limiar / tempo", 15],
+    ["Longo controlado", 12],
+    ["VO2 e intervalos", 3]
+  ];
+}
+
+function dashboardTestSvg(tests, athlete) {
   if (!tests.length) return `<div class="empty-state">Nenhum teste de 3000 m marcado ou importado.</div>`;
-  const ordered = [...tests].reverse();
-  const width = 620;
-  const height = 150;
-  const pad = 22;
-  const seconds = ordered.map((test) => Number(test.seconds || 0)).filter(Boolean);
-  const min = Math.min(...seconds);
-  const max = Math.max(...seconds);
-  const spread = Math.max(1, max - min);
-  const points = ordered.map((test, index) => ({
-    x: pad + (index * (width - pad * 2) / Math.max(1, ordered.length - 1)),
-    y: pad + ((Number(test.seconds || max) - min) / spread) * (height - pad * 2),
-    test
-  }));
+  const lastTest = latest3000Test(tests);
+  if (!lastTest?.seconds) return `<div class="empty-state">Marque um teste de 3000 m para calcular parametros.</div>`;
+  const basePace = Number(lastTest.seconds) / 3;
+  const projectionTargets = [
+    ["1000 m", 1000],
+    ["1500 m", 1500],
+    ["5 km", 5000],
+    ["10 km", 10000],
+    ["21 km", 21097.5],
+    ["42 km", 42195]
+  ];
+  const zones = [
+    ["Regenerativo", paceRange(basePace, 1.55, 1.75), "recuperacao e volume facil"],
+    ["Leve / base", paceRange(basePace, 1.35, 1.55), "rodagem sustentavel"],
+    ["Ritmo / tempo", paceRange(basePace, 1.14, 1.25), "controle aerobio forte"],
+    ["Limiar", paceRange(basePace, 1.08, 1.14), "blocos progressivos"],
+    ["VO2 / intervalado", paceRange(basePace, 0.98, 1.05), "series curtas e medias"]
+  ];
+  const objectiveDistance = dashboardObjectiveDistance(athlete);
+  const mix = trainingMixForDistance(objectiveDistance);
+  const objectiveLabel = focusDistanceLabels[objectiveDistance] || `${Math.round(objectiveDistance / 1000)} km`;
+
   return `
-    <div class="test-evolution">
-      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Evolucao dos testes de 3000 m">
-        <line class="dash-grid" x1="${pad}" x2="${width - pad}" y1="${height - pad}" y2="${height - pad}"></line>
-        <polyline class="dash-line dash-line-tss" pathLength="1" points="${svgPolyline(points)}"></polyline>
-        ${points.map((point) => `<circle class="dash-node" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4"></circle>`).join("")}
-      </svg>
-      <div class="test-timeline">
-        ${ordered.map((test, index) => `
-          <article class="timeline-card">
-            <span>Teste ${index + 1}</span>
-            <strong>${escapeHtml(formatDurationSeconds(test.seconds))}</strong>
-            <p>${escapeHtml(test.title || test.source || "3000 m")}</p>
-            <small>${escapeHtml(test.date ?test.date.toLocaleDateString("pt-BR") : "sem data")}</small>
-          </article>
-        `).join("")}
+    <div class="test-params">
+      <article class="test-base-card">
+        <span>Teste base</span>
+        <strong>${escapeHtml(formatDurationSeconds(lastTest.seconds))}</strong>
+        <p>${escapeHtml(lastTest.date ?lastTest.date.toLocaleDateString("pt-BR") : "sem data")} - ritmo ${escapeHtml(formatPace(basePace))}</p>
+      </article>
+      <div class="test-projection-grid">
+        ${projectionTargets.map(([label, meters]) => {
+          const seconds = projectTime(lastTest.seconds, 3000, meters);
+          return `
+            <article class="test-param-card">
+              <span>${escapeHtml(label)}</span>
+              <strong>${escapeHtml(formatDurationSeconds(seconds))}</strong>
+              <p>${escapeHtml(formatPace(seconds / (meters / 1000)))}</p>
+            </article>
+          `;
+        }).join("")}
+      </div>
+      <div class="test-param-columns">
+        <section class="test-zone-panel">
+          <div class="test-param-title">
+            <span>Zonas e ritmos sugeridos</span>
+            <strong>Riegel + pace 3000m</strong>
+          </div>
+          <div class="test-zone-list">
+            ${zones.map(([name, range, note]) => `
+              <article>
+                <div><strong>${escapeHtml(name)}</strong><p>${escapeHtml(note)}</p></div>
+                <span>${escapeHtml(range)}</span>
+              </article>
+            `).join("")}
+          </div>
+        </section>
+        <section class="test-zone-panel">
+          <div class="test-param-title">
+            <span>Distribuicao recomendada</span>
+            <strong>${escapeHtml(objectiveLabel)}</strong>
+          </div>
+          <div class="test-mix-list">
+            ${mix.map(([name, pct]) => `
+              <article>
+                <div><span>${escapeHtml(name)}</span><strong>${pct}%</strong></div>
+                <i style="--pct:${pct}%"></i>
+              </article>
+            `).join("")}
+          </div>
+        </section>
       </div>
     </div>
   `;
@@ -1651,7 +1754,7 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
     </div>
   `;
 
-  testTarget.innerHTML = dashboardTestSvg(tests);
+  testTarget.innerHTML = dashboardTestSvg(tests, athlete);
   typeTarget.innerHTML = dashboardTypeChart(types);
   goalTarget.innerHTML = activeGoals.length
     ?activeGoals.slice(0, 4).map((goal) => {
