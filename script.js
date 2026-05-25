@@ -1860,11 +1860,11 @@ function renderPeriodCalendar() {
     : "Sem atividades neste período";
 }
 
-function renderMonthWeekHeader(weekStart, index, cursor) {
+function renderMonthWeekHeader(weekStart, index) {
   const weekEnd = addDays(weekStart, 6);
   const weekActivities = visibleActivities().filter((activity) => {
     const date = activityDate(activity);
-    return date && date >= weekStart && date <= weekEnd && date.getMonth() === cursor.getMonth();
+    return date && date >= weekStart && date <= weekEnd;
   });
   const volume = weekActivities.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
   const tss = weekActivities.reduce((sum, activity) => sum + activityTss(activity), 0);
@@ -1902,12 +1902,12 @@ function renderCalendar() {
       if (weekStarts.length >= 6) break;
     }
     calendar.style.setProperty("--month-weeks", weekStarts.length);
-    const header = `<div class="month-grid-corner"></div>` + weekStarts.map((weekStart, index) => renderMonthWeekHeader(weekStart, index, cursor)).join("");
+    const header = `<div class="month-grid-corner"></div>` + weekStarts.map((weekStart, index) => renderMonthWeekHeader(weekStart, index)).join("");
     const rows = weekdayNamesMonday.map((weekday, index) => `
       <div class="month-day-label">${weekday}</div>
       ${weekStarts.map((weekStart) => {
         const day = addDays(weekStart, index);
-        return renderDayCell(day, day.getMonth() !== cursor.getMonth());
+        return renderDayCell(day);
       }).join("")}
     `).join("");
     calendar.innerHTML = header + rows;

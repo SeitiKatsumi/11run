@@ -1823,7 +1823,7 @@ dialog {
 }
 
 .day.is-muted {
-  opacity: 0.42;
+  opacity: 1;
 }
 
 .day.is-today {
