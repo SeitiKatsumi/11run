@@ -1542,7 +1542,7 @@ function dashboardTypeChart(types) {
   const entries = Object.entries(types).sort((a, b) => b[1] - a[1]);
   if (!entries.length) return `<div class="empty-state">Classifique treinos para alimentar a distribuicao.</div>`;
   const total = entries.reduce((sum, [, count]) => sum + count, 0) || 1;
-  const colors = ["#ff4b0b", "#f4c15d", "#7dd3fc", "#e7e3dc", "#8ee58a"];
+  const colors = ["#ff4b0b", "#d94209", "#b93708", "#f1efe9", "#8a8178"];
   let cursor = 0;
   const gradient = entries.map(([_, count], index) => {
     const start = cursor;
