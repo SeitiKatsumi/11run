@@ -1135,6 +1135,7 @@ function renderDashboard() {
   const typeTarget = document.querySelector("#dashboardTypes");
   const goalTarget = document.querySelector("#dashboardGoals");
   if (!highlightTarget || !testTarget || !typeTarget || !goalTarget) return;
+  return renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarget);
 
   const recent = activitiesSince(30).filter(isRunningActivity);
   const week = activitiesSince(7).filter(isRunningActivity);
@@ -1362,6 +1363,223 @@ async function saveManualWorkout(event) {
 
 function activityTss(activity) {
   return Number(activity.analysis?.tss || activity.load || 0);
+}
+
+function dashboardSeries(days = 30) {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - days + 1);
+  const rows = Array.from({ length: days }, (_, index) => {
+    const date = addDays(start, index);
+    return {
+      date,
+      label: String(date.getDate()).padStart(2, "0"),
+      volume: 0,
+      tss: 0,
+      count: 0
+    };
+  });
+  visibleActivities()
+    .filter(isRunningActivity)
+    .forEach((activity) => {
+      const date = activityDate(activity);
+      if (!date || date < start) return;
+      const index = Math.floor((date.getTime() - start.getTime()) / 86400000);
+      if (!rows[index]) return;
+      rows[index].volume += parseDistanceKm(activity.distance);
+      rows[index].tss += activityTss(activity);
+      rows[index].count += 1;
+    });
+  return rows;
+}
+
+function svgPolyline(points) {
+  return points.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+}
+
+function dashboardTrendSvg(series) {
+  const width = 900;
+  const height = 230;
+  const pad = { top: 22, right: 28, bottom: 34, left: 32 };
+  const maxVolume = Math.max(1, ...series.map((item) => item.volume));
+  const maxTss = Math.max(1, ...series.map((item) => item.tss));
+  const xFor = (index) => pad.left + (index * (width - pad.left - pad.right) / Math.max(1, series.length - 1));
+  const yForVolume = (value) => height - pad.bottom - ((value / maxVolume) * (height - pad.top - pad.bottom));
+  const yForTss = (value) => height - pad.bottom - ((value / maxTss) * (height - pad.top - pad.bottom));
+  const volumePoints = series.map((item, index) => ({ x: xFor(index), y: yForVolume(item.volume) }));
+  const tssPoints = series.map((item, index) => ({ x: xFor(index), y: yForTss(item.tss) }));
+  const activeCount = series.filter((item) => item.count).length;
+  if (!activeCount) return `<div class="empty-state">Importe atividades para ativar o centro visual.</div>`;
+  const areaPoints = `${pad.left},${height - pad.bottom} ${svgPolyline(volumePoints)} ${width - pad.right},${height - pad.bottom}`;
+  const dayTicks = series
+    .filter((_, index) => index === 0 || index === Math.floor(series.length / 2) || index === series.length - 1)
+    .map((item, index) => `<text x="${index === 0 ?pad.left : index === 1 ?width / 2 : width - pad.right}" y="${height - 8}" text-anchor="${index === 0 ?"start" : index === 1 ?"middle" : "end"}">${escapeHtml(item.label)}</text>`)
+    .join("");
+  const nodes = volumePoints
+    .filter((_, index) => series[index].count)
+    .map((point, index) => `<circle class="dash-node" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${index % 3 === 0 ?3.2 :2.2}"></circle>`)
+    .join("");
+  return `
+    <svg class="dashboard-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Volume e 11TSS dos ultimos 30 dias">
+      <defs>
+        <linearGradient id="dashArea" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="rgba(255,75,11,.34)" />
+          <stop offset="100%" stop-color="rgba(255,75,11,0)" />
+        </linearGradient>
+        <filter id="dashGlow">
+          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+      ${[0.25, 0.5, 0.75].map((ratio) => `<line class="dash-grid" x1="${pad.left}" x2="${width - pad.right}" y1="${pad.top + ratio * (height - pad.top - pad.bottom)}" y2="${pad.top + ratio * (height - pad.top - pad.bottom)}"></line>`).join("")}
+      <polygon class="dash-area" points="${areaPoints}"></polygon>
+      <polyline class="dash-line dash-line-volume" points="${svgPolyline(volumePoints)}"></polyline>
+      <polyline class="dash-line dash-line-tss" points="${svgPolyline(tssPoints)}"></polyline>
+      ${nodes}
+      ${dayTicks}
+    </svg>
+  `;
+}
+
+function dashboardMiniBars(series) {
+  const max = Math.max(1, ...series.map((item) => item.volume + item.tss / 100));
+  return `
+    <div class="dashboard-barcode" aria-label="Pulso de carga recente">
+      ${series.slice(-18).map((item) => {
+        const size = 18 + ((item.volume + item.tss / 100) / max) * 82;
+        return `<span style="--bar:${size.toFixed(0)}%"></span>`;
+      }).join("")}
+    </div>
+  `;
+}
+
+function dashboardTestSvg(tests) {
+  if (!tests.length) return `<div class="empty-state">Nenhum teste de 3000 m marcado ou importado.</div>`;
+  const ordered = [...tests].reverse();
+  const width = 620;
+  const height = 150;
+  const pad = 22;
+  const seconds = ordered.map((test) => Number(test.seconds || 0)).filter(Boolean);
+  const min = Math.min(...seconds);
+  const max = Math.max(...seconds);
+  const spread = Math.max(1, max - min);
+  const points = ordered.map((test, index) => ({
+    x: pad + (index * (width - pad * 2) / Math.max(1, ordered.length - 1)),
+    y: pad + ((Number(test.seconds || max) - min) / spread) * (height - pad * 2),
+    test
+  }));
+  return `
+    <div class="test-evolution">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Evolucao dos testes de 3000 m">
+        <line class="dash-grid" x1="${pad}" x2="${width - pad}" y1="${height - pad}" y2="${height - pad}"></line>
+        <polyline class="dash-line dash-line-tss" points="${svgPolyline(points)}"></polyline>
+        ${points.map((point) => `<circle class="dash-node" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4"></circle>`).join("")}
+      </svg>
+      <div class="test-timeline">
+        ${ordered.map((test, index) => `
+          <article class="timeline-card">
+            <span>Teste ${index + 1}</span>
+            <strong>${escapeHtml(formatDurationSeconds(test.seconds))}</strong>
+            <p>${escapeHtml(test.title || test.source || "3000 m")}</p>
+            <small>${escapeHtml(test.date ?test.date.toLocaleDateString("pt-BR") : "sem data")}</small>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function dashboardTypeChart(types) {
+  const entries = Object.entries(types).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) return `<div class="empty-state">Classifique treinos para alimentar a distribuicao.</div>`;
+  const total = entries.reduce((sum, [, count]) => sum + count, 0) || 1;
+  const colors = ["#ff4b0b", "#f4c15d", "#7dd3fc", "#e7e3dc", "#8ee58a"];
+  let cursor = 0;
+  const gradient = entries.map(([_, count], index) => {
+    const start = cursor;
+    cursor += (count / total) * 100;
+    return `${colors[index % colors.length]} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
+  }).join(", ");
+  return `
+    <div class="type-radar">
+      <div class="dashboard-donut" style="--donut: conic-gradient(${gradient});">
+        <span>${total}</span>
+        <small>sessoes</small>
+      </div>
+      <div class="type-bars">
+        ${entries.map(([type, count], index) => `
+          <article class="type-bar">
+            <div><span>${escapeHtml(type)}</span><strong>${count}</strong></div>
+            <i style="--pct:${((count / total) * 100).toFixed(0)}%;--color:${colors[index % colors.length]}"></i>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarget) {
+  const recent = activitiesSince(30).filter(isRunningActivity);
+  const week = activitiesSince(7).filter(isRunningActivity);
+  const volume30 = recent.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const weekVolume = week.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss30 = recent.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const bestLoad = [...recent].sort((a, b) => activityTss(b) - activityTss(a))[0];
+  const series = dashboardSeries(30);
+  const athlete = getActiveAthlete();
+  const tests = collect3000Tests(athlete);
+  const types = recent.reduce((acc, activity) => {
+    const key = activity.trainingType || activity.feedback?.trainingType || "Treino";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  const activeGoals = (state.goals || []).filter((goal) => !isPastGoal(goal));
+
+  highlightTarget.innerHTML = `
+    <div class="dashboard-cockpit">
+      <div class="dashboard-orbit" aria-hidden="true">
+        <span></span><span></span><span></span>
+        <strong>${Math.round(tss30)}</strong>
+        <small>11TSS</small>
+      </div>
+      <div class="dashboard-trend">
+        <div class="dashboard-legend">
+          <span><i class="legend-volume"></i>Volume</span>
+          <span><i class="legend-tss"></i>11TSS</span>
+        </div>
+        ${dashboardTrendSvg(series)}
+        ${dashboardMiniBars(series)}
+      </div>
+      <div class="dashboard-metrics">
+        <article class="dashboard-metric-card"><span>Volume 30 dias</span><strong>${escapeHtml(formatKm(volume30))}</strong><p>${recent.length} atividades importadas</p></article>
+        <article class="dashboard-metric-card"><span>Volume semanal</span><strong>${escapeHtml(formatKm(weekVolume))}</strong><p>${week.length} sessoes nos ultimos 7 dias</p></article>
+        <article class="dashboard-metric-card"><span>11TSS 30 dias</span><strong>${Math.round(tss30)}</strong><p>Carga acumulada recente</p></article>
+        <article class="dashboard-metric-card"><span>Destaque</span><strong>${escapeHtml(bestLoad?.title || "--")}</strong><p>${bestLoad ?`${activityTss(bestLoad)} 11TSS` : "Sem atividade recente"}</p></article>
+      </div>
+    </div>
+  `;
+
+  testTarget.innerHTML = dashboardTestSvg(tests);
+  typeTarget.innerHTML = dashboardTypeChart(types);
+  goalTarget.innerHTML = activeGoals.length
+    ?activeGoals.slice(0, 4).map((goal) => {
+      const model = buildFocusModel(goalAsAthlete(goal));
+      const probability = Math.max(0, Math.min(100, Number(model.probability || 0)));
+      return `
+        <article class="dashboard-goal-card">
+          <div>
+            <span>${escapeHtml(focusDistanceLabels[goal.distanceM] || `${goal.distanceM} m`)}</span>
+            <strong>${escapeHtml(goal.title)}</strong>
+            <p>${probability || "--"}% - ${escapeHtml(goalDateLabel(goal))}</p>
+          </div>
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="goal-ring-base" cx="60" cy="60" r="45"></circle>
+            <circle class="goal-ring-progress" cx="60" cy="60" r="45" style="--goal:${probability}"></circle>
+            <text x="60" y="65" text-anchor="middle">${probability || "--"}%</text>
+          </svg>
+        </article>`;
+    }).join("")
+    : `<div class="empty-state">Crie objetivos para acompanhar status e rota preditiva.</div>`;
 }
 
 function chartRange() {
