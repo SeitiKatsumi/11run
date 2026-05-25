@@ -1470,17 +1470,17 @@ function dashboardTrendSvg(series) {
     .join("");
   const nodes = volumePoints
     .filter((_, index) => series[index].count)
-    .map((point, index) => `<circle class="dash-node" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${index % 3 === 0 ?3.2 :2.2}"></circle>`)
+    .map((point) => `<circle class="dash-node" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="1.8"></circle>`)
     .join("");
   return `
     <svg class="dashboard-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Volume e 11TSS dos ultimos 90 dias">
       <defs>
         <linearGradient id="dashArea" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stop-color="rgba(255,75,11,.34)" />
+          <stop offset="0%" stop-color="rgba(255,75,11,.18)" />
           <stop offset="100%" stop-color="rgba(255,75,11,0)" />
         </linearGradient>
         <filter id="dashGlow">
-          <feGaussianBlur stdDeviation="2.5" result="blur" />
+          <feGaussianBlur stdDeviation="1.1" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>

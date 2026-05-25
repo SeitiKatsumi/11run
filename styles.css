@@ -1157,8 +1157,8 @@ dialog {
 }
 
 .dash-grid {
-  stroke: rgba(255, 255, 255, 0.08);
-  stroke-width: 0.55;
+  stroke: rgba(255, 255, 255, 0.055);
+  stroke-width: 0.45;
 }
 
 .dash-area {
@@ -1169,7 +1169,7 @@ dialog {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.1;
+  stroke-width: 0.62;
   stroke-dasharray: 1;
   stroke-dashoffset: 0;
   animation: dashboardDraw 1.8s ease both;
@@ -1177,18 +1177,18 @@ dialog {
 }
 
 .dash-line-volume {
-  stroke: rgba(255, 75, 11, 0.94);
+  stroke: rgba(255, 75, 11, 0.86);
 }
 
 .dash-line-tss {
-  stroke: rgba(231, 227, 220, 0.66);
+  stroke: rgba(231, 227, 220, 0.5);
   animation-delay: 0.12s;
 }
 
 .dash-node {
-  fill: var(--orange);
-  stroke: rgba(255, 255, 255, 0.64);
-  stroke-width: 0.8;
+  fill: rgba(255, 75, 11, 0.86);
+  stroke: rgba(255, 255, 255, 0.5);
+  stroke-width: 0.45;
   transform-box: fill-box;
   transform-origin: center;
   animation: dashboardPulse 1.8s ease-in-out infinite;
