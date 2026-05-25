@@ -249,19 +249,16 @@
               <p class="kicker">Preferências</p>
               <h2>Preferências</h2>
             </div>
-            <div class="toolbar">
-              <button class="secondary-action compact" type="button" id="openProfileModal">Meu perfil</button>
-              <button class="secondary-action compact" type="button" id="openHistoryModal">Histórico</button>
-            </div>
           </header>
 
           <section class="athlete-grid">
             <form class="panel athlete-form" id="athleteForm">
-              <div class="section-title">
-                <span>Perfil multi-tenant</span>
-                <h3>Dados principais</h3>
-              </div>
-              <div class="form-grid">
+              <section class="profile-edit-panel">
+                <div class="section-title">
+                  <span>Meu perfil</span>
+                  <h3>Dados principais</h3>
+                </div>
+                <div class="form-grid">
                 <label class="credential-field">
                   <span>Nome</span>
                   <input name="name" autocomplete="name" required />
@@ -315,7 +312,19 @@
                     <option value="admin">Super admin</option>
                   </select>
                 </label>
-                <fieldset class="tests-field wide-field profile-history-block">
+                </div>
+              </section>
+
+              <section class="profile-edit-panel profile-history-panel">
+                <div class="section-title">
+                  <span>Histórico</span>
+                  <h3>Linha do tempo e contexto</h3>
+                </div>
+                <label class="credential-field wide-field">
+                  <span>Histórico e comentários cronológicos</span>
+                  <textarea name="historyNotes" rows="5" placeholder="Ex.: 10/05 - iniciou bloco de volume; 14/05 - dor leve na panturrilha; 20/05 - teste controlado."></textarea>
+                </label>
+                <fieldset class="tests-field wide-field">
                   <legend>Últimos 3 testes de 3000 m</legend>
                   <div class="tests-grid">
                     <label class="credential-field">
@@ -365,17 +374,13 @@
                     <button class="secondary-action compact" id="flagSelected3000" type="button">Marcar atividade como teste 3000 m</button>
                   </div>
                 </fieldset>
-                <label class="credential-field wide-field profile-history-block">
-                  <span>Histórico e comentários cronológicos</span>
-                  <textarea name="historyNotes" rows="5" placeholder="Ex.: 10/05 - iniciou bloco de volume; 14/05 - dor leve na panturrilha; 20/05 - teste controlado."></textarea>
-                </label>
-                <fieldset class="history-field wide-field profile-history-block">
+                <fieldset class="history-field wide-field">
                   <legend>Linha do tempo esportiva (com período)</legend>
                   <div id="historyTimelineList" class="history-timeline-list"></div>
                   <button class="secondary-action compact" id="addHistoryEntry" type="button">Adicionar histórico</button>
                 </fieldset>
-              </div>
-              <div id="athleteFocusHistory" class="focus-history profile-history-block"></div>
+                <div id="athleteFocusHistory" class="focus-history"></div>
+              </section>
               <div class="form-actions">
                 <button class="primary-action compact" id="athleteSubmitButton" type="submit">Salvar atleta</button>
                 <button class="secondary-action compact" id="cancelAthleteEdit" type="button" hidden>Cancelar edição</button>

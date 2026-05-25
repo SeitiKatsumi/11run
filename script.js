@@ -2453,7 +2453,7 @@ function historyTimelineRowTemplate(entry = {}) {
       </label>
       <label class="credential-field">
         <span>Descrição / contexto</span>
-        <input data-history-description value="${escapeHtml(entry.description || "")}" placeholder="Detalhes relevantes para análise futura da IA." />
+        <textarea data-history-description rows="2" placeholder="Detalhes relevantes para análise futura da IA.">${escapeHtml(entry.description || "")}</textarea>
       </label>
       <button class="danger-action compact" type="button" data-remove-history-entry>Remover</button>
     </article>

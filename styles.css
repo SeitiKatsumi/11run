@@ -576,10 +576,6 @@ dialog {
   grid-column: 1 / -1;
 }
 
-.profile-history-block {
-  display: none !important;
-}
-
 .training-grid-wide {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -593,6 +589,42 @@ dialog {
 
 .panel {
   padding: 18px;
+}
+
+[data-view="athlete"] .athlete-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.athlete-form {
+  display: grid;
+  gap: 18px;
+}
+
+.profile-edit-panel {
+  display: grid;
+  gap: 16px;
+  padding: clamp(16px, 2vw, 22px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(145deg, rgba(255, 75, 11, 0.055), rgba(255, 255, 255, 0.025) 38%, rgba(0, 0, 0, 0.06)),
+    rgba(255, 255, 255, 0.018);
+}
+
+.profile-edit-panel .section-title {
+  margin-bottom: 2px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.profile-edit-panel .section-title h3 {
+  margin-top: 5px;
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-weight: 560;
+}
+
+.profile-history-panel {
+  border-color: rgba(255, 75, 11, 0.2);
 }
 
 .focus-projection-panel {
