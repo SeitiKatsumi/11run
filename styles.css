@@ -1161,37 +1161,32 @@ dialog {
   stroke-width: 0.45;
 }
 
-.dash-area {
-  fill: url(#dashArea);
-}
-
 .dash-line {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 0.62;
+  stroke-width: 0.5;
   stroke-dasharray: 1;
   stroke-dashoffset: 0;
   animation: dashboardDraw 1.8s ease both;
-  filter: url(#dashGlow);
+  filter: none;
 }
 
 .dash-line-volume {
-  stroke: rgba(255, 75, 11, 0.86);
+  stroke: rgba(255, 75, 11, 0.68);
 }
 
 .dash-line-tss {
-  stroke: rgba(231, 227, 220, 0.5);
+  stroke: rgba(248, 243, 232, 0.48);
   animation-delay: 0.12s;
 }
 
 .dash-node {
-  fill: rgba(255, 75, 11, 0.86);
-  stroke: rgba(255, 255, 255, 0.5);
-  stroke-width: 0.45;
+  fill: rgba(255, 75, 11, 0.58);
+  stroke: rgba(248, 243, 232, 0.5);
+  stroke-width: 0.35;
   transform-box: fill-box;
   transform-origin: center;
-  animation: dashboardPulse 1.8s ease-in-out infinite;
 }
 
 .dashboard-trend-svg text,

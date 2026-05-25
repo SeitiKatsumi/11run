@@ -1445,7 +1445,6 @@ function dashboardTrendSvg(series) {
   const tssPoints = series.map((item, index) => ({ x: xFor(index), y: yForTss(item.tss) }));
   const activeCount = series.filter((item) => item.count).length;
   if (!activeCount) return `<div class="empty-state">Importe atividades para ativar o centro visual.</div>`;
-  const areaPoints = `${pad.left},${height - pad.bottom} ${svgPolyline(volumePoints)} ${width - pad.right},${height - pad.bottom}`;
   const monthGroups = series.reduce((groups, item, index) => {
     const key = item.date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
     const current = groups[groups.length - 1];
@@ -1475,18 +1474,13 @@ function dashboardTrendSvg(series) {
   return `
     <svg class="dashboard-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Volume e 11TSS dos ultimos 90 dias">
       <defs>
-        <linearGradient id="dashArea" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stop-color="rgba(255,75,11,.18)" />
-          <stop offset="100%" stop-color="rgba(255,75,11,0)" />
-        </linearGradient>
         <filter id="dashGlow">
-          <feGaussianBlur stdDeviation="1.1" result="blur" />
+          <feGaussianBlur stdDeviation="0.35" result="blur" />
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
       ${monthTicks}
       ${[0.25, 0.5, 0.75].map((ratio) => `<line class="dash-grid" x1="${pad.left}" x2="${width - pad.right}" y1="${pad.top + ratio * (height - pad.top - pad.bottom)}" y2="${pad.top + ratio * (height - pad.top - pad.bottom)}"></line>`).join("")}
-      <polygon class="dash-area" points="${areaPoints}"></polygon>
       <polyline class="dash-line dash-line-volume" pathLength="1" points="${svgPolyline(volumePoints)}"></polyline>
       <polyline class="dash-line dash-line-tss" pathLength="1" points="${svgPolyline(tssPoints)}"></polyline>
       ${nodes}
@@ -1609,7 +1603,6 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
           <span><i class="legend-tss"></i>11TSS</span>
         </div>
         ${dashboardTrendSvg(series)}
-        ${dashboardMiniBars(series)}
       </div>
       <div class="dashboard-metrics">
         <article class="dashboard-metric-card"><span>Volume mensal médio</span><strong>${escapeHtml(formatKm(monthlyAverage))}</strong><p>${recent.length} atividades nos últimos 90 dias</p></article>
