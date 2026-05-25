@@ -1137,7 +1137,8 @@ dialog {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.1;
-  stroke-dasharray: 900;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
   animation: dashboardDraw 1.8s ease both;
   filter: url(#dashGlow);
 }
@@ -1185,7 +1186,7 @@ dialog {
 }
 
 @keyframes dashboardDraw {
-  from { stroke-dashoffset: 900; }
+  from { stroke-dashoffset: 1; }
   to { stroke-dashoffset: 0; }
 }
 

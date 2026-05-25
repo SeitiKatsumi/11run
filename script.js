@@ -1467,8 +1467,8 @@ function dashboardTrendSvg(series) {
       ${monthTicks}
       ${[0.25, 0.5, 0.75].map((ratio) => `<line class="dash-grid" x1="${pad.left}" x2="${width - pad.right}" y1="${pad.top + ratio * (height - pad.top - pad.bottom)}" y2="${pad.top + ratio * (height - pad.top - pad.bottom)}"></line>`).join("")}
       <polygon class="dash-area" points="${areaPoints}"></polygon>
-      <polyline class="dash-line dash-line-volume" points="${svgPolyline(volumePoints)}"></polyline>
-      <polyline class="dash-line dash-line-tss" points="${svgPolyline(tssPoints)}"></polyline>
+      <polyline class="dash-line dash-line-volume" pathLength="1" points="${svgPolyline(volumePoints)}"></polyline>
+      <polyline class="dash-line dash-line-tss" pathLength="1" points="${svgPolyline(tssPoints)}"></polyline>
       ${nodes}
       ${dayTicks}
     </svg>
@@ -1506,7 +1506,7 @@ function dashboardTestSvg(tests) {
     <div class="test-evolution">
       <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Evolucao dos testes de 3000 m">
         <line class="dash-grid" x1="${pad}" x2="${width - pad}" y1="${height - pad}" y2="${height - pad}"></line>
-        <polyline class="dash-line dash-line-tss" points="${svgPolyline(points)}"></polyline>
+        <polyline class="dash-line dash-line-tss" pathLength="1" points="${svgPolyline(points)}"></polyline>
         ${points.map((point) => `<circle class="dash-node" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4"></circle>`).join("")}
       </svg>
       <div class="test-timeline">
