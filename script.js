@@ -1904,6 +1904,7 @@ function renderPeriodCalendar() {
 
 function renderMonthWeekHeader(weekStart, index) {
   const weekEnd = addDays(weekStart, 6);
+  const periodLabel = `${String(weekStart.getDate()).padStart(2, "0")}/${String(weekStart.getMonth() + 1).padStart(2, "0")} a ${String(weekEnd.getDate()).padStart(2, "0")}/${String(weekEnd.getMonth() + 1).padStart(2, "0")}`;
   const weekActivities = visibleActivities().filter((activity) => {
     const date = activityDate(activity);
     return date && date >= weekStart && date <= weekEnd;
@@ -1918,7 +1919,7 @@ function renderMonthWeekHeader(weekStart, index) {
     :"--%";
   return `
     <div class="month-week-header">
-      <strong>Semana ${index + 1}</strong>
+      <strong>Semana ${index + 1} <small>${escapeHtml(periodLabel)}</small></strong>
       <div class="month-week-stats">
         <span>${volume.toFixed(1)} km</span>
         <span>${Math.round(tss)} 11TSS</span>
