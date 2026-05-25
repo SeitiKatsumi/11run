@@ -501,6 +501,17 @@ function periodRange(view = state.calendarView, cursor = state.cursor) {
       label: `Semestre ${semesterStartMonth === 0 ?1 : 2}/${base.getFullYear()}`
     };
   }
+  if (view === "year") {
+    const start = new Date(base.getFullYear(), 0, 1);
+    const end = new Date(base.getFullYear(), 11, 31);
+    return {
+      start,
+      end,
+      days: Math.ceil((Math.round((end - start) / 86400000) + 1) / 7),
+      unit: "week",
+      label: `${base.getFullYear()}`
+    };
+  }
   const start = new Date(base.getFullYear(), base.getMonth(), 1);
   const end = new Date(base.getFullYear(), base.getMonth() + 1, 0);
   return { start, end, days: end.getDate(), unit: "day", label: `${monthNames[base.getMonth()]} ${base.getFullYear()}` };
@@ -528,6 +539,12 @@ function hasActivitiesInCurrentRange() {
     return activities.some((activity) => {
       const date = activityDate(activity);
       return date && date >= range.start && date <= range.end;
+    });
+  }
+  if (state.calendarView === "year") {
+    return activities.some((activity) => {
+      const date = activityDate(activity);
+      return date && date.getFullYear() === state.cursor.getFullYear();
     });
   }
   return activities.some((activity) => activity.date === dateKey(state.cursor));
@@ -1849,6 +1866,15 @@ function renderPeriodWeek(start, end, index) {
 
 function renderPeriodCalendar() {
   const range = periodRange();
+  if (state.calendarView === "year") {
+    const months = Array.from({ length: 12 }, (_, index) => renderPeriodMonth(new Date(state.cursor.getFullYear(), index, 1)));
+    calendar.innerHTML = `<div class="period-month-list">${months.join("")}</div>`;
+    document.querySelector("#calendarEyebrow").textContent = `${state.cursor.getFullYear()}`;
+    document.querySelector("#calendarTitle").textContent = hasActivitiesInCurrentRange()
+      ?"Ano de treinamento"
+      : "Sem atividades neste ano";
+    return;
+  }
   const weeks = [];
   for (let date = new Date(range.start), index = 0; date <= range.end; date = addDays(date, 7), index += 1) {
     weeks.push(renderPeriodWeek(new Date(date), new Date(Math.min(addDays(date, 6).getTime(), range.end.getTime())), index));
@@ -1889,7 +1915,7 @@ function renderMonthWeekHeader(weekStart, index) {
 function renderCalendar() {
   syncCalendarViewButtons();
   const cursor = state.cursor;
-  const calendarClass = state.calendarView === "quarter" || state.calendarView === "semester" ?"calendar-period" : `calendar-${state.calendarView}`;
+  const calendarClass = state.calendarView === "quarter" || state.calendarView === "semester" || state.calendarView === "year" ?"calendar-period" : `calendar-${state.calendarView}`;
   calendar.className = `calendar ${calendarClass} calendar-${state.calendarView}`;
   const activities = visibleActivities();
 
@@ -1936,7 +1962,7 @@ function renderCalendar() {
       ?`${activities.length} atividades importadas em outras datas`
       : "Detalhe do dia";
   }
-  if (state.calendarView === "quarter" || state.calendarView === "semester") {
+  if (state.calendarView === "quarter" || state.calendarView === "semester" || state.calendarView === "year") {
     renderPeriodCalendar();
   }
   renderFocusProjection();
@@ -2963,6 +2989,7 @@ document.querySelectorAll("[data-period-shift]").forEach((button) => {
     if (state.calendarView === "day") next.setDate(next.getDate() + direction);
     if (state.calendarView === "quarter") next.setMonth(next.getMonth() + direction * 3);
     if (state.calendarView === "semester") next.setMonth(next.getMonth() + direction * 6);
+    if (state.calendarView === "year") next.setFullYear(next.getFullYear() + direction);
     state.cursor = next;
     renderCalendar();
   });

@@ -1687,6 +1687,12 @@ dialog {
   gap: 10px;
 }
 
+.period-month-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .period-week {
   padding: 10px;
   border: 1px solid rgba(255, 255, 255, 0.075);
@@ -2974,6 +2980,10 @@ dialog::backdrop {
     grid-template-columns: 1fr;
   }
 
+  .period-month-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .calendar-month {
     grid-template-columns: 40px repeat(var(--month-weeks, 5), minmax(0, 1fr));
     min-width: 0;
@@ -3113,6 +3123,10 @@ dialog::backdrop {
   .calendar-month {
     grid-template-columns: 30px repeat(var(--month-weeks, 5), minmax(0, 1fr));
     gap: 4px;
+  }
+
+  .period-month-list {
+    grid-template-columns: 1fr;
   }
 
   .calendar-month .day {
