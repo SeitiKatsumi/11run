@@ -1413,9 +1413,9 @@ function svgPolyline(points) {
 }
 
 function dashboardTrendSvg(series) {
-  const width = 900;
-  const height = 230;
-  const pad = { top: 22, right: 28, bottom: 34, left: 32 };
+  const width = 1040;
+  const height = 270;
+  const pad = { top: 44, right: 34, bottom: 54, left: 38 };
   const maxVolume = Math.max(1, ...series.map((item) => item.volume));
   const maxTss = Math.max(1, ...series.map((item) => item.tss));
   const xFor = (index) => pad.left + (index * (width - pad.left - pad.right) / Math.max(1, series.length - 1));
@@ -1426,9 +1426,27 @@ function dashboardTrendSvg(series) {
   const activeCount = series.filter((item) => item.count).length;
   if (!activeCount) return `<div class="empty-state">Importe atividades para ativar o centro visual.</div>`;
   const areaPoints = `${pad.left},${height - pad.bottom} ${svgPolyline(volumePoints)} ${width - pad.right},${height - pad.bottom}`;
+  const monthGroups = series.reduce((groups, item, index) => {
+    const key = item.date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    const current = groups[groups.length - 1];
+    if (!current || current.key !== key) {
+      groups.push({ key, start: index, end: index });
+    } else {
+      current.end = index;
+    }
+    return groups;
+  }, []);
+  const monthTicks = monthGroups
+    .map((group) => {
+      const x = (xFor(group.start) + xFor(group.end)) / 2;
+      return `<text class="dash-month-label" x="${x.toFixed(1)}" y="19" text-anchor="middle">${escapeHtml(group.key.toUpperCase())}</text>`;
+    })
+    .join("");
   const dayTicks = series
-    .filter((_, index) => index === 0 || index === Math.floor(series.length / 2) || index === series.length - 1)
-    .map((item, index) => `<text x="${index === 0 ?pad.left : index === 1 ?width / 2 : width - pad.right}" y="${height - 8}" text-anchor="${index === 0 ?"start" : index === 1 ?"middle" : "end"}">${escapeHtml(item.label)}</text>`)
+    .map((item, index) => {
+      const strong = index === 0 || index === series.length - 1 || item.date.getDate() === 1;
+      return `<text class="dash-day-label${strong ? " is-strong" : ""}" x="${xFor(index).toFixed(1)}" y="${height - 16}" text-anchor="middle">${escapeHtml(item.label)}</text>`;
+    })
     .join("");
   const nodes = volumePoints
     .filter((_, index) => series[index].count)
@@ -1446,6 +1464,7 @@ function dashboardTrendSvg(series) {
           <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
       </defs>
+      ${monthTicks}
       ${[0.25, 0.5, 0.75].map((ratio) => `<line class="dash-grid" x1="${pad.left}" x2="${width - pad.right}" y1="${pad.top + ratio * (height - pad.top - pad.bottom)}" y2="${pad.top + ratio * (height - pad.top - pad.bottom)}"></line>`).join("")}
       <polygon class="dash-area" points="${areaPoints}"></polygon>
       <polyline class="dash-line dash-line-volume" points="${svgPolyline(volumePoints)}"></polyline>
