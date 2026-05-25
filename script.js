@@ -439,6 +439,8 @@ function normalizeDateKey(value) {
   const text = String(value || "").trim();
   const isoDate = text.match(/^(\d{4}-\d{2}-\d{2})/);
   if (isoDate) return isoDate[1];
+  const brDate = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (brDate) return `${brDate[3]}-${brDate[2].padStart(2, "0")}-${brDate[1].padStart(2, "0")}`;
   const parsed = new Date(text);
   return Number.isNaN(parsed.getTime()) ?"" : dateKey(parsed);
 }
@@ -870,18 +872,20 @@ function renderFocusRoadmap() {
 
 function goalAsAthlete(goal) {
   const athlete = getActiveAthlete() || {};
+  const raceDate = normalizeDateKey(goal.raceDate);
   return {
     ...athlete,
     focusDistanceM: goal.distanceM,
     targetTimeSeconds: goal.targetTimeSeconds,
     targetTime: goal.targetTime,
-    targetDate: goal.raceDate,
+    targetDate: raceDate,
     bestTimeSeconds: 0
   };
 }
 
 function isPastGoal(goal) {
-  const raceDate = goal.raceDate ?new Date(`${goal.raceDate}T00:00:00`) : null;
+  const raceKey = normalizeDateKey(goal.raceDate);
+  const raceDate = raceKey ?new Date(`${raceKey}T00:00:00`) : null;
   if (!raceDate || Number.isNaN(raceDate.getTime())) return false;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -893,10 +897,16 @@ function goalDateLabel(goal) {
   return new Date(`${goal.raceDate}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function goalDateLabel(goal) {
+  const raceKey = normalizeDateKey(goal.raceDate);
+  if (!raceKey) return "data nao definida";
+  return new Date(`${raceKey}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 function goalResultPerformance(goal) {
   const targetMeters = Number(goal.distanceM || 0);
-  if (!goal.raceDate || !targetMeters) return null;
   const raceKey = normalizeDateKey(goal.raceDate);
+  if (!raceKey || !targetMeters) return null;
   const candidates = [];
   visibleActivities()
     .filter((activity) => normalizeDateKey(activity.date) === raceKey && isRunningActivity(activity))
@@ -1004,6 +1014,11 @@ async function saveGoal(event) {
   const body = Object.fromEntries(new FormData(form).entries());
   const goalId = String(body.goalId || "").trim();
   delete body.goalId;
+  body.raceDate = normalizeDateKey(body.raceDate);
+  if (!body.raceDate) {
+    setGoalMessage("Informe uma data valida para a prova.", true);
+    return;
+  }
   if (!window.confirm(goalId ?"Confirmar alteração deste objetivo?" :"Confirmar criação deste objetivo?")) return;
   try {
     setGoalMessage("Salvando objetivo...");
@@ -1030,7 +1045,7 @@ function editGoal(goalId) {
   if (form.title) form.title.value = goal.title || "";
   if (form.distanceM) form.distanceM.value = goal.distanceM || "";
   if (form.targetTime) form.targetTime.value = goal.targetTime || formatDurationSeconds(goal.targetTimeSeconds);
-  if (form.raceDate) form.raceDate.value = goal.raceDate || "";
+  if (form.raceDate) form.raceDate.value = normalizeDateKey(goal.raceDate);
   if (form.notes) form.notes.value = goal.notes || "";
   if (isPanelCollapsed("goalForm")) {
     setPanelCollapsed("goalForm", false);

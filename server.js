@@ -1214,7 +1214,7 @@ function formatGoal(row) {
     distanceM: Number(row.distance_m || row.distanceM || 0),
     targetTimeSeconds: Number(row.target_time_seconds || row.targetTimeSeconds || 0),
     targetTime: formatDuration(row.target_time_seconds || row.targetTimeSeconds || 0),
-    raceDate: row.race_date ? String(row.race_date).slice(0, 10) : row.raceDate || "",
+    raceDate: formatDateOnly(row.race_date || row.raceDate),
     notes: row.notes || "",
     actualTimeSeconds: row.actual_time_seconds || row.actualTimeSeconds || null,
     actualTime: row.actual_time_seconds || row.actualTimeSeconds ? formatDuration(row.actual_time_seconds || row.actualTimeSeconds) : "",
@@ -1227,7 +1227,7 @@ function formatGoal(row) {
 function validateGoal(input) {
   const distanceM = Number(input.distanceM || input.distance_m || 0);
   const targetTimeSeconds = parseTimeToSeconds(input.targetTime || input.target_time || input.targetTimeSeconds);
-  const raceDate = String(input.raceDate || input.race_date || "").trim();
+  const raceDate = formatDateOnly(input.raceDate || input.race_date);
   const title = String(input.title || "").trim();
   if (!title) throw httpError("Informe o nome do objetivo.", 400);
   if (!distanceM) throw httpError("Selecione a prova do objetivo.", 400);
@@ -1700,7 +1700,21 @@ function formatDateOnly(value) {
     const day = String(value.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   }
-  return String(value || "").slice(0, 10);
+  const text = String(value || "").trim();
+  const isoDate = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoDate) return `${isoDate[1]}-${isoDate[2]}-${isoDate[3]}`;
+  const brDate = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (brDate) {
+    return `${brDate[3]}-${brDate[2].padStart(2, "0")}-${brDate[1].padStart(2, "0")}`;
+  }
+  const parsed = new Date(text);
+  if (!Number.isNaN(parsed.getTime())) {
+    const year = parsed.getFullYear();
+    const month = String(parsed.getMonth() + 1).padStart(2, "0");
+    const day = String(parsed.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+  return "";
 }
 
 async function listActivities(tenantId, athleteUserId = null) {
