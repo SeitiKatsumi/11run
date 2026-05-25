@@ -2,11 +2,11 @@ services:
   app:
     build: .
     ports:
-      - "3005:3005"
+      - "3009:3009"
     environment:
       NODE_ENV: production
-      PORT: 3005
-      PUBLIC_BASE_URL: http://localhost:3005
+      PORT: 3009
+      PUBLIC_BASE_URL: http://localhost:3009
       DATABASE_URL: postgres://11run:11run@db:5432/11run
     depends_on:
       - db

@@ -14,7 +14,7 @@ No app 11RUN, configure:
 
 ```env
 NODE_ENV=production
-PORT=3005
+PORT=3009
 PUBLIC_BASE_URL=https://SEU-DOMINIO
 DATABASE_URL=postgres://USER:PASSWORD@srv-captain--NOME-DO-POSTGRES:5432/DB
 ```
