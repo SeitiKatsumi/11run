@@ -85,6 +85,8 @@ CREATE TABLE IF NOT EXISTS activities (
   pace TEXT,
   load TEXT,
   external_url TEXT,
+  status TEXT NOT NULL DEFAULT 'executed',
+  planned_activity_id TEXT,
   raw JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -130,10 +132,13 @@ ALTER TABLE athlete_profiles ADD COLUMN IF NOT EXISTS tests_3000 JSONB NOT NULL 
 ALTER TABLE athlete_goals ADD COLUMN IF NOT EXISTS notes TEXT;
 ALTER TABLE athlete_goals ADD COLUMN IF NOT EXISTS actual_time_seconds INTEGER;
 ALTER TABLE athlete_goals ADD COLUMN IF NOT EXISTS result_notes TEXT;
+ALTER TABLE activities ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'executed';
+ALTER TABLE activities ADD COLUMN IF NOT EXISTS planned_activity_id TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_users_tenant_role ON users(tenant_id, role);
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_team ON athlete_profiles(team_id);
 CREATE INDEX IF NOT EXISTS idx_athlete_profiles_coach ON athlete_profiles(coach_user_id);
 CREATE INDEX IF NOT EXISTS idx_activities_tenant_date ON activities(tenant_id, activity_date);
+CREATE INDEX IF NOT EXISTS idx_activities_status ON activities(tenant_id, athlete_user_id, status, activity_date);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_athlete_goals_athlete_date ON athlete_goals(tenant_id, athlete_user_id, race_date);

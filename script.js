@@ -674,6 +674,14 @@ function activityMovingSeconds(activity) {
   return Number(activity.movingTimeSeconds || activity.elapsedTimeSeconds || 0) || parseDurationSeconds(activity.duration);
 }
 
+function activityStatus(activity) {
+  return String(activity.status || activity.raw?.status || "").toLowerCase() === "planned" ? "planned" : "executed";
+}
+
+function isExecutedActivity(activity) {
+  return activityStatus(activity) === "executed";
+}
+
 function isRunningActivity(activity) {
   const type = String(activity.type || "").toLowerCase();
   return !type || type.includes("run") || type.includes("corrida");
@@ -685,7 +693,7 @@ function activitiesSince(days) {
   start.setDate(start.getDate() - days + 1);
   return visibleActivities().filter((activity) => {
     const date = activityDate(activity);
-    return date && date >= start;
+    return isExecutedActivity(activity) && date && date >= start;
   });
 }
 
@@ -709,7 +717,7 @@ function collectFocusPerformances(athlete) {
   const direct = [];
 
   visibleActivities()
-    .filter((activity) => isRunningActivity(activity))
+    .filter((activity) => isExecutedActivity(activity) && isRunningActivity(activity))
     .filter((activity) => {
       const date = activityDate(activity);
       return date && date >= start;
@@ -825,7 +833,7 @@ function collect3000Tests(athlete) {
       details: "Cadastro manual"
     }));
   const flaggedActivities = visibleActivities()
-    .filter((activity) => isRunningActivity(activity) && activity.is3000Test)
+    .filter((activity) => isExecutedActivity(activity) && isRunningActivity(activity) && activity.is3000Test)
     .map((activity) => ({
       date: activityDate(activity),
       seconds: parseDurationSeconds(activity.duration),
@@ -836,7 +844,7 @@ function collect3000Tests(athlete) {
     }))
     .filter((test) => test.seconds);
   const fromActivities = visibleActivities()
-    .filter((activity) => isRunningActivity(activity))
+    .filter((activity) => isExecutedActivity(activity) && isRunningActivity(activity))
     .flatMap((activity) => {
       const efforts = Array.isArray(activity.bestEfforts) ?activity.bestEfforts : [];
       return efforts
@@ -1021,7 +1029,7 @@ function goalResultPerformance(goal) {
   if (!raceKey || !targetMeters) return null;
   const candidates = [];
   visibleActivities()
-    .filter((activity) => normalizeDateKey(activity.date) === raceKey && isRunningActivity(activity))
+    .filter((activity) => isExecutedActivity(activity) && normalizeDateKey(activity.date) === raceKey && isRunningActivity(activity))
     .forEach((activity) => {
       const efforts = Array.isArray(activity.bestEfforts) ?activity.bestEfforts : [];
       efforts.forEach((effort) => {
@@ -1476,12 +1484,54 @@ function workoutRows(count) {
   return Array.from({ length: count }, (_, index) => `
     <div class="workout-row" data-workout-row>
       <label class="credential-field"><span>Data</span><input name="date" type="date" /></label>
+      <label class="credential-field"><span>Horário</span><input name="scheduledTime" type="time" /></label>
+      <label class="credential-field"><span>Status</span><select name="status"><option value="executed">Executado</option><option value="planned">Planejado</option></select></label>
       <label class="credential-field"><span>Título</span><input name="title" placeholder="Treino ${index + 1}" /></label>
       <label class="credential-field"><span>Distância</span><input name="distance" placeholder="8 km" /></label>
       <label class="credential-field"><span>Descrição</span><input name="description" placeholder="Objetivo, ritmo, observações" /></label>
       <label class="credential-field"><span>Tipo</span><select name="trainingType">${trainingTypeOptionsHtml("Treino")}</select></label>
     </div>
   `).join("");
+}
+
+function workoutStepTemplate(step = {}) {
+  const kind = step.kind || "work";
+  return `
+    <article class="workout-step" data-workout-step>
+      <label><span>Etapa</span><select name="kind">
+        ${[
+          ["warmup", "Aquecimento"],
+          ["work", "Treino"],
+          ["interval", "Intervalo forte"],
+          ["recovery", "Pausa / trote"],
+          ["cooldown", "Arrefecimento"]
+        ].map(([value, label]) => `<option value="${value}" ${value === kind ?"selected" : ""}>${label}</option>`).join("")}
+      </select></label>
+      <label><span>Nome</span><input name="label" value="${escapeHtml(step.label || "")}" placeholder="Ex.: 6x800m" /></label>
+      <label><span>Medida</span><select name="durationType"><option value="time">Tempo</option><option value="distance" ${step.durationType === "distance" ?"selected" : ""}>Distância</option></select></label>
+      <label><span>Valor</span><input name="durationValue" value="${escapeHtml(step.durationValue || "")}" placeholder="Ex.: 10min ou 800m" /></label>
+      <label><span>Alvo</span><input name="target" value="${escapeHtml(step.target || "")}" placeholder="Ex.: 3:40/km, Z4" /></label>
+      <button class="danger-action" type="button" data-remove-workout-step>Remover</button>
+    </article>
+  `;
+}
+
+function defaultWorkoutSteps() {
+  return [
+    { kind: "warmup", label: "Aquecimento", durationType: "time", durationValue: "15min", target: "Leve / base" },
+    { kind: "interval", label: "Bloco principal", durationType: "distance", durationValue: "6 x 800m", target: "Ritmo alvo" },
+    { kind: "recovery", label: "Pausas", durationType: "time", durationValue: "2min", target: "Trote leve" },
+    { kind: "cooldown", label: "Arrefecimento", durationType: "time", durationValue: "10min", target: "Leve" }
+  ];
+}
+
+function readWorkoutPlan(form) {
+  const steps = Array.from(form.querySelectorAll("[data-workout-step]")).map((row) => Object.fromEntries(new FormData(row).entries()));
+  return {
+    name: form.elements.workoutPlanName?.value || "Bloco estruturado",
+    notes: form.elements.workoutPlanNotes?.value || "",
+    steps: steps.filter((step) => step.label || step.durationValue || step.target)
+  };
 }
 
 function addDaysToInputDate(value, days) {
@@ -1529,6 +1579,22 @@ function openWorkoutDialog() {
           <label class="credential-field"><span>Data de fim</span><input name="endDate" type="date" /></label>
         </div>
         <div id="workoutRows" class="workout-day-list">${workoutRows(1)}</div>
+        <div class="workout-structure">
+          <div class="workout-structure-head">
+            <div>
+              <span>Bloco estruturado</span>
+              <strong>Modelo para relógio e execução</strong>
+            </div>
+            <button class="secondary-action compact" type="button" data-add-workout-step>Adicionar etapa</button>
+          </div>
+          <div class="workout-plan-meta">
+            <label class="credential-field"><span>Nome do bloco</span><input name="workoutPlanName" value="Treino estruturado 11RUN" /></label>
+            <label class="credential-field"><span>Observações do bloco</span><input name="workoutPlanNotes" placeholder="Ex.: controlar recuperação, FC, terreno" /></label>
+          </div>
+          <div id="workoutStepList" class="workout-step-list">
+            ${defaultWorkoutSteps().map(workoutStepTemplate).join("")}
+          </div>
+        </div>
         <div id="audioWorkoutArea" class="audio-workout-area" hidden>
           <label class="credential-field wide-field">
             <span>Áudio ou transcrição</span>
@@ -1566,9 +1632,10 @@ async function saveManualWorkout(event) {
   if (!window.confirm(mode === "week" ?"Confirmar criação da semana de treinos?" : mode === "month" ?"Confirmar criação do mês de treinos?" : "Confirmar cadastro deste treino?")) return;
   const message = document.querySelector("#workoutBuilderMessage");
   const rows = Array.from(form.querySelectorAll("[data-workout-row]"));
+  const workoutPlan = readWorkoutPlan(form);
   const activities = mode === "audio"
-    ?[{ date: form.elements.startDate?.value || dateKey(new Date()), title: "Treino por áudio", description: form.elements.audioNotes?.value || "Entrada preparada para transcrição futura.", trainingType: "Treino" }]
-    : rows.map((row) => Object.fromEntries(new FormData(row).entries())).filter((item) => item.date || item.title || item.description);
+    ?[{ date: form.elements.startDate?.value || dateKey(new Date()), title: "Treino por áudio", description: form.elements.audioNotes?.value || "Entrada preparada para transcrição futura.", trainingType: "Treino", status: "planned", workoutPlan }]
+    : rows.map((row) => ({ ...Object.fromEntries(new FormData(row).entries()), workoutPlan })).filter((item) => item.date || item.title || item.description);
   if (!activities.length) {
     if (message) message.textContent = "Informe pelo menos um treino.";
     return;
@@ -1589,6 +1656,7 @@ async function saveManualWorkout(event) {
 }
 
 function activityTss(activity) {
+  if (!isExecutedActivity(activity)) return 0;
   return Number(activity.analysis?.tss || activity.load || 0);
 }
 
@@ -1607,7 +1675,7 @@ function dashboardSeries(days = 90) {
     };
   });
   visibleActivities()
-    .filter(isRunningActivity)
+    .filter((activity) => isExecutedActivity(activity) && isRunningActivity(activity))
     .forEach((activity) => {
       const date = activityDate(activity);
       if (!date || date < start) return;
@@ -2242,7 +2310,7 @@ function activitiesBetweenDays(fromDaysAgo, toDaysAgo) {
   const end = addDays(today, -toDaysAgo);
   return visibleActivities().filter((activity) => {
     const date = eventDateFromKey(activity.date);
-    return date && date >= start && date <= end;
+    return isExecutedActivity(activity) && date && date >= start && date <= end;
   });
 }
 
@@ -2432,7 +2500,7 @@ function aggregatePerformanceSeries() {
       count: 0
     };
   });
-  visibleActivities().forEach((activity) => {
+  visibleActivities().filter(isExecutedActivity).forEach((activity) => {
     const date = activityDate(activity);
     if (!date || date < range.start || date > range.end) return;
     const index = range.unit === "week"
@@ -2559,15 +2627,18 @@ function renderActivity(activity) {
       : painNumber <= 6
         ?"pain-mid"
         : "pain-high";
-  const analysisLine = analysis.tss
+  const status = activityStatus(activity);
+  const analysisLine = status !== "planned" && analysis.tss
     ?`<em>${escapeHtml(analysis.standard || "11TSS Advance")} ${escapeHtml(analysis.tss)} - agressão ${escapeHtml(analysis.aggressionScore || "--")} - ${escapeHtml(analysis.characteristic || "")}</em>`
     : "";
-  const feedbackLine = `<small class="activity-feedback"><span>Execução ${escapeHtml(performancePercent || "--")}%</span><span class="${painClass}">Dor ${escapeHtml(painScore === "" ?"—" : painScore)}/10</span></small>`;
+  const feedbackLine = status === "planned"
+    ?`<small class="activity-feedback"><span>Planejado</span><span>Não contabiliza métricas</span></small>`
+    : `<small class="activity-feedback"><span>Execução ${escapeHtml(performancePercent || "--")}%</span><span class="${painClass}">Dor ${escapeHtml(painScore === "" ?"—" : painScore)}/10</span></small>`;
   const trainingType = activity.trainingType || feedback.trainingType || "";
   return `
-    <button class="activity" data-activity-id="${escapeHtml(activity.id)}" data-source="${escapeHtml(activity.source)}">
+    <button class="activity ${status === "planned" ?"is-planned" : ""}" data-activity-id="${escapeHtml(activity.id)}" data-source="${escapeHtml(activity.source)}">
       <strong>${escapeHtml(activity.title)}</strong>
-      <span>${escapeHtml(activity.source)} - ${escapeHtml(activity.distance)} - ${escapeHtml(activity.description)}</span>
+      <span>${escapeHtml(status === "planned" ?"Planejado" : activity.source)}${activity.scheduledTime ?` ${escapeHtml(activity.scheduledTime)}` : ""} - ${escapeHtml(activity.distance)} - ${escapeHtml(activity.description)}</span>
       ${analysisLine}
       ${trainingType ?`<small class="activity-type">${escapeHtml(trainingType)}</small>` : ""}
       ${feedbackLine}
@@ -2605,8 +2676,9 @@ function renderPeriodMonth(monthDate) {
     const date = activityDate(activity);
     return date && date >= monthStart && date <= monthEnd;
   });
-  const volume = activities.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
-  const tss = activities.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const executed = activities.filter(isExecutedActivity);
+  const volume = executed.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss = executed.reduce((sum, activity) => sum + activityTss(activity), 0);
   const list = activities.length
     ?activities.slice(0, 8).map(renderActivity).join("")
     : `<p class="period-empty">Sem atividades importadas neste mês.</p>`;
@@ -2633,8 +2705,9 @@ function renderPeriodWeek(start, end, index) {
     const date = activityDate(activity);
     return date && date >= start && date <= end;
   });
-  const volume = activities.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
-  const tss = activities.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const executed = activities.filter(isExecutedActivity);
+  const volume = executed.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss = executed.reduce((sum, activity) => sum + activityTss(activity), 0);
   return `
     <article class="period-week">
       <div class="period-week-head">
@@ -2642,7 +2715,7 @@ function renderPeriodWeek(start, end, index) {
         <span>${escapeHtml(start.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }))} - ${escapeHtml(end.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }))}</span>
       </div>
       <div class="period-month-stats">
-        <span>${activities.length} sessões</span>
+        <span>${executed.length}/${activities.length} exec.</span>
         <span>${escapeHtml(formatKm(volume))}</span>
         <span>${Math.round(tss)} 11TSS</span>
       </div>
@@ -2675,9 +2748,10 @@ function renderMonthWeekHeader(weekStart, index) {
     const date = activityDate(activity);
     return date && date >= weekStart && date <= weekEnd;
   });
-  const volume = weekActivities.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
-  const tss = weekActivities.reduce((sum, activity) => sum + activityTss(activity), 0);
-  const executions = weekActivities
+  const executed = weekActivities.filter(isExecutedActivity);
+  const volume = executed.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss = executed.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const executions = executed
     .map((activity) => Number(activity.feedback?.performancePercent || 0))
     .filter((value) => Number.isFinite(value) && value > 0);
   const execution = executions.length
@@ -2763,7 +2837,26 @@ function openActivity(activityId) {
   const feedback = activity.feedback || {};
   const perceivedExertion = activity.perceivedExertion ?? feedback.perceivedExertion ?? "";
   const trainingType = activity.trainingType || feedback.trainingType || "Treino";
+  const status = activityStatus(activity);
   const external = activity.externalUrl ?`<a class="detail-link" href="${escapeHtml(activity.externalUrl)}" target="_blank" rel="noreferrer">Abrir atividade original</a>` : "";
+  const workoutPlan = activity.workoutPlan;
+  const workoutPlanPanel = workoutPlan?.steps?.length ?`
+    <div class="workout-plan-preview">
+      <div class="workout-structure-head">
+        <div><span>Bloco estruturado</span><strong>${escapeHtml(workoutPlan.name || "Treino estruturado")}</strong></div>
+        <a class="secondary-action compact" href="/api/activities/gpx?activityId=${encodeURIComponent(activity.id)}">Baixar GPX</a>
+      </div>
+      <div class="workout-step-strip">
+        ${workoutPlan.steps.map((step, index) => `
+          <article>
+            <span>${String(index + 1).padStart(2, "0")} ${escapeHtml(step.kind || "etapa")}</span>
+            <strong>${escapeHtml(step.label || "Etapa")}</strong>
+            <p>${escapeHtml([step.durationValue, step.target, step.intensity].filter(Boolean).join(" | "))}</p>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  ` : "";
   const analysisPanel = analysis.tss ?`
     <div class="analysis-panel">
       <span class="kicker">${escapeHtml(analysis.standard || "11TSS Advance")}</span>
@@ -2785,7 +2878,7 @@ function openActivity(activityId) {
   `;
   detail.innerHTML = `
     <div class="detail">
-      <span class="kicker">${escapeHtml(activity.source)} - ${escapeHtml(activity.type)}</span>
+      <span class="kicker">${escapeHtml(status === "planned" ?"Planejado" : "Executado")} - ${escapeHtml(activity.source)} - ${escapeHtml(activity.type)}</span>
       <h3>${escapeHtml(activity.title)}</h3>
       <p>${escapeHtml(activity.description)}</p>
       <div class="detail-grid">
@@ -2794,6 +2887,7 @@ function openActivity(activityId) {
         <div><span class="metric-label">Pace</span><strong>${escapeHtml(activity.pace)}</strong></div>
         <div><span class="metric-label">Carga</span><strong>${escapeHtml(activity.load)}</strong></div>
       </div>
+      ${workoutPlanPanel}
       ${analysisPanel}
       <div class="activity-feedback-form">
         <label class="credential-field wide-field">
@@ -2826,7 +2920,10 @@ function openActivity(activityId) {
         </label>
         <button class="secondary-action compact" type="button" data-save-activity-feedback="${escapeHtml(activity.id)}">Salvar percepção</button>
       </div>
-      <div class="provider-actions">${testFlagButton}</div>
+      <div class="provider-actions">
+        <button class="secondary-action compact" type="button" data-set-activity-status="${escapeHtml(activity.id)}" data-status="${status === "planned" ?"executed" : "planned"}">${status === "planned" ?"Marcar como executado" : "Marcar como planejado"}</button>
+        ${testFlagButton}
+      </div>
       ${external}
     </div>
   `;
@@ -3964,6 +4061,25 @@ async function approveRelationshipRequest(athleteId) {
   }
 }
 
+async function setActivityStatus(activityId, status) {
+  const label = status === "planned" ?"planejado" : "executado";
+  if (!window.confirm(`Marcar este treino como ${label}?`)) return;
+  try {
+    const payload = await api("/api/activities/status", {
+      method: "POST",
+      body: JSON.stringify({ activityId, status })
+    });
+    state.activities = payload.activities || [];
+    renderCalendar();
+    renderDashboard();
+    renderTrainingInsights();
+    if (dialog.open) openActivity(activityId);
+    setLog([`Treino marcado como ${label}.`]);
+  } catch (error) {
+    setLog([error.message || "Não foi possível alterar o status do treino."], true);
+  }
+}
+
 async function saveTeam(event) {
   event.preventDefault();
   if (!canManageAthletes()) return;
@@ -4381,6 +4497,14 @@ document.addEventListener("click", async (event) => {
     applyWorkoutMode(workoutModeButton.dataset.workoutMode);
     return;
   }
+  if (event.target.closest("[data-add-workout-step]")) {
+    document.querySelector("#workoutStepList")?.insertAdjacentHTML("beforeend", workoutStepTemplate({ kind: "work", label: "Nova etapa" }));
+    return;
+  }
+  if (event.target.closest("[data-remove-workout-step]")) {
+    event.target.closest("[data-workout-step]")?.remove();
+    return;
+  }
   const editButton = event.target.closest("[data-edit-athlete]");
   if (editButton) {
     event.preventDefault();
@@ -4530,6 +4654,13 @@ document.addEventListener("click", async (event) => {
       return;
     }
     await setActivity3000Flag(activityId, enabled);
+    return;
+  }
+  const statusButton = event.target.closest("[data-set-activity-status]");
+  if (statusButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    await setActivityStatus(statusButton.dataset.setActivityStatus, statusButton.dataset.status);
     return;
   }
   const feedbackButton = event.target.closest("[data-save-activity-feedback]");

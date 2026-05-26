@@ -2509,6 +2509,17 @@ dialog {
   background: linear-gradient(135deg, rgba(255, 75, 11, 0.2), rgba(255, 255, 255, 0.05));
 }
 
+.activity.is-planned {
+  border-left-color: rgba(180, 180, 180, 0.72);
+  color: rgba(231, 228, 220, 0.78);
+  background: linear-gradient(135deg, rgba(80, 80, 84, 0.26), rgba(255, 255, 255, 0.035));
+}
+
+.activity.is-planned span,
+.activity.is-planned .activity-type {
+  color: rgba(205, 205, 205, 0.74);
+}
+
 .activity strong {
   display: block;
   font-size: 13px;
@@ -3274,7 +3285,6 @@ dialog::backdrop {
 }
 
 .workout-range,
-.workout-row,
 .activity-feedback-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3282,10 +3292,112 @@ dialog::backdrop {
 }
 
 .workout-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
   padding: 14px;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.025);
+}
+
+.workout-structure,
+.workout-plan-preview {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(255, 75, 11, 0.28);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, rgba(255, 75, 11, 0.08), rgba(255, 255, 255, 0.035));
+}
+
+.workout-structure-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workout-structure-head span {
+  display: block;
+  color: var(--orange);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.workout-structure-head strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--heading);
+  font-size: 17px;
+  font-weight: 540;
+}
+
+.workout-plan-meta,
+.workout-step-list {
+  display: grid;
+  gap: 10px;
+}
+
+.workout-plan-meta {
+  grid-template-columns: 0.8fr 1.2fr;
+}
+
+.workout-step {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr 0.8fr 0.9fr 1.2fr auto;
+  gap: 8px;
+  align-items: end;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: rgba(10, 10, 11, 0.42);
+}
+
+.workout-step label {
+  display: grid;
+  gap: 5px;
+}
+
+.workout-step label span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.workout-step-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.workout-step-strip article {
+  min-height: 92px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.workout-step-strip span {
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.workout-step-strip strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--heading);
+}
+
+.workout-step-strip p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .workout-day-list {
@@ -3535,6 +3647,8 @@ dialog::backdrop {
   .athlete-row-details,
   .workout-range,
   .workout-row,
+  .workout-plan-meta,
+  .workout-step,
   .activity-feedback-form {
     grid-template-columns: 1fr;
   }

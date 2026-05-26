@@ -1604,6 +1604,11 @@ function activityRowToApi(row) {
     title: row.title,
     source: row.provider,
     type: row.type || "",
+    status: row.status || raw.status || (raw.manual && raw.planned ? "planned" : "executed"),
+    plannedActivityId: row.planned_activity_id || raw.plannedActivityId || "",
+    scheduledTime: raw.scheduledTime || raw.start_time || "",
+    workoutPlan: raw.workoutPlan || null,
+    executedFromPlanned: Boolean(raw.executedFromPlanned),
     description: row.description || "",
     distance: row.distance || "",
     duration: row.duration || "",
@@ -1676,6 +1681,28 @@ const TRAINING_TYPE_OPTIONS = [
 function normalizeTrainingType(value, fallback = "Treino") {
   const text = String(value || "").trim();
   return TRAINING_TYPE_OPTIONS.includes(text) ?text : fallback;
+}
+
+function normalizeActivityStatus(value, fallback = "executed") {
+  const text = String(value || "").trim().toLowerCase();
+  return text === "planned" || text === "planejado" ? "planned" : text === "executed" || text === "executado" ? "executed" : fallback;
+}
+
+function normalizeWorkoutPlan(input = {}) {
+  const steps = Array.isArray(input.steps) ?input.steps : [];
+  return {
+    name: String(input.name || "Bloco estruturado").trim().slice(0, 80),
+    notes: String(input.notes || "").trim().slice(0, 500),
+    steps: steps.map((step, index) => ({
+      id: String(step.id || `step-${index + 1}`),
+      kind: String(step.kind || "work").trim().slice(0, 32),
+      label: String(step.label || step.kind || "Etapa").trim().slice(0, 80),
+      target: String(step.target || "").trim().slice(0, 80),
+      durationType: String(step.durationType || "time").trim().slice(0, 24),
+      durationValue: String(step.durationValue || "").trim().slice(0, 32),
+      intensity: String(step.intensity || "").trim().slice(0, 80)
+    })).filter((step) => step.label || step.durationValue || step.target).slice(0, 40)
+  };
 }
 
 function normalizeOptionalNumber(value, min, max) {
@@ -1863,6 +1890,8 @@ async function listActivities(tenantId, athleteUserId = null) {
             pace,
             load,
             external_url,
+            status,
+            planned_activity_id,
             raw
        FROM activities
       WHERE tenant_id = $1
@@ -2043,10 +2072,12 @@ async function upsertActivities(tenantId, athleteUserId, importedActivities) {
       const is3000Test = Boolean(current?.is3000Test || current?.raw?.flags?.is3000Test);
       byId.set(String(activity.id), {
         ...activity,
+        status: "executed",
         is3000Test,
         feedback: current?.feedback || current?.raw?.feedback || activity.feedback || {},
         raw: {
           ...(activity.raw || {}),
+          status: "executed",
           feedback: current?.raw?.feedback || current?.feedback || activity.feedback || {},
           flags: {
             ...((activity.raw || {}).flags || {}),
@@ -2061,12 +2092,90 @@ async function upsertActivities(tenantId, athleteUserId, importedActivities) {
   }
 
   for (const activity of importedActivities) {
+    const importedDate = formatDateOnly(activity.date || new Date());
+    const importedDistance = safeNumber(activity.raw?.distance || activity.distanceMeters || 0);
+    const nextStatus = normalizeActivityStatus(activity.status || activity.raw?.status, "executed");
+    const matchedPlanned = String(activity.source || "").toLowerCase() !== "manual" ? await query(
+      `SELECT provider, provider_activity_id, raw
+         FROM activities
+        WHERE tenant_id = $1
+          AND athlete_user_id = $2
+          AND provider = 'Manual'
+          AND status = 'planned'
+          AND activity_date BETWEEN ($3::date - INTERVAL '1 day') AND ($3::date + INTERVAL '1 day')
+        ORDER BY ABS(activity_date - $3::date), updated_at DESC
+        LIMIT 1`,
+      [tenantId, athleteUserId, importedDate]
+    ) : { rows: [] };
+    if (matchedPlanned.rows[0]) {
+      const plannedRaw = parseJsonObject(matchedPlanned.rows[0].raw);
+      const plannedDistance = safeNumber(plannedRaw.distance);
+      const distanceMatches = !plannedDistance || !importedDistance || Math.abs(plannedDistance - importedDistance) <= Math.max(1200, plannedDistance * 0.35);
+      if (distanceMatches) {
+        await query(
+          `UPDATE activities
+              SET provider = $3,
+                  provider_activity_id = $4,
+                  activity_date = $5,
+                  title = $6,
+                  type = $7,
+                  description = $8,
+                  distance = $9,
+                  duration = $10,
+                  pace = $11,
+                  load = $12,
+                  external_url = $13,
+                  status = 'executed',
+                  planned_activity_id = $14,
+                  raw = jsonb_set(
+                    jsonb_set(
+                      $15::jsonb || jsonb_build_object(
+                        'status', 'executed',
+                        'executedFromPlanned', true,
+                        'plannedActivityId', $14::text,
+                        'plannedTitle', COALESCE($16::jsonb->>'title', '')
+                      ),
+                      '{workoutPlan}',
+                      COALESCE($16::jsonb->'workoutPlan', 'null'::jsonb),
+                      true
+                    ),
+                    '{feedback}',
+                    COALESCE($16::jsonb->'feedback', $15::jsonb->'feedback', '{}'::jsonb),
+                    true
+                  ),
+                  updated_at = now()
+            WHERE tenant_id = $1
+              AND athlete_user_id = $2
+              AND provider = 'Manual'
+              AND provider_activity_id = $14`,
+          [
+            tenantId,
+            athleteUserId,
+            activity.source,
+            activity.providerId || activity.id,
+            importedDate,
+            activity.title,
+            activity.type,
+            activity.description,
+            activity.distance,
+            activity.duration,
+            activity.pace,
+            activity.load,
+            activity.externalUrl,
+            matchedPlanned.rows[0].provider_activity_id,
+            JSON.stringify(activity.raw || activity),
+            JSON.stringify(plannedRaw)
+          ]
+        );
+        continue;
+      }
+    }
     await query(
       `INSERT INTO activities (
          tenant_id, athlete_user_id, provider, provider_activity_id, activity_date, title, type,
-         description, distance, duration, pace, load, external_url, raw, updated_at
+         description, distance, duration, pace, load, external_url, status, planned_activity_id, raw, updated_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $15, NULL, $14, now())
        ON CONFLICT (tenant_id, provider, provider_activity_id)
        DO UPDATE SET athlete_user_id = EXCLUDED.athlete_user_id,
                      activity_date = EXCLUDED.activity_date,
@@ -2083,6 +2192,7 @@ async function upsertActivities(tenantId, athleteUserId, importedActivities) {
                      pace = EXCLUDED.pace,
                      load = EXCLUDED.load,
                      external_url = EXCLUDED.external_url,
+                     status = CASE WHEN EXCLUDED.status = 'planned' AND activities.status = 'executed' THEN activities.status ELSE EXCLUDED.status END,
                      raw = CASE
                        WHEN activities.raw->>'resource_state' = '3'
                         AND COALESCE(EXCLUDED.raw->>'resource_state', '') <> '3'
@@ -2114,7 +2224,8 @@ async function upsertActivities(tenantId, athleteUserId, importedActivities) {
         activity.pace,
         activity.load,
         activity.externalUrl,
-        JSON.stringify(activity.raw || activity)
+        JSON.stringify(activity.raw || activity),
+        nextStatus
       ]
     );
   }
@@ -2142,9 +2253,15 @@ async function createManualActivities(tenantId, athleteUserId, mode, activities)
     }
     const distanceMeters = parseDistanceToMeters(activity.distance);
     const durationSeconds = parseTimeToSeconds(activity.duration || activity.time || "") || 0;
+    const status = normalizeActivityStatus(activity.status, "executed");
+    const workoutPlan = normalizeWorkoutPlan(activity.workoutPlan || {});
+    const scheduledTime = String(activity.scheduledTime || "").trim().slice(0, 8);
     const raw = {
       manual: true,
       mode: sourceMode,
+      status,
+      scheduledTime,
+      workoutPlan,
       distance: distanceMeters,
       moving_time: durationSeconds,
       elapsed_time: durationSeconds,
@@ -2159,6 +2276,9 @@ async function createManualActivities(tenantId, athleteUserId, mode, activities)
       date,
       title: String(activity.title || `Treino ${index + 1}`).trim(),
       source: "Manual",
+      status,
+      scheduledTime,
+      workoutPlan,
       type: "Run",
       description: raw.description || "Treino cadastrado manualmente.",
       distance: activity.distance || formatDistance(distanceMeters),
@@ -2173,6 +2293,95 @@ async function createManualActivities(tenantId, athleteUserId, mode, activities)
 
   if (!mapped.length) throw httpError("Informe pelo menos um treino.", 400);
   return upsertActivities(tenantId, athleteUserId, mapped);
+}
+
+async function updateActivityStatus(tenantId, athleteUserId, activityId, status) {
+  const cleanActivityId = String(activityId || "").trim();
+  const nextStatus = normalizeActivityStatus(status);
+  if (!cleanActivityId) throw httpError("Atividade inválida.", 400);
+  if (!pool) {
+    const activities = readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
+    const index = activities.findIndex((item) => String(item.id) === cleanActivityId);
+    if (index < 0) throw httpError("Atividade não encontrada para este atleta.", 404);
+    const item = activities[index];
+    activities[index] = {
+      ...item,
+      status: nextStatus,
+      raw: { ...(item.raw || {}), status: nextStatus }
+    };
+    writeJson(ACTIVITIES_FILE, activities);
+    return listActivities(tenantId, athleteUserId);
+  }
+  const separator = cleanActivityId.indexOf("-");
+  if (separator < 0) throw httpError("Identificador de atividade inválido.", 400);
+  const provider = cleanActivityId.slice(0, separator);
+  const providerActivityId = cleanActivityId.slice(separator + 1);
+  const updated = await query(
+    `UPDATE activities
+        SET status = $5,
+            raw = jsonb_set(COALESCE(raw, '{}'::jsonb), '{status}', to_jsonb($5::text), true),
+            updated_at = now()
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND lower(provider) = lower($3)
+        AND provider_activity_id = $4
+      RETURNING provider_activity_id`,
+    [tenantId, athleteUserId, provider, providerActivityId, nextStatus]
+  );
+  if (!updated.rows[0]) throw httpError("Atividade não encontrada para este atleta.", 404);
+  return listActivities(tenantId, athleteUserId);
+}
+
+async function getActivityByApiId(tenantId, athleteUserId, activityId) {
+  const cleanActivityId = String(activityId || "").trim();
+  const separator = cleanActivityId.indexOf("-");
+  if (separator < 0) return null;
+  const provider = cleanActivityId.slice(0, separator);
+  const providerActivityId = cleanActivityId.slice(separator + 1);
+  if (!pool) {
+    return listActivities(tenantId, athleteUserId).then((items) => items.find((item) => item.id === cleanActivityId) || null);
+  }
+  const result = await query(
+    `SELECT provider, provider_activity_id, activity_date, to_char(activity_date, 'YYYY-MM-DD') AS activity_date_key,
+            title, type, description, distance, duration, pace, load, external_url, status, planned_activity_id, raw
+       FROM activities
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND lower(provider) = lower($3)
+        AND provider_activity_id = $4
+      LIMIT 1`,
+    [tenantId, athleteUserId, provider, providerActivityId]
+  );
+  return result.rows[0] ?activityRowToApi(result.rows[0]) : null;
+}
+
+function workoutPlanToGpx(activity) {
+  const plan = activity?.workoutPlan || {};
+  const steps = Array.isArray(plan.steps) ?plan.steps : [];
+  const generated = new Date().toISOString();
+  const points = steps.length ?steps : [{ kind: "work", label: activity.title || "Treino", durationValue: activity.distance || activity.duration || "" }];
+  const wpts = points.map((step, index) => `
+  <wpt lat="0.000${index}" lon="0.000${index}">
+    <name>${escapeXml(`${index + 1}. ${step.label || step.kind || "Etapa"}`)}</name>
+    <desc>${escapeXml([step.kind, step.durationValue, step.durationType, step.target, step.intensity].filter(Boolean).join(" | "))}</desc>
+  </wpt>`).join("");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="11RUN" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>${escapeXml(activity.title || "Treino 11RUN")}</name>
+    <desc>${escapeXml(activity.description || "Treino estruturado exportado pelo 11RUN.")}</desc>
+    <time>${generated}</time>
+  </metadata>${wpts}
+</gpx>`;
+}
+
+function escapeXml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 function formatDuration(seconds) {
@@ -2814,6 +3023,38 @@ async function handleApi(req, res, url) {
       const body = await readRequestBody(req);
       const activities = await createManualActivities(tenant.id, athleteUserId, body.mode, body.activities);
       sendJson(res, 201, { ok: true, activities });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/activities/status") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      const targetAthleteId = athleteUserId || await resolveAthleteIdFromActivity(tenant.id, body.activityId);
+      if (!targetAthleteId || !(await canAccessAthlete(tenant.id, user, targetAthleteId))) {
+        throw httpError("Usuário sem permissão para alterar esta atividade.", 403);
+      }
+      const activities = await updateActivityStatus(tenant.id, targetAthleteId, body.activityId, body.status);
+      sendJson(res, 200, { ok: true, activities });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/activities/gpx") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const activityId = url.searchParams.get("activityId") || "";
+      const targetAthleteId = athleteUserId || await resolveAthleteIdFromActivity(tenant.id, activityId);
+      if (!targetAthleteId || !(await canAccessAthlete(tenant.id, user, targetAthleteId))) {
+        throw httpError("Usuário sem permissão para exportar esta atividade.", 403);
+      }
+      const activity = await getActivityByApiId(tenant.id, targetAthleteId, activityId);
+      if (!activity) throw httpError("Atividade não encontrada.", 404);
+      const filename = `${String(activity.title || "treino-11run").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "treino-11run"}.gpx`;
+      res.writeHead(200, {
+        "Content-Type": "application/gpx+xml; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${filename}"`
+      });
+      res.end(workoutPlanToGpx(activity));
       return;
     }
 
