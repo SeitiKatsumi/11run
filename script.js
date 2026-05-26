@@ -1820,11 +1820,14 @@ function dashboardGoalProbability(goal, model) {
   const analysis = String(state.dashboardAnalysis?.athleteId || "") === String(getActiveAthlete()?.id || "")
     ?state.dashboardAnalysis
     : null;
+  const isRunning = analysis?.status === "running";
   const analysisLabel = analysis?.generatedAt
-    ?`Recalculado ${new Date(analysis.generatedAt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
+    ?isRunning
+      ?"Recalculando com IA..."
+      : `Recalculado ${new Date(analysis.generatedAt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
     : "Clique em Recalcular para reprocessar a cronologia";
   return `
-    <article class="dashboard-goal-card">
+    <article class="dashboard-goal-card ${isRunning ?"is-recalculating" : ""}">
       <div class="goal-probability-copy">
         <span>${escapeHtml(focusDistanceLabels[goal.distanceM] || `${goal.distanceM} m`)}</span>
         <strong>${escapeHtml(goal.title)}</strong>
@@ -1835,7 +1838,7 @@ function dashboardGoalProbability(goal, model) {
           <small><b>${escapeHtml(gainLabel)}</b> ganho</small>
           <small><b>${escapeHtml(weekLabel)}</b> ritmo</small>
         </div>
-        <p class="goal-analysis-stamp">${escapeHtml(analysisLabel)}</p>
+        <p class="goal-analysis-stamp">${isRunning ?`<i class="mini-loader" aria-hidden="true"></i>` : ""}${escapeHtml(analysisLabel)}</p>
       </div>
       <div class="goal-probability-visual">
         <svg viewBox="0 0 120 120" aria-hidden="true">
@@ -2164,6 +2167,7 @@ function dashboardVo2Panel(athlete, tests) {
   const dashboardAnalysis = String(state.dashboardAnalysis?.athleteId || "") === String(athlete?.id || "")
     ?state.dashboardAnalysis
     : null;
+  const isRunning = dashboardAnalysis?.status === "running";
   if (!vo2) {
     return `
       <aside class="dashboard-vo2-panel">
@@ -2178,10 +2182,12 @@ function dashboardVo2Panel(athlete, tests) {
   const riskLabel = vo2.riskHits ?`${vo2.riskHits} alerta(s) no histórico` : "histórico sem alerta forte";
   const analysisText = dashboardAnalysis?.aiText || vo2.chronology.summary;
   const analysisMeta = dashboardAnalysis?.generatedAt
-    ?`Recalculado em ${new Date(dashboardAnalysis.generatedAt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
+    ?isRunning
+      ?"Recalculando análise fisiológica"
+      : `Recalculado em ${new Date(dashboardAnalysis.generatedAt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
     : "Aguardando recalculo manual com IA";
   return `
-    <aside class="dashboard-vo2-panel">
+    <aside class="dashboard-vo2-panel ${isRunning ?"is-recalculating" : ""}">
       <div class="vo2-panel-head">
         <div>
           <span>VO2 estimado</span>
@@ -2204,7 +2210,7 @@ function dashboardVo2Panel(athlete, tests) {
         <span><b>${vo2.boostHits}</b> sinal(is) positivos no histórico cronológico</span>
       </div>
       <div class="vo2-ai-analysis">
-        <span>${escapeHtml(analysisMeta)}</span>
+        <span>${isRunning ?`<i class="mini-loader" aria-hidden="true"></i>` : ""}${escapeHtml(analysisMeta)}</span>
         <p>${escapeHtml(analysisText)}</p>
       </div>
     </aside>
@@ -3936,6 +3942,64 @@ async function testOpenAiSettings() {
   }
 }
 
+function setDashboardRecalcBusy(isBusy) {
+  document.querySelectorAll("[data-recalculate-dashboard]").forEach((button) => {
+    button.disabled = isBusy;
+    button.classList.toggle("is-loading", isBusy);
+    button.textContent = isBusy ? "Analisando..." : "Recalcular";
+  });
+}
+
+function compactActivityForAi(activity) {
+  return {
+    date: activity.date,
+    title: activity.title,
+    type: activity.trainingType || activity.feedback?.trainingType || "",
+    distanceKm: Number(parseDistanceKm(activity.distance).toFixed(2)),
+    seconds: activityMovingSeconds(activity),
+    pace: activityMovingSeconds(activity) && parseDistanceKm(activity.distance)
+      ?formatPace(activityMovingSeconds(activity) / parseDistanceKm(activity.distance))
+      : "",
+    tss: activityTss(activity),
+    perceivedEffort: activity.feedback?.perceivedEffort || "",
+    painScore: activity.feedback?.painScore ?? "",
+    performancePercent: activity.feedback?.performancePercent || ""
+  };
+}
+
+function compactAthleteForAi(athlete, tests, localAnalysis) {
+  return {
+    id: athlete.id,
+    name: athlete.name,
+    age: athlete.age,
+    weightKg: athlete.weightKg,
+    heightCm: athlete.heightCm,
+    focusDistanceM: athlete.focusDistanceM,
+    targetTimeSeconds: athlete.targetTimeSeconds,
+    targetDate: athlete.targetDate,
+    tests3000: tests.map((test) => ({
+      date: test.date instanceof Date ?test.date.toISOString().slice(0, 10) : test.date,
+      seconds: test.seconds,
+      source: test.source || test.origin || test.title || ""
+    })),
+    historyTimeline: (athlete.historyTimeline || []).map((entry) => ({
+      date: entry.startDate,
+      time: entry.time || "",
+      type: entry.type,
+      title: entry.title,
+      description: entry.description || entry.originalContent || "",
+      vo2: entry.vo2 || "",
+      weightKg: entry.weightKg || "",
+      painScore: entry.painScore ?? "",
+      perceivedEffort: entry.perceivedEffort || "",
+      tags: entry.tags || [],
+      importance: entry.importance || "",
+      relation: entry.relation || ""
+    })).slice(-80),
+    chronologySummary: localAnalysis.summary
+  };
+}
+
 async function refreshAiProjection() {
   const athlete = getActiveAthlete();
   if (!athlete) return;
@@ -3958,36 +4022,50 @@ async function recalculateDashboardAnalysis() {
   if (!athlete) return;
   const tests = collect3000Tests(athlete);
   const localAnalysis = buildChronologicalPerformanceAnalysis(athlete, tests);
+  setDashboardRecalcBusy(true);
   state.dashboardAnalysis = {
     ...localAnalysis,
     athleteId: athlete.id,
     status: "running",
-    aiText: "IA analisando cronologia, testes, registros de VO2 e carga recente antes de recalcular."
+    aiText: "Etapa 1/3: dossiê cronológico montado. Etapa 2/3: enviando testes, VO2, linha do tempo e carga recente para a IA."
   };
   renderDashboard();
   try {
     const model = buildFocusModel(athlete);
+    state.dashboardAnalysis = {
+      ...state.dashboardAnalysis,
+      aiText: "Etapa 2/3: IA do sistema interpretando histórico, fadiga, evolução e riscos antes de atualizar os resultados."
+    };
+    renderDashboard();
     const aiProjection = await api("/api/ai/projection", {
       method: "POST",
       body: JSON.stringify({
         athleteId: athlete.id,
-        athlete,
+        athlete: compactAthleteForAi(athlete, tests, localAnalysis),
         model,
         chronology: {
-          ...localAnalysis,
+          summary: localAnalysis.summary,
+          probabilityModifier: localAnalysis.probabilityModifier,
+          historyModifier: localAnalysis.historyModifier,
+          trainingTrendModifier: localAnalysis.trainingTrendModifier,
+          riskScore: localAnalysis.riskScore,
+          positiveScore: localAnalysis.positiveScore,
           events: localAnalysis.events.map((event) => ({
-            ...event,
-            date: event.date instanceof Date ?event.date.toISOString().slice(0, 10) : event.date
+            date: event.date instanceof Date ?event.date.toISOString().slice(0, 10) : event.date,
+            type: event.type,
+            label: event.label,
+            weight: event.weight,
+            vo2: event.vo2 || ""
           }))
         },
-        activities: activitiesSince(180).filter(isRunningActivity).slice(-90)
+        activities: activitiesSince(180).filter(isRunningActivity).slice(-60).map(compactActivityForAi)
       })
     });
     state.dashboardAnalysis = {
       ...localAnalysis,
       athleteId: athlete.id,
       status: aiProjection?.ok ? "ready" : "local",
-      aiText: aiProjection?.text || localAnalysis.summary,
+      aiText: aiProjection?.text || "A IA respondeu, mas sem texto interpretável. Modelo local aplicado.",
       aiModel: aiProjection?.model || "modelo local 11RUN"
     };
   } catch (error) {
@@ -3995,9 +4073,11 @@ async function recalculateDashboardAnalysis() {
       ...localAnalysis,
       athleteId: athlete.id,
       status: "local",
-      aiText: `IA externa indisponivel. Recalculo local aplicado com cronologia: ${localAnalysis.summary}`,
+      aiText: `IA externa indisponível no recálculo (${error.message}). Modelo local aplicado com cronologia: ${localAnalysis.summary}`,
       aiModel: "modelo local 11RUN"
     };
+  } finally {
+    setDashboardRecalcBusy(false);
   }
   renderDashboard();
 }

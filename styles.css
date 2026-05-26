@@ -1847,10 +1847,19 @@ dialog {
 }
 
 .goal-analysis-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   margin: 10px 0 0;
   color: rgba(231, 227, 220, 0.52);
   font-size: 11px;
   line-height: 1.35;
+}
+
+.dashboard-goal-card.is-recalculating,
+.dashboard-vo2-panel.is-recalculating {
+  border-color: rgba(255, 255, 255, 0.34);
+  box-shadow: 0 0 0 1px rgba(255, 75, 11, 0.08), 0 18px 50px rgba(255, 75, 11, 0.08);
 }
 
 .goal-probability-visual {
@@ -2025,7 +2034,9 @@ dialog {
 }
 
 .vo2-ai-analysis span {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: var(--orange);
   font-size: 10px;
   font-weight: 560;
@@ -2042,6 +2053,28 @@ dialog {
 .dashboard-recalc {
   align-self: start;
   white-space: nowrap;
+}
+
+.dashboard-recalc.is-loading,
+.dashboard-recalc:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.mini-loader {
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spinLoader 0.75s linear infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes spinLoader {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .performance-chart-panel {
