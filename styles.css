@@ -3400,7 +3400,31 @@ dialog::backdrop {
 }
 
 .bulk-activity-panel {
-  width: min(1440px, calc(100vw - 32px));
+  width: min(1500px, calc(100vw - 32px));
+  height: min(86vh, 820px);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+#bulkActivityDialog {
+  width: min(1500px, calc(100vw - 32px));
+}
+
+.bulk-activity-panel .section-title {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  background:
+    linear-gradient(145deg, rgba(255, 75, 11, 0.08), rgba(255, 255, 255, 0.025) 34%, rgba(0, 0, 0, 0.08)),
+    rgba(13, 14, 16, 0.98);
+}
+
+.bulk-activity-panel .section-title .primary-action {
+  flex: 0 0 auto;
 }
 
 .bulk-editor-caption {
@@ -3410,8 +3434,11 @@ dialog::backdrop {
 }
 
 .bulk-activity-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
   overflow: auto;
-  max-height: min(62vh, 620px);
+  max-height: calc(min(86vh, 820px) - 190px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   scrollbar-width: thin;
@@ -3420,7 +3447,8 @@ dialog::backdrop {
 
 .bulk-activity-table {
   width: 100%;
-  min-width: 1320px;
+  min-width: 1180px;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
@@ -3446,16 +3474,58 @@ dialog::backdrop {
 .bulk-activity-table select {
   width: 100%;
   min-height: 36px;
-  padding: 0 10px;
+  padding: 0 9px;
   border: 1px solid var(--line);
   border-radius: 6px;
   color: var(--heading);
   background: rgba(0, 0, 0, 0.3);
 }
 
+.bulk-activity-table input {
+  text-overflow: ellipsis;
+}
+
 .bulk-activity-table td:nth-child(1) {
   color: var(--muted);
   font-weight: 800;
+}
+
+.bulk-activity-table th:nth-child(1),
+.bulk-activity-table td:nth-child(1) {
+  width: 44px;
+}
+
+.bulk-activity-table th:nth-child(2),
+.bulk-activity-table td:nth-child(2) {
+  width: 150px;
+}
+
+.bulk-activity-table th:nth-child(3),
+.bulk-activity-table td:nth-child(3),
+.bulk-activity-table th:nth-child(4),
+.bulk-activity-table td:nth-child(4) {
+  width: 106px;
+}
+
+.bulk-activity-table th:nth-child(6),
+.bulk-activity-table td:nth-child(6),
+.bulk-activity-table th:nth-child(7),
+.bulk-activity-table td:nth-child(7),
+.bulk-activity-table th:nth-child(8),
+.bulk-activity-table td:nth-child(8),
+.bulk-activity-table th:nth-child(9),
+.bulk-activity-table td:nth-child(9) {
+  width: 100px;
+}
+
+.bulk-activity-table th:nth-child(10),
+.bulk-activity-table td:nth-child(10) {
+  width: 150px;
+}
+
+.bulk-activity-table th:nth-child(11),
+.bulk-activity-table td:nth-child(11) {
+  width: 240px;
 }
 
 .workout-range,
