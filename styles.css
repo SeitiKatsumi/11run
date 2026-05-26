@@ -523,8 +523,18 @@ dialog {
 }
 
 .segmented button.is-active {
-  color: #f0ece5;
+  color: #ffffff;
   background: rgba(255, 75, 11, 0.92);
+}
+
+.segmented button.is-active,
+.segmented button.is-active span,
+.segmented button.is-active .control-icon,
+.system-control-button.is-active,
+.system-control-button.is-active span,
+.system-control-button.is-active .control-icon {
+  color: #ffffff;
+  opacity: 1;
 }
 
 .system-control-button {
