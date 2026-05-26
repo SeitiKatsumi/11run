@@ -1685,13 +1685,71 @@ dialog {
 
 .dashboard-goal-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 96px;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 128px;
+  gap: 18px;
   align-items: center;
-  padding: 13px;
+  padding: 15px;
   border: 1px solid rgba(255, 75, 11, 0.22);
   border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.03);
+  background:
+    linear-gradient(140deg, rgba(255, 75, 11, 0.09), rgba(255, 255, 255, 0.025) 44%),
+    rgba(255, 255, 255, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-goal-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, rgba(255, 75, 11, 0.95), rgba(185, 55, 8, 0.18));
+}
+
+.goal-probability-copy {
+  min-width: 0;
+  position: relative;
+}
+
+.goal-probability-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.goal-probability-grid small {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.goal-probability-grid b {
+  display: block;
+  color: #f1efe9;
+  font-size: 13px;
+  font-weight: 540;
+  white-space: nowrap;
+}
+
+.goal-probability-visual {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.goal-probability-visual span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 520;
+  text-align: center;
+  text-transform: none;
 }
 
 .dashboard-goal-card svg {
@@ -3389,6 +3447,10 @@ dialog::backdrop {
   .test-timeline,
   .dashboard-goal-card {
     grid-template-columns: 1fr;
+  }
+
+  .goal-probability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dashboard-orbit {

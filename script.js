@@ -1704,6 +1704,36 @@ function dashboardTypeChart(types) {
   `;
 }
 
+function dashboardGoalProbability(goal, model) {
+  const probability = Math.max(0, Math.min(100, Number(model.probability || 0)));
+  const targetLabel = model.targetSeconds ?formatDurationSeconds(model.targetSeconds) : "--";
+  const projectionLabel = model.currentSeconds ?formatDurationSeconds(model.currentSeconds) : "--";
+  const gainLabel = model.requiredGain ?formatDurationSeconds(model.requiredGain) : "no alvo";
+  const weekLabel = model.requiredPerWeek ?`${formatDurationSeconds(model.requiredPerWeek)}/sem` : "--";
+  return `
+    <article class="dashboard-goal-card">
+      <div class="goal-probability-copy">
+        <span>${escapeHtml(focusDistanceLabels[goal.distanceM] || `${goal.distanceM} m`)}</span>
+        <strong>${escapeHtml(goal.title)}</strong>
+        <p>${escapeHtml(goalDateLabel(goal))} - ${model.daysToRace || "--"} dias</p>
+        <div class="goal-probability-grid">
+          <small><b>${escapeHtml(targetLabel)}</b> alvo</small>
+          <small><b>${escapeHtml(projectionLabel)}</b> projecao</small>
+          <small><b>${escapeHtml(gainLabel)}</b> ganho</small>
+          <small><b>${escapeHtml(weekLabel)}</b> ritmo</small>
+        </div>
+      </div>
+      <div class="goal-probability-visual">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="goal-ring-base" cx="60" cy="60" r="45"></circle>
+          <circle class="goal-ring-progress" cx="60" cy="60" r="45" style="--goal:${probability}"></circle>
+          <text x="60" y="65" text-anchor="middle">${probability || "--"}%</text>
+        </svg>
+        <span>${escapeHtml(model.status || "Dados insuficientes")}</span>
+      </div>
+    </article>`;
+}
+
 function buildHomeMotivation() {
   const athlete = getActiveAthlete();
   const activeGoals = (state.goals || []).filter((goal) => !isPastGoal(goal));
@@ -1802,20 +1832,7 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
   goalTarget.innerHTML = activeGoals.length
     ?activeGoals.slice(0, 4).map((goal) => {
       const model = buildFocusModel(goalAsAthlete(goal));
-      const probability = Math.max(0, Math.min(100, Number(model.probability || 0)));
-      return `
-        <article class="dashboard-goal-card">
-          <div>
-            <span>${escapeHtml(focusDistanceLabels[goal.distanceM] || `${goal.distanceM} m`)}</span>
-            <strong>${escapeHtml(goal.title)}</strong>
-            <p>${probability || "--"}% - ${escapeHtml(goalDateLabel(goal))}</p>
-          </div>
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <circle class="goal-ring-base" cx="60" cy="60" r="45"></circle>
-            <circle class="goal-ring-progress" cx="60" cy="60" r="45" style="--goal:${probability}"></circle>
-            <text x="60" y="65" text-anchor="middle">${probability || "--"}%</text>
-          </svg>
-        </article>`;
+      return dashboardGoalProbability(goal, model);
     }).join("")
     : `<div class="empty-state">Crie objetivos para acompanhar status e rota preditiva.</div>`;
 }
