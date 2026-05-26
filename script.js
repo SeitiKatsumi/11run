@@ -805,7 +805,10 @@ function buildFocusModel(athlete) {
   const consistency = Math.min(1, weeklySessions / 5);
   const freshness = recent14.length ?Math.min(1, recent14.length / 8) : 0.18;
   const testSignal = tests3000.length ?Math.min(1, tests3000.length / 3) : 0;
-  const history = String(athlete?.historyNotes || "").toLowerCase();
+  const history = athleteHistoryText(athlete).toLowerCase();
+  const measuredVo2 = (Array.isArray(athlete?.historyTimeline) ?athlete.historyTimeline : [])
+    .filter((entry) => entry.type === "vo2" && Number(entry.vo2 || 0) > 0)
+    .sort((a, b) => String(b.startDate || "").localeCompare(String(a.startDate || "")))[0];
   const riskPenalty = /(les|dor|inflama|fadiga|cansa|viagem|pausa|doente|posterior)/i.test(history) ?12 : 0;
   const gapPercent = targetSeconds && currentSeconds ?((currentSeconds - targetSeconds) / currentSeconds) * 100 : 0;
   const weeks = daysToRace / 7;
@@ -1853,13 +1856,17 @@ function estimateVo2From3000(athlete, tests) {
   const volumeModifier = Math.max(-1.2, Math.min(2.2, (weeklyVolume - 35) / 18));
   const loadModifier = Math.max(-0.8, Math.min(1.2, (tss30 / 4 - 260) / 260));
   const freshnessModifier = recent14.length ?Math.min(0.9, recent14.length / 12) : -0.7;
-  const history = String(athlete?.historyNotes || "").toLowerCase();
+  const history = athleteHistoryText(athlete).toLowerCase();
+  const measuredVo2 = (Array.isArray(athlete?.historyTimeline) ?athlete.historyTimeline : [])
+    .filter((entry) => entry.type === "vo2" && Number(entry.vo2 || 0) > 0)
+    .sort((a, b) => String(b.startDate || "").localeCompare(String(a.startDate || "")))[0];
   const riskHistory = history.replace(/sem dor/g, "");
   const riskHits = (riskHistory.match(/les|dor|inflama|fadiga|cansa|pausa|doente|panturrilha|posterior/g) || []).length;
   const boostHits = (history.match(/consist|regular|sem dor|evolu|volume|teste controlado|progress/g) || []).length;
   const historyModifier = Math.max(-2.4, Math.min(1.2, (boostHits * 0.35) - (riskHits * 0.55)));
   const trainingModifier = (consistency * 1.4) + volumeModifier + loadModifier + freshnessModifier;
-  const estimated = Math.max(20, Math.min(85, testVo2 + trainingModifier + historyModifier));
+  const estimatedFromPerformance = testVo2 + trainingModifier + historyModifier;
+  const estimated = Math.max(20, Math.min(85, measuredVo2 ?(estimatedFromPerformance * 0.62) + (Number(measuredVo2.vo2) * 0.38) : estimatedFromPerformance));
   const confidence = Math.round(Math.max(45, Math.min(94, 58 + tests.length * 8 + consistency * 16 + (recent90.length ?10 : 0) - riskHits * 3)));
   return {
     estimated,
@@ -1872,8 +1879,22 @@ function estimateVo2From3000(athlete, tests) {
     weeklyVolume,
     volume30,
     riskHits,
-    boostHits
+    boostHits,
+    measuredVo2: measuredVo2 ?Number(measuredVo2.vo2) : 0
   };
+}
+
+function athleteHistoryText(athlete) {
+  const timeline = Array.isArray(athlete?.historyTimeline) ?athlete.historyTimeline : [];
+  const timelineText = timeline.map((entry) => [
+    entry.startDate,
+    entry.endDate,
+    entry.type,
+    entry.title,
+    entry.description,
+    entry.vo2 ?`VO2 ${entry.vo2}` : ""
+  ].filter(Boolean).join(" ")).join(" ");
+  return `${athlete?.historyNotes || ""} ${timelineText}`.trim();
 }
 
 function dashboardVo2Panel(athlete, tests) {
@@ -1906,7 +1927,7 @@ function dashboardVo2Panel(athlete, tests) {
       <div class="vo2-source-grid">
         <article><span>Teste 3000</span><strong>${vo2.testVo2.toFixed(1)}</strong><p>${escapeHtml(formatDurationSeconds(vo2.lastTest.seconds))}</p></article>
         <article><span>Treinos</span><strong>${vo2.trainingModifier >= 0 ?"+" : ""}${vo2.trainingModifier.toFixed(1)}</strong><p>${escapeHtml(formatKm(vo2.weeklyVolume))}/sem</p></article>
-        <article><span>Histórico</span><strong>${vo2.historyModifier >= 0 ?"+" : ""}${vo2.historyModifier.toFixed(1)}</strong><p>${escapeHtml(riskLabel)}</p></article>
+        <article><span>Histórico</span><strong>${vo2.historyModifier >= 0 ?"+" : ""}${vo2.historyModifier.toFixed(1)}</strong><p>${escapeHtml(vo2.measuredVo2 ?`VO2 medido ${vo2.measuredVo2}` : riskLabel)}</p></article>
       </div>
       <div class="vo2-context-list">
         <span><b>${vo2.weeklySessions.toFixed(1)}</b> sessões/semana nos últimos 90 dias</span>
@@ -2643,6 +2664,9 @@ function renderAiSettings() {
 }
 
 function syncSelectedAthlete() {
+  if (state.currentUser?.role === "athlete") {
+    state.selectedAthleteId = state.currentUser.id;
+  }
   if (state.athletes.length && !state.athletes.some((athlete) => String(athlete.id) === String(state.selectedAthleteId))) {
     state.selectedAthleteId = state.athletes[0].id;
   }
@@ -2717,7 +2741,7 @@ function renderDirectoryOptions(athlete = null) {
 }
 
 function renderAthleteSelector() {
-  const selector = document.querySelector("#athleteSelector");
+  const selector = document.querySelector("#adminAthleteSelector");
   if (!selector) return;
   selector.innerHTML = state.athletes.length
     ?state.athletes.map((athlete) => `<option value="${escapeHtml(athlete.id)}">${escapeHtml(athlete.name)}</option>`).join("")
@@ -2771,6 +2795,21 @@ function renderAthletes() {
   list.innerHTML = filtered.map((athlete) => {
     const isExpanded = String(athlete.id) === String(state.expandedAdminUserId);
     const profile = athlete.profileData || {};
+    const coachDetails = athlete.role === "coach" ?`
+          <p><strong>Formação:</strong> ${escapeHtml(profile.education || "--")}</p>
+          <p><strong>Especialidades:</strong> ${escapeHtml(profile.skills || "--")}</p>
+          <p><strong>Experiência:</strong> ${escapeHtml(profile.experience || "--")}</p>
+          <p><strong>Certificações:</strong> ${escapeHtml(profile.certifications || "--")}</p>
+    ` : "";
+    const teamDetails = athlete.isTeamRecord ?`
+          <p><strong>Institucional:</strong> ${escapeHtml(profile.institutionalNotes || "--")}</p>
+          <p><strong>Local:</strong> ${escapeHtml(profile.location || "--")}</p>
+    ` : "";
+    const request = profile.relationshipRequest || {};
+    const requestDetails = request.teamName || request.coachEmail ?`
+          <p><strong>Solicitação:</strong> ${escapeHtml(request.teamName || "sem equipe")} / ${escapeHtml(request.coachName || request.coachEmail || "sem treinador")}</p>
+          <button class="secondary-action compact" type="button" data-approve-relationship="${escapeHtml(athlete.id)}">Aprovar solicitação</button>
+    ` : "";
     return `
     <article class="athlete-list-row ${String(athlete.id) === String(state.selectedAthleteId) ?"is-selected" : ""}">
       <button class="athlete-row-main" type="button" data-toggle-admin-user="${escapeHtml(athlete.id)}" aria-expanded="${isExpanded ? "true" : "false"}">
@@ -2791,12 +2830,9 @@ function renderAthletes() {
           <p><strong>Dados:</strong> ${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
           <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "Não tenho")}</p>
           <p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "Não tenho")}</p>
-          <p><strong>Formação:</strong> ${escapeHtml(profile.education || "--")}</p>
-          <p><strong>Especialidades:</strong> ${escapeHtml(profile.skills || "--")}</p>
-          <p><strong>Experiência:</strong> ${escapeHtml(profile.experience || "--")}</p>
-          <p><strong>Certificações:</strong> ${escapeHtml(profile.certifications || "--")}</p>
-          <p><strong>Institucional:</strong> ${escapeHtml(profile.institutionalNotes || "--")}</p>
-          <p><strong>Local:</strong> ${escapeHtml(profile.location || "--")}</p>
+          ${coachDetails}
+          ${teamDetails}
+          ${requestDetails}
         </div>
       ` : ""}
     </article>
@@ -2858,6 +2894,7 @@ function resetAthleteForm(message = "") {
   if (!form) return;
   form.reset();
   renderHistoryTimelineEditor([]);
+  renderTests3000Editor([]);
   render3000ActivityPicker();
   state.editingAthleteId = "";
   const submit = document.querySelector("#athleteSubmitButton");
@@ -2868,8 +2905,16 @@ function resetAthleteForm(message = "") {
 }
 
 function historyTimelineRowTemplate(entry = {}) {
+  const type = entry.type || "context";
   return `
     <article class="history-entry-row">
+      <label class="credential-field">
+        <span>Tipo</span>
+        <select data-history-type>
+          <option value="context" ${type === "context" ?"selected" : ""}>Registro cronológico</option>
+          <option value="vo2" ${type === "vo2" ?"selected" : ""}>Teste de VO2</option>
+        </select>
+      </label>
       <label class="credential-field">
         <span>Início</span>
         <input type="date" data-history-start value="${escapeHtml(entry.startDate || "")}" />
@@ -2886,6 +2931,10 @@ function historyTimelineRowTemplate(entry = {}) {
         <span>Descrição / contexto</span>
         <textarea data-history-description rows="2" placeholder="Detalhes relevantes para análise futura da IA.">${escapeHtml(entry.description || "")}</textarea>
       </label>
+      <label class="credential-field">
+        <span>VO2 medido</span>
+        <input data-history-vo2 type="number" step="0.1" min="1" value="${escapeHtml(entry.vo2 || "")}" placeholder="ml/kg/min" />
+      </label>
       <button class="danger-action compact" type="button" data-remove-history-entry>Remover</button>
     </article>
   `;
@@ -2900,13 +2949,51 @@ function renderHistoryTimelineEditor(entries = []) {
     : historyTimelineRowTemplate({});
 }
 
+function test3000RowTemplate(test = {}, index = 1) {
+  return `
+    <article class="test3000-row">
+      <label class="credential-field">
+        <span>Teste ${index} - data</span>
+        <input data-test3000-date type="date" value="${escapeHtml(test.date || "")}" />
+      </label>
+      <label class="credential-field">
+        <span>Teste ${index} - tempo</span>
+        <input data-test3000-time placeholder="mm:ss" value="${escapeHtml(test.time || "")}" />
+      </label>
+      <label class="credential-field">
+        <span>Observação</span>
+        <input data-test3000-notes value="${escapeHtml(test.notes || "")}" />
+      </label>
+      <button class="danger-action compact" type="button" data-remove-3000-test>Remover</button>
+    </article>
+  `;
+}
+
+function renderTests3000Editor(tests = []) {
+  const target = document.querySelector("#tests3000List");
+  if (!target) return;
+  const cleanTests = Array.isArray(tests) ?tests : [];
+  const visibleTests = cleanTests.length ?cleanTests : [{}];
+  target.innerHTML = visibleTests.map((test, index) => test3000RowTemplate(test, index + 1)).join("");
+}
+
 function readHistoryTimelineForm(form) {
   const rows = [...form.querySelectorAll(".history-entry-row")];
   return rows.map((row) => ({
+    type: row.querySelector("[data-history-type]")?.value || "context",
     startDate: row.querySelector("[data-history-start]")?.value || "",
     endDate: row.querySelector("[data-history-end]")?.value || "",
     title: row.querySelector("[data-history-title]")?.value || "",
-    description: row.querySelector("[data-history-description]")?.value || ""
+    description: row.querySelector("[data-history-description]")?.value || "",
+    vo2: row.querySelector("[data-history-vo2]")?.value || ""
+  }));
+}
+
+function readTests3000Form(form) {
+  return [...form.querySelectorAll(".test3000-row")].map((row) => ({
+    date: row.querySelector("[data-test3000-date]")?.value || "",
+    time: row.querySelector("[data-test3000-time]")?.value || "",
+    notes: row.querySelector("[data-test3000-notes]")?.value || ""
   }));
 }
 
@@ -2915,17 +3002,21 @@ function readAthleteForm(form) {
   const coachSelect = form.elements.coachEmail;
   const coachOption = coachSelect?.selectedOptions?.[0];
   if (coachOption && coachSelect.value) body.coachName = coachOption.textContent.split(" - ")[0];
+  if (state.currentUser?.role === "athlete") {
+    body.profileData = {
+      relationshipRequest: {
+        teamName: body.teamName || "",
+        coachName: body.coachName || "",
+        coachEmail: body.coachEmail || "",
+        requestedAt: new Date().toISOString()
+      }
+    };
+    delete body.teamName;
+    delete body.coachName;
+    delete body.coachEmail;
+  }
   body.historyTimeline = readHistoryTimelineForm(form);
-  body.tests3000 = [1, 2, 3].map((index) => ({
-    date: body[`test3000Date${index}`],
-    time: body[`test3000Time${index}`],
-    notes: body[`test3000Notes${index}`]
-  }));
-  [1, 2, 3].forEach((index) => {
-    delete body[`test3000Date${index}`];
-    delete body[`test3000Time${index}`];
-    delete body[`test3000Notes${index}`];
-  });
+  body.tests3000 = readTests3000Form(form);
   if (!isSuperAdmin()) delete body.role;
   return body;
 }
@@ -2943,8 +3034,8 @@ function editAthlete(athleteId, options = {}) {
   form.elements.heightCm.value = athlete.heightCm || "";
   form.elements.whatsapp.value = athlete.whatsapp || "";
   form.elements.teamName.value = athlete.teamName || "";
-  form.elements.coachName.value = athlete.coachName || "";
-  form.elements.coachEmail.value = athlete.coachEmail || "";
+  if (form.elements.coachName) form.elements.coachName.value = athlete.coachName || "";
+  if (form.elements.coachEmail) form.elements.coachEmail.value = athlete.coachEmail || "";
   if (form.elements.focusDistanceM) form.elements.focusDistanceM.value = athlete.focusDistanceM || "";
   if (form.elements.targetTime) form.elements.targetTime.value = athlete.targetTime || "";
   if (form.elements.targetDate) form.elements.targetDate.value = athlete.targetDate || "";
@@ -2954,12 +3045,7 @@ function editAthlete(athleteId, options = {}) {
   renderHistoryTimelineEditor(athlete.historyTimeline || []);
   render3000ActivityPicker();
   const tests = Array.isArray(athlete.tests3000) ?athlete.tests3000 : [];
-  [1, 2, 3].forEach((index) => {
-    const test = tests[index - 1] || {};
-    if (form.elements[`test3000Date${index}`]) form.elements[`test3000Date${index}`].value = test.date || "";
-    if (form.elements[`test3000Time${index}`]) form.elements[`test3000Time${index}`].value = test.time || "";
-    if (form.elements[`test3000Notes${index}`]) form.elements[`test3000Notes${index}`].value = test.notes || "";
-  });
+  renderTests3000Editor(tests);
   form.elements.password.value = "";
   const submit = document.querySelector("#athleteSubmitButton");
   const cancel = document.querySelector("#cancelAthleteEdit");
@@ -3123,22 +3209,23 @@ async function refreshDirectory() {
 function renderAdminMode() {
   const isTeam = state.adminMode === "team";
   const isCoach = state.adminMode === "coach";
+  const isAdminMode = state.adminMode === "admin";
   document.querySelectorAll("[data-admin-mode]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.adminMode === state.adminMode);
   });
   const title = document.querySelector("#adminFormTitle");
   if (title) {
     const action = state.editingAdminUserId ?"Editar" : "Adicionar";
-    title.textContent = state.adminMode === "coach" ?`${action} treinador` : state.adminMode === "team" ?`${action} equipe` : `${action} atleta`;
+    title.textContent = state.adminMode === "admin" ?`${action} super admin` : state.adminMode === "coach" ?`${action} treinador` : state.adminMode === "team" ?`${action} equipe` : `${action} atleta`;
   }
   const userForm = document.querySelector("#adminUserForm");
   const teamForm = document.querySelector("#teamForm");
   if (userForm) {
     userForm.hidden = isTeam;
-    if (userForm.elements.role) userForm.elements.role.value = state.adminMode === "coach" ?"coach" : "athlete";
+    if (userForm.elements.role) userForm.elements.role.value = isAdminMode ?"admin" : state.adminMode === "coach" ?"coach" : "athlete";
   }
   document.querySelectorAll(".admin-athlete-field").forEach((field) => {
-    field.hidden = isCoach || isTeam;
+    field.hidden = isCoach || isTeam || isAdminMode;
   });
   document.querySelectorAll(".admin-coach-field").forEach((field) => {
     field.hidden = !isCoach;
@@ -3153,20 +3240,20 @@ function editAdminUser(athleteId) {
   const form = document.querySelector("#adminUserForm");
   if (!athlete || !form) return;
   state.editingAdminUserId = athlete.id;
-  state.adminMode = athlete.role === "coach" ?"coach" : "athlete";
+  state.adminMode = athlete.role === "admin" ?"admin" : athlete.role === "coach" ?"coach" : "athlete";
   renderAdminMode();
   const profile = athlete.profileData || {};
-  if (form.elements.role) form.elements.role.value = athlete.role === "coach" ?"coach" : athlete.role === "admin" ?"admin" : "athlete";
+  if (form.elements.role) form.elements.role.value = athlete.role === "admin" ?"admin" : athlete.role === "coach" ?"coach" : "athlete";
   form.elements.name.value = athlete.name || "";
   form.elements.email.value = athlete.email || "";
   form.elements.password.value = "";
   form.elements.whatsapp.value = athlete.whatsapp || "";
-  form.elements.teamName.value = athlete.teamName || "";
-  form.elements.coachEmail.value = athlete.coachEmail || "";
-  form.elements.education.value = profile.education || "";
-  form.elements.skills.value = profile.skills || "";
-  form.elements.experience.value = profile.experience || "";
-  form.elements.certifications.value = profile.certifications || "";
+  if (form.elements.teamName) form.elements.teamName.value = athlete.teamName || "";
+  if (form.elements.coachEmail) form.elements.coachEmail.value = athlete.coachEmail || "";
+  if (form.elements.education) form.elements.education.value = profile.education || "";
+  if (form.elements.skills) form.elements.skills.value = profile.skills || "";
+  if (form.elements.experience) form.elements.experience.value = profile.experience || "";
+  if (form.elements.certifications) form.elements.certifications.value = profile.certifications || "";
   setAdminMessage(`Editando ${athlete.name}.`);
   form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -3179,6 +3266,12 @@ async function saveAdminUser(event) {
   const coachSelect = form.elements.coachEmail;
   const coachOption = coachSelect?.selectedOptions?.[0];
   if (coachOption && coachSelect.value) body.coachName = coachOption.textContent.split(" - ")[0];
+  if (state.adminMode === "admin") {
+    body.role = "admin";
+    body.teamName = "";
+    body.coachEmail = "";
+    body.profileData = {};
+  }
   if (state.adminMode === "coach") {
     body.role = "coach";
     body.teamName = "";
@@ -3207,6 +3300,38 @@ async function saveAdminUser(event) {
     state.editingAdminUserId = "";
     renderAdminMode();
     setAdminMessage(`${payload.athlete.name} ${editingId ?"atualizado" : "cadastrado"} com sucesso.`);
+  } catch (error) {
+    setAdminMessage(error.message, true);
+  }
+}
+
+async function approveRelationshipRequest(athleteId) {
+  const athlete = state.athletes.find((item) => String(item.id) === String(athleteId));
+  const request = athlete?.profileData?.relationshipRequest;
+  if (!athlete || !request) return;
+  try {
+    setAdminMessage("Aprovando solicitação...");
+    const body = {
+      ...athlete,
+      teamName: request.teamName || athlete.teamName || "",
+      coachName: request.coachName || athlete.coachName || "",
+      coachEmail: request.coachEmail || athlete.coachEmail || "",
+      profileData: {
+        ...(athlete.profileData || {}),
+        relationshipRequest: null,
+        relationshipApprovedAt: new Date().toISOString()
+      }
+    };
+    const payload = await api(`/api/athletes/${encodeURIComponent(athlete.id)}`, {
+      method: "PUT",
+      body: JSON.stringify(body)
+    });
+    state.athletes = payload.athletes || [];
+    await refreshDirectory();
+    renderAthletes();
+    renderAthleteSelector();
+    renderAthleteIdentity();
+    setAdminMessage("Solicitação aprovada.");
   } catch (error) {
     setAdminMessage(error.message, true);
   }
@@ -3417,7 +3542,7 @@ document.querySelector("#loginForm").addEventListener("submit", async (event) =>
   }
 });
 
-document.querySelector("#athleteSelector").addEventListener("change", async (event) => {
+document.querySelector("#adminAthleteSelector")?.addEventListener("change", async (event) => {
   state.selectedAthleteId = event.currentTarget.value;
   syncSelectedAthlete();
   renderAthleteIdentity();
@@ -3550,9 +3675,26 @@ document.addEventListener("click", async (event) => {
     await removeGoal(deleteGoalButton.dataset.deleteGoal);
     return;
   }
+  const approveRelationshipButton = event.target.closest("[data-approve-relationship]");
+  if (approveRelationshipButton) {
+    event.preventDefault();
+    await approveRelationshipRequest(approveRelationshipButton.dataset.approveRelationship);
+    return;
+  }
   if (event.target.closest("#addHistoryEntry")) {
     const list = document.querySelector("#historyTimelineList");
     if (list) list.insertAdjacentHTML("beforeend", historyTimelineRowTemplate({}));
+    return;
+  }
+  if (event.target.closest("#addVo2Test")) {
+    const list = document.querySelector("#historyTimelineList");
+    if (list) list.insertAdjacentHTML("beforeend", historyTimelineRowTemplate({ type: "vo2", title: "Teste de VO2" }));
+    return;
+  }
+  if (event.target.closest("#add3000Test")) {
+    const list = document.querySelector("#tests3000List");
+    const count = list?.querySelectorAll(".test3000-row").length || 0;
+    if (list) list.insertAdjacentHTML("beforeend", test3000RowTemplate({}, count + 1));
     return;
   }
   if (event.target.closest("#flagSelected3000")) {
@@ -3571,6 +3713,15 @@ document.addEventListener("click", async (event) => {
     if (row) row.remove();
     if (list && !list.querySelector(".history-entry-row")) {
       list.innerHTML = historyTimelineRowTemplate({});
+    }
+    return;
+  }
+  if (event.target.closest("[data-remove-3000-test]")) {
+    const row = event.target.closest(".test3000-row");
+    const list = document.querySelector("#tests3000List");
+    if (row) row.remove();
+    if (list && !list.querySelector(".test3000-row")) {
+      list.innerHTML = test3000RowTemplate({}, 1);
     }
     return;
   }

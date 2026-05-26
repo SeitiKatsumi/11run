@@ -598,10 +598,12 @@ function formatAthlete(row) {
     bestTime: row.best_time_seconds == null ?"" : formatDuration(row.best_time_seconds),
     historyNotes: row.history_notes || "",
     historyTimeline: Array.isArray(historyTimeline) ?historyTimeline.map((entry) => ({
+      type: entry.type || "context",
       startDate: entry.startDate || "",
       endDate: entry.endDate || "",
       title: entry.title || "",
-      description: entry.description || ""
+      description: entry.description || "",
+      vo2: entry.vo2 || ""
     })) : [],
     tests3000: Array.isArray(tests3000) ?tests3000.map((test) => ({
       date: test.date || "",
@@ -615,7 +617,7 @@ function formatAthlete(row) {
 
 function validateTests3000(value) {
   const input = Array.isArray(value) ?value : [];
-  return input.slice(0, 3).map((item) => {
+  return input.slice(0, 20).map((item) => {
     const date = String(item.date || "").trim();
     const seconds = parseTimeToSeconds(item.time || item.timeSeconds);
     const notes = String(item.notes || "").trim().slice(0, 220);
@@ -633,11 +635,16 @@ function validateHistoryTimeline(value) {
     .map((item) => {
       const startDate = String(item.startDate || "").trim();
       const endDate = String(item.endDate || "").trim();
+      const type = ["context", "vo2"].includes(String(item.type || "")) ?String(item.type) : "context";
       const title = String(item.title || "").trim().slice(0, 120);
       const description = String(item.description || "").trim().slice(0, 1200);
-      if (!startDate && !endDate && !title && !description) return null;
+      const vo2 = item.vo2 === "" || item.vo2 == null ?"" : Number(item.vo2);
+      if (!startDate && !endDate && !title && !description && !vo2) return null;
       if (!startDate || Number.isNaN(new Date(`${startDate}T00:00:00`).getTime())) {
         throw new Error("Informe a data de início em cada item do histórico.");
+      }
+      if (vo2 && (!Number.isFinite(vo2) || vo2 < 1 || vo2 > 100)) {
+        throw new Error("Informe um VO2 válido no histórico.");
       }
       if (endDate && Number.isNaN(new Date(`${endDate}T00:00:00`).getTime())) {
         throw new Error("Informe uma data de fim válida no histórico.");
@@ -645,7 +652,7 @@ function validateHistoryTimeline(value) {
       if (endDate && endDate < startDate) {
         throw new Error("A data de fim não pode ser menor que a data de início.");
       }
-      return { startDate, endDate, title, description };
+      return { type, startDate, endDate, title, description, vo2: vo2 || "" };
     })
     .filter(Boolean);
 }
@@ -1072,7 +1079,7 @@ async function updateAthlete(tenantId, athleteUserId, input, actorUser = null) {
   try {
     await client.query("BEGIN");
     const existing = await client.query(
-      `SELECT u.id, u.email, u.role
+      `SELECT u.id, u.email, u.role, u.profile_data, ap.team_id, ap.coach_user_id
          FROM users u
          JOIN athlete_profiles ap ON ap.user_id = u.id
         WHERE u.tenant_id = $1 AND u.id = $2
@@ -1114,6 +1121,15 @@ async function updateAthlete(tenantId, athleteUserId, input, actorUser = null) {
         [tenantId, athlete.coachName || athlete.coachEmail, athlete.coachEmail]
       );
       coachId = coachResult.rows[0].id;
+    }
+    const isSelfAthleteUpdate = actorUser?.role === "athlete" && String(actorUser.id) === String(athleteUserId);
+    if (isSelfAthleteUpdate) {
+      teamId = existing.rows[0].team_id || null;
+      coachId = existing.rows[0].coach_user_id || null;
+      athlete.profileData = {
+        ...parseJsonObject(existing.rows[0].profile_data),
+        ...athlete.profileData
+      };
     }
     const passwordHash = athlete.password ?hashPassword(athlete.password) : null;
     await client.query(
@@ -2539,7 +2555,7 @@ async function handleApi(req, res, url) {
     if (req.method === "POST" && url.pathname === "/api/athletes") {
       const tenant = await getTenant(tenantSlugFromReq(req));
       const user = await getSessionUser(req, tenant.id);
-      requireUser(user);
+      requireRole(user, ["admin", "manager", "coach"]);
       await ensureUserAthleteProfile(tenant.id, user);
       const body = await readRequestBody(req);
       const athlete = await createAthlete(tenant.id, body, user);

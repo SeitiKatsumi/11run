@@ -46,11 +46,8 @@
           <a href="#configuracoes" class="manager-only" data-view-link="settings" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg></span><span class="nav-label" data-i18n="nav.settings">CONFIGURAÇÕES</span></a>
         </nav>
         <div class="athlete-chip">
-          <span>Atleta selecionado</span>
+          <span>Perfil ativo</span>
           <strong id="sidebarAthleteName">Atleta não cadastrado</strong>
-          <select id="athleteSelector" class="athlete-select" aria-label="Selecionar atleta">
-            <option value="">Nenhum atleta</option>
-          </select>
         </div>
       </aside>
 
@@ -292,15 +289,12 @@
                   </select>
                 </label>
                 <label class="credential-field">
-                  <span>Nome do treinador</span>
-                  <input name="coachName" autocomplete="name" readonly />
-                </label>
-                <label class="credential-field">
-                  <span>E-mail do treinador</span>
+                  <span>Treinador</span>
                   <select name="coachEmail" id="coachEmailSelect">
                     <option value="">Não tenho</option>
                   </select>
                 </label>
+                <p class="relationship-note wide-field">A seleção de equipe e treinador fica registrada como solicitação e depende de aprovação administrativa.</p>
                 <label class="credential-field">
                   <span>Senha do atleta</span>
                   <input name="password" type="password" autocomplete="new-password" />
@@ -328,7 +322,7 @@
                 </label>
                 <fieldset class="tests-field wide-field">
                   <legend>Últimos 3 testes de 3000 m</legend>
-                  <div class="tests-grid">
+                  <div id="tests3000List" class="tests-grid">
                     <label class="credential-field">
                       <span>Teste 1 - data</span>
                       <input name="test3000Date1" type="date" />
@@ -366,6 +360,7 @@
                       <input name="test3000Notes3" />
                     </label>
                   </div>
+                  <button class="secondary-action compact" id="add3000Test" type="button">Adicionar mais testes de 3000</button>
                   <div class="activity-test-picker">
                     <label class="credential-field">
                       <span>Selecionar atividade importada</span>
@@ -379,7 +374,8 @@
                 <fieldset class="history-field wide-field">
                   <legend>Linha do tempo esportiva (com período)</legend>
                   <div id="historyTimelineList" class="history-timeline-list"></div>
-                  <button class="secondary-action compact" id="addHistoryEntry" type="button">Adicionar histórico</button>
+                  <button class="secondary-action compact" id="addHistoryEntry" type="button">Adicionar registro cronológico</button>
+                  <button class="secondary-action compact" id="addVo2Test" type="button">Adicionar resultado de teste de VO2</button>
                 </fieldset>
                 <div id="athleteFocusHistory" class="focus-history"></div>
               </section>
@@ -450,6 +446,7 @@
                 <button class="is-active" type="button" data-admin-mode="athlete">Adicionar atleta</button>
                 <button type="button" data-admin-mode="coach">Adicionar treinador</button>
                 <button type="button" data-admin-mode="team">Adicionar equipe</button>
+                <button class="admin-only" type="button" data-admin-mode="admin" hidden>Adicionar super admin</button>
               </div>
 
               <form id="adminUserForm" class="admin-user-form">
@@ -567,6 +564,12 @@
                 <span>Usuários</span>
                 <h3>Cadastros</h3>
               </div>
+              <label class="credential-field admin-athlete-selector">
+                <span>Selecionar atleta para análise/admin</span>
+                <select id="adminAthleteSelector" aria-label="Selecionar atleta no painel administrativo">
+                  <option value="">Nenhum atleta</option>
+                </select>
+              </label>
               <div class="athlete-filter-grid">
                 <label class="credential-field">
                   <span>Buscar</span>
