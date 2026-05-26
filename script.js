@@ -954,9 +954,9 @@ function goalProjectionRoute(goal, model, actualSeconds = 0) {
   const target = Number(goal.targetTimeSeconds || model.targetSeconds || 0);
   if (!current || !target) return `<div class="goal-route-empty">Dados insuficientes para gerar a escala preditiva.</div>`;
   const weeks = Math.max(0.5, Number(model.daysToRace || 0) / 7);
-  const width = 720;
-  const height = 160;
-  const pad = { left: 74, right: 34, top: 20, bottom: 32 };
+  const width = 620;
+  const height = 132;
+  const pad = { left: 58, right: 26, top: 16, bottom: 28 };
   const optimisticRate = 0.009;
   const conservativeRate = 0.0025;
   const optimisticEnd = current * (1 - Math.min(0.12, weeks * optimisticRate));
@@ -1000,16 +1000,16 @@ function goalProjectionRoute(goal, model, actualSeconds = 0) {
         <line class="goal-route-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}"></line>
         <line class="goal-route-axis" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
         ${timelineTicks.map((tick) => `
-          <line class="goal-route-time-tick" x1="${tick.x.toFixed(1)}" y1="${height - pad.bottom}" x2="${tick.x.toFixed(1)}" y2="${height - pad.bottom + 6}"></line>
+          <line class="goal-route-time-tick" x1="${tick.x.toFixed(1)}" y1="${height - pad.bottom}" x2="${tick.x.toFixed(1)}" y2="${height - pad.bottom + 5}"></line>
           <text class="goal-route-label" x="${tick.x.toFixed(1)}" y="${height - 8}" text-anchor="${tick.ratio === 0 ?"start" : tick.ratio === 1 ?"end" : "middle"}">${escapeHtml(tick.label)}</text>
         `).join("")}
         <line class="goal-route-target" x1="${pad.left}" y1="${targetY.toFixed(1)}" x2="${width - pad.right}" y2="${targetY.toFixed(1)}"></line>
         <path class="goal-route-optimistic" d="${curve(optimisticEnd)}"></path>
         <path class="goal-route-conservative" d="${curve(conservativeEnd)}"></path>
-        <circle class="goal-route-now" cx="${x(0).toFixed(1)}" cy="${currentY.toFixed(1)}" r="4"></circle>
-        <circle class="goal-route-target-dot" cx="${x(1).toFixed(1)}" cy="${targetY.toFixed(1)}" r="4"></circle>
-        <circle class="goal-route-optimistic-dot" cx="${x(1).toFixed(1)}" cy="${optimisticY.toFixed(1)}" r="3"></circle>
-        <circle class="goal-route-conservative-dot" cx="${x(1).toFixed(1)}" cy="${conservativeY.toFixed(1)}" r="3"></circle>
+        <circle class="goal-route-now" cx="${x(0).toFixed(1)}" cy="${currentY.toFixed(1)}" r="2.7"></circle>
+        <circle class="goal-route-target-dot" cx="${x(1).toFixed(1)}" cy="${targetY.toFixed(1)}" r="3.2"></circle>
+        <circle class="goal-route-optimistic-dot" cx="${x(1).toFixed(1)}" cy="${optimisticY.toFixed(1)}" r="2.4"></circle>
+        <circle class="goal-route-conservative-dot" cx="${x(1).toFixed(1)}" cy="${conservativeY.toFixed(1)}" r="2.4"></circle>
         <text class="goal-route-tag" x="${width - pad.right}" y="${Math.max(16, targetY - 8).toFixed(1)}" text-anchor="end">Alvo ${escapeHtml(formatDurationSeconds(target))}</text>
       </svg>
       <div class="goal-route-legend">
