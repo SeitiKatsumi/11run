@@ -1516,6 +1516,17 @@ function workoutStepTemplate(step = {}) {
   `;
 }
 
+function readNamedFields(container) {
+  return Array.from(container.querySelectorAll("input[name], select[name], textarea[name]")).reduce((acc, field) => {
+    if (field.type === "checkbox") {
+      acc[field.name] = field.checked;
+    } else {
+      acc[field.name] = field.value;
+    }
+    return acc;
+  }, {});
+}
+
 function defaultWorkoutSteps() {
   return [
     { kind: "warmup", label: "Aquecimento", durationType: "time", durationValue: "15min", target: "Leve / base" },
@@ -1526,7 +1537,8 @@ function defaultWorkoutSteps() {
 }
 
 function readWorkoutPlan(form) {
-  const steps = Array.from(form.querySelectorAll("[data-workout-step]")).map((row) => Object.fromEntries(new FormData(row).entries()));
+  if (!form.elements.useWorkoutPlan?.checked) return null;
+  const steps = Array.from(form.querySelectorAll("[data-workout-step]")).map(readNamedFields);
   return {
     name: form.elements.workoutPlanName?.value || "Bloco estruturado",
     notes: form.elements.workoutPlanNotes?.value || "",
@@ -1585,14 +1597,19 @@ function openWorkoutDialog() {
               <span>Bloco estruturado</span>
               <strong>Modelo para relógio e execução</strong>
             </div>
-            <button class="secondary-action compact" type="button" data-add-workout-step>Adicionar etapa</button>
+            <div class="workout-structure-actions">
+              <label class="toggle-field"><input name="useWorkoutPlan" type="checkbox" checked /> Usar bloco</label>
+              <button class="secondary-action compact" type="button" data-add-workout-step>Adicionar etapa</button>
+            </div>
           </div>
+          <div class="workout-plan-body" data-workout-plan-body>
           <div class="workout-plan-meta">
             <label class="credential-field"><span>Nome do bloco</span><input name="workoutPlanName" value="Treino estruturado 11RUN" /></label>
             <label class="credential-field"><span>Observações do bloco</span><input name="workoutPlanNotes" placeholder="Ex.: controlar recuperação, FC, terreno" /></label>
           </div>
           <div id="workoutStepList" class="workout-step-list">
             ${defaultWorkoutSteps().map(workoutStepTemplate).join("")}
+          </div>
           </div>
         </div>
         <div id="audioWorkoutArea" class="audio-workout-area" hidden>
@@ -1635,7 +1652,7 @@ async function saveManualWorkout(event) {
   const workoutPlan = readWorkoutPlan(form);
   const activities = mode === "audio"
     ?[{ date: form.elements.startDate?.value || dateKey(new Date()), title: "Treino por áudio", description: form.elements.audioNotes?.value || "Entrada preparada para transcrição futura.", trainingType: "Treino", status: "planned", workoutPlan }]
-    : rows.map((row) => ({ ...Object.fromEntries(new FormData(row).entries()), workoutPlan })).filter((item) => item.date || item.title || item.description);
+    : rows.map((row) => ({ ...readNamedFields(row), workoutPlan })).filter((item) => item.date || item.title || item.description);
   if (!activities.length) {
     if (message) message.textContent = "Informe pelo menos um treino.";
     return;
@@ -4683,6 +4700,11 @@ document.addEventListener("change", (event) => {
   }
   if (event.target?.closest("#workoutBuilderForm") && ["startDate", "endDate"].includes(event.target.name)) {
     syncWorkoutDates();
+  }
+  if (event.target?.name === "useWorkoutPlan") {
+    const enabled = Boolean(event.target.checked);
+    document.querySelector("[data-workout-plan-body]")?.toggleAttribute("hidden", !enabled);
+    document.querySelector("[data-add-workout-step]")?.toggleAttribute("hidden", !enabled);
   }
   if (event.target?.matches("[data-history-filter]")) {
     state.historyTimelineFilter = event.target.value || "all";
