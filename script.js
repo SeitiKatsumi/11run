@@ -1170,8 +1170,9 @@ function renderDashboard() {
   const testTarget = document.querySelector("#dashboardTests");
   const typeTarget = document.querySelector("#dashboardTypes");
   const goalTarget = document.querySelector("#dashboardGoals");
-  if (!highlightTarget || !testTarget || !typeTarget || !goalTarget) return;
-  return renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarget);
+  const vo2Target = document.querySelector("#dashboardVo2");
+  if (!highlightTarget || !testTarget || !typeTarget || !goalTarget || !vo2Target) return;
+  return renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarget, vo2Target);
 
   const recent = activitiesSince(30).filter(isRunningActivity);
   const week = activitiesSince(7).filter(isRunningActivity);
@@ -1861,7 +1862,7 @@ function latest3000Test(tests) {
     .sort((a, b) => b.date - a.date)[0] || tests[0] || null;
 }
 
-function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarget) {
+function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarget, vo2Target) {
   const recent = activitiesSince(90).filter(isRunningActivity);
   const volume90 = recent.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
   const tss90 = recent.reduce((sum, activity) => sum + activityTss(activity), 0);
@@ -1915,22 +1916,15 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
   typeTarget.innerHTML = dashboardTypeChart(types);
   goalTarget.innerHTML = activeGoals.length
     ?`
-      <div class="goal-probability-layout">
-        <div class="goal-probability-list">
-          ${activeGoals.slice(0, 4).map((goal) => {
-            const model = buildFocusModel(goalAsAthlete(goal));
-            return dashboardGoalProbability(goal, model);
-          }).join("")}
-        </div>
-        ${dashboardVo2Panel(athlete, tests)}
+      <div class="goal-probability-list">
+        ${activeGoals.slice(0, 4).map((goal) => {
+          const model = buildFocusModel(goalAsAthlete(goal));
+          return dashboardGoalProbability(goal, model);
+        }).join("")}
       </div>
     `
-    : `
-      <div class="goal-probability-layout">
-        <div class="empty-state">Crie objetivos para acompanhar status e rota preditiva.</div>
-        ${dashboardVo2Panel(athlete, tests)}
-      </div>
-    `;
+    : `<div class="empty-state">Crie objetivos para acompanhar status e rota preditiva.</div>`;
+  vo2Target.innerHTML = dashboardVo2Panel(athlete, tests);
 }
 
 function chartRange() {

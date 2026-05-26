@@ -1780,13 +1780,6 @@ dialog {
   font-weight: 560;
 }
 
-.goal-probability-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.55fr);
-  gap: 14px;
-  align-items: stretch;
-}
-
 .goal-probability-list {
   display: grid;
   gap: 12px;
@@ -3574,8 +3567,7 @@ dialog::backdrop {
 
   .dashboard-metrics,
   .test-timeline,
-  .dashboard-goal-card,
-  .goal-probability-layout {
+  .dashboard-goal-card {
     grid-template-columns: 1fr;
   }
 
