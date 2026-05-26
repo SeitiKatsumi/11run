@@ -1642,29 +1642,63 @@ function dashboardTestSvg(tests, athlete) {
 }
 
 function dashboardTypeChart(types) {
-  const entries = Object.entries(types).sort((a, b) => b[1] - a[1]);
+  const entries = Object.entries(types)
+    .map(([type, stats]) => ({
+      type,
+      count: Number(stats.count || 0),
+      volume: Number(stats.volume || 0),
+      tss: Number(stats.tss || 0),
+      seconds: Number(stats.seconds || 0),
+      paceKm: stats.paceDistance ?Number(stats.seconds || 0) / Number(stats.paceDistance || 1) : 0
+    }))
+    .sort((a, b) => b.count - a.count);
   if (!entries.length) return `<div class="empty-state">Classifique treinos para alimentar a distribuicao.</div>`;
-  const total = entries.reduce((sum, [, count]) => sum + count, 0) || 1;
-  const colors = ["#ff4b0b", "#d94209", "#b93708", "#f1efe9", "#8a8178"];
-  let cursor = 0;
-  const gradient = entries.map(([_, count], index) => {
-    const start = cursor;
-    cursor += (count / total) * 100;
-    return `${colors[index % colors.length]} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
-  }).join(", ");
+  const total = entries.reduce((sum, item) => sum + item.count, 0) || 1;
+  const maxCount = Math.max(1, ...entries.map((item) => item.count));
+  const maxVolume = Math.max(1, ...entries.map((item) => item.volume));
+  const dominant = entries[0];
   return `
-    <div class="type-radar">
-      <div class="dashboard-donut" style="--donut: conic-gradient(${gradient});">
-        <span>${total}</span>
-        <small>sessoes</small>
+    <div class="type-insights">
+      <div class="type-summary-strip">
+        <article>
+          <span>Sessoes</span>
+          <strong>${total}</strong>
+          <p>${escapeHtml(entries.length)} tipos classificados</p>
+        </article>
+        <article>
+          <span>Tipo dominante</span>
+          <strong>${escapeHtml(dominant.type)}</strong>
+          <p>${Math.round((dominant.count / total) * 100)}% das sessoes</p>
+        </article>
+        <article>
+          <span>Ritmo medio do lider</span>
+          <strong>${escapeHtml(formatPace(dominant.paceKm))}</strong>
+          <p>${escapeHtml(formatKm(dominant.volume))} acumulados</p>
+        </article>
       </div>
-      <div class="type-bars">
-        ${entries.map(([type, count], index) => `
-          <article class="type-bar">
-            <div><span>${escapeHtml(type)}</span><strong>${count}</strong></div>
-            <i style="--pct:${((count / total) * 100).toFixed(0)}%;--color:${colors[index % colors.length]}"></i>
+      <div class="type-insight-list">
+        ${entries.map((item) => {
+          const pct = (item.count / total) * 100;
+          const volumePct = (item.volume / maxVolume) * 100;
+          const countPct = (item.count / maxCount) * 100;
+          return `
+          <article class="type-insight-card" style="--pct:${pct.toFixed(0)}%;--vol:${volumePct.toFixed(0)}%;--count:${countPct.toFixed(0)}%;">
+            <div class="type-insight-head">
+              <div>
+                <span>${escapeHtml(item.type)}</span>
+                <strong>${item.count} sessoes</strong>
+              </div>
+              <em>${pct.toFixed(0)}%</em>
+            </div>
+            <div class="type-insight-meter"><i></i></div>
+            <div class="type-insight-metrics">
+              <span><b>${escapeHtml(formatPace(item.paceKm))}</b> ritmo medio</span>
+              <span><b>${escapeHtml(formatKm(item.volume))}</b> volume</span>
+              <span><b>${Math.round(item.tss)}</b> 11TSS</span>
+            </div>
           </article>
-        `).join("")}
+          `;
+        }).join("")}
       </div>
     </div>
   `;
@@ -1726,7 +1760,16 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
   const lastTest = latest3000Test(tests);
   const types = recent.reduce((acc, activity) => {
     const key = activity.trainingType || activity.feedback?.trainingType || "Treino";
-    acc[key] = (acc[key] || 0) + 1;
+    const distanceKm = parseDistanceKm(activity.distance);
+    const seconds = activityMovingSeconds(activity);
+    if (!acc[key]) acc[key] = { count: 0, volume: 0, tss: 0, seconds: 0, paceDistance: 0 };
+    acc[key].count += 1;
+    acc[key].volume += distanceKm;
+    acc[key].tss += activityTss(activity);
+    if (distanceKm > 0 && seconds > 0) {
+      acc[key].seconds += seconds;
+      acc[key].paceDistance += distanceKm;
+    }
     return acc;
   }, {});
   const activeGoals = (state.goals || []).filter((goal) => !isPastGoal(goal));
