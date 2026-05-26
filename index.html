@@ -62,6 +62,17 @@
               <h1>The world's smartest AI-powered training manager.</h1>
               <p id="homeMotivation" class="hero-motivation">Carregando leitura do ciclo atual.</p>
             </div>
+            <aside class="home-ai-agent" aria-label="Agente de IA 11RUN">
+              <div class="section-title">
+                <span>IA 11RUN</span>
+                <h3>Buscar no sistema</h3>
+              </div>
+              <div id="homeAiMessages" class="home-ai-messages" aria-live="polite"></div>
+              <form id="homeAiForm" class="home-ai-form">
+                <input name="question" autocomplete="off" placeholder="Pergunte sobre atleta, treino, equipe, prova ou histórico" />
+                <button class="primary-action compact" type="submit">Enviar</button>
+              </form>
+            </aside>
           </div>
         </section>
 
@@ -125,6 +136,7 @@
             </div>
             <div class="toolbar">
               <button class="primary-action compact" type="button" data-open-workout-builder>Adicionar treino</button>
+              <button class="secondary-action compact" type="button" data-open-bulk-activity-editor>Editar em lote</button>
               <div class="segmented calendar-view-switch" role="tablist" aria-label="Visualização do calendário">
                 <button class="is-active" data-calendar-view="month">Mês</button>
                 <button data-calendar-view="quarter">Trimestre</button>
@@ -640,6 +652,11 @@
     <dialog id="workoutDialog" class="profile-dialog workout-dialog">
       <button class="close-button dialog-fixed-close" type="button" data-close-dialog="workoutDialog" aria-label="Fechar">x</button>
       <div id="workoutDialogContent"></div>
+    </dialog>
+
+    <dialog id="bulkActivityDialog" class="profile-dialog workout-dialog">
+      <button class="close-button dialog-fixed-close" type="button" data-close-dialog="bulkActivityDialog" aria-label="Fechar">x</button>
+      <div id="bulkActivityDialogContent"></div>
     </dialog>
 
     <div id="syncOverlay" class="sync-overlay" hidden aria-live="polite" aria-busy="true">

@@ -13,6 +13,8 @@ const state = {
   appSettings: null,
   aiProjection: null,
   dashboardAnalysis: null,
+  homeAiMessages: [],
+  homeAiBusy: false,
   historyTimelineDraft: [],
   historyTimelineFilter: "all",
   historyTimelineOutput: null,
@@ -410,7 +412,8 @@ const controlIconPaths = {
   single: `<path d="M12 3v18"></path><path d="M7 8h10M7 16h10"></path>`,
   week: `<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 14h.01M12 14h.01M16 14h.01"></path>`,
   audio: `<path d="M12 4v16"></path><path d="M8 8v8M16 8v8M4 11v2M20 11v2"></path>`,
-  workout: `<path d="M6 19V5"></path><path d="M18 19V5"></path><path d="M3 9h3M18 9h3M3 15h3M18 15h3M8 12h8"></path>`
+  workout: `<path d="M6 19V5"></path><path d="M18 19V5"></path><path d="M3 9h3M18 9h3M3 15h3M18 15h3M8 12h8"></path>`,
+  bulk: `<path d="M4 6h16M4 12h16M4 18h16"></path><path d="M9 4v16M15 4v16"></path>`
 };
 
 function controlIconSvg(key) {
@@ -422,7 +425,8 @@ function enhanceSystemControls() {
     ...document.querySelectorAll("[data-calendar-view]"),
     ...document.querySelectorAll("[data-admin-mode]"),
     ...document.querySelectorAll("[data-workout-mode]"),
-    ...document.querySelectorAll("[data-open-workout-builder]")
+    ...document.querySelectorAll("[data-open-workout-builder]"),
+    ...document.querySelectorAll("[data-open-bulk-activity-editor]")
   ];
   controls.forEach((button) => {
     if (button.dataset.controlEnhanced === "1") return;
@@ -430,7 +434,8 @@ function enhanceSystemControls() {
     const key = button.dataset.calendarView
       || button.dataset.adminMode
       || button.dataset.workoutMode
-      || (button.matches("[data-open-workout-builder]") ? "workout" : "single");
+      || (button.matches("[data-open-workout-builder]") ? "workout" : "")
+      || (button.matches("[data-open-bulk-activity-editor]") ? "bulk" : "single");
     button.dataset.controlEnhanced = "1";
     button.classList.add("system-control-button");
     button.innerHTML = `${controlIconSvg(key)}<span>${escapeHtml(label)}</span>`;
@@ -438,7 +443,7 @@ function enhanceSystemControls() {
 }
 
 async function api(path, options = {}) {
-  const scopedPaths = ["/api/integrations", "/api/activities", "/api/goals", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich", "/api/ai/projection", "/api/ai/test"];
+  const scopedPaths = ["/api/integrations", "/api/activities", "/api/goals", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich", "/api/ai/projection", "/api/ai/test", "/api/ai/chat"];
   const shouldScopeAthlete = scopedPaths.some((prefix) => path.startsWith(prefix));
   const athleteHeaders = shouldScopeAthlete && state.selectedAthleteId ?{ "X-Athlete-Id": state.selectedAthleteId } : {};
   const response = await fetch(path, {
@@ -1717,6 +1722,110 @@ async function saveManualWorkoutSafely(event) {
   }
 }
 
+function bulkActivityRow(activity, index) {
+  const status = activityStatus(activity);
+  const trainingType = activity.trainingType || activity.feedback?.trainingType || "Treino";
+  return `
+    <tr data-bulk-activity-row data-activity-id="${escapeHtml(activity.id)}">
+      <td>${index + 1}</td>
+      <td><input name="date" type="date" value="${escapeHtml(activity.date || "")}" /></td>
+      <td><input name="scheduledTime" type="time" value="${escapeHtml(activity.scheduledTime || activity.raw?.scheduledTime || "")}" /></td>
+      <td>
+        <select name="status">
+          <option value="executed" ${status === "executed" ?"selected" : ""}>Executado</option>
+          <option value="planned" ${status === "planned" ?"selected" : ""}>Planejado</option>
+        </select>
+      </td>
+      <td><input name="title" value="${escapeHtml(activity.title || "")}" /></td>
+      <td><input name="distance" value="${escapeHtml(activity.distance || "")}" /></td>
+      <td><input name="duration" value="${escapeHtml(activity.duration || "")}" /></td>
+      <td><input name="pace" value="${escapeHtml(activity.pace || "")}" /></td>
+      <td><input name="load" value="${escapeHtml(activity.load || "")}" /></td>
+      <td><select name="trainingType">${trainingTypeOptionsHtml(trainingType)}</select></td>
+      <td><input name="description" value="${escapeHtml(activity.description || "")}" /></td>
+    </tr>
+  `;
+}
+
+function openBulkActivityEditor() {
+  const modal = document.querySelector("#bulkActivityDialog");
+  const target = document.querySelector("#bulkActivityDialogContent");
+  if (!modal || !target) return;
+  const rows = visibleActivities()
+    .slice()
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))
+    .slice(0, 160);
+  target.innerHTML = `
+    <section class="modal-panel bulk-activity-panel">
+      <div class="section-title">
+        <div>
+          <span>Treinamentos</span>
+          <h3>Editar em lote</h3>
+        </div>
+        <button class="primary-action compact" type="button" data-save-bulk-activities>Salvar alterações</button>
+      </div>
+      <p class="bulk-editor-caption">${rows.length} registros carregados. Edite em linha como uma planilha e salve tudo de uma vez.</p>
+      <div class="bulk-activity-table-wrap">
+        <table class="bulk-activity-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Data</th>
+              <th>Hora</th>
+              <th>Status</th>
+              <th>Título</th>
+              <th>Distância</th>
+              <th>Tempo</th>
+              <th>Pace</th>
+              <th>11TSS</th>
+              <th>Tipo</th>
+              <th>Descrição</th>
+            </tr>
+          </thead>
+          <tbody>${rows.map(bulkActivityRow).join("")}</tbody>
+        </table>
+      </div>
+      <p class="form-message" id="bulkActivityMessage"></p>
+    </section>
+  `;
+  modal.showModal();
+  enhanceSystemControls();
+}
+
+async function saveBulkActivities() {
+  const modal = document.querySelector("#bulkActivityDialog");
+  const message = document.querySelector("#bulkActivityMessage");
+  const button = modal?.querySelector("[data-save-bulk-activities]");
+  const rows = Array.from(modal?.querySelectorAll("[data-bulk-activity-row]") || []);
+  const activities = rows.map((row) => ({
+    activityId: row.dataset.activityId,
+    ...readNamedFields(row)
+  }));
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Salvando...";
+  }
+  if (message) message.textContent = "Salvando alterações em lote...";
+  try {
+    const payload = await api("/api/activities/bulk", {
+      method: "POST",
+      body: JSON.stringify({ activities })
+    });
+    state.activities = payload.activities || [];
+    renderCalendar();
+    renderDashboard();
+    renderTrainingInsights();
+    if (message) message.textContent = `Salvo: ${activities.length} registros atualizados.`;
+  } catch (error) {
+    if (message) message.textContent = error.message || "Não foi possível salvar em lote.";
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Salvar alterações";
+    }
+  }
+}
+
 function activityTss(activity) {
   if (!isExecutedActivity(activity)) return 0;
   return Number(activity.analysis?.tss || activity.load || 0);
@@ -2466,6 +2575,60 @@ function renderHomeMotivation() {
   const target = document.querySelector("#homeMotivation");
   if (!target) return;
   target.textContent = buildHomeMotivation();
+  renderHomeAiMessages();
+}
+
+function renderHomeAiMessages() {
+  const target = document.querySelector("#homeAiMessages");
+  if (!target) return;
+  const messages = state.homeAiMessages.length ?state.homeAiMessages : [{
+    role: "assistant",
+    content: "Pergunte em linguagem natural sobre treinos, atletas, equipes, objetivos, VO2, testes, dor, carga ou histórico cronológico."
+  }];
+  target.innerHTML = messages.map((message) => `
+    <article class="home-ai-message ${message.role === "user" ?"is-user" : "is-assistant"}">
+      <span>${message.role === "user" ?"Você" : "IA 11RUN"}</span>
+      <p>${escapeHtml(message.content)}</p>
+    </article>
+  `).join("");
+  target.scrollTop = target.scrollHeight;
+  const form = document.querySelector("#homeAiForm");
+  const button = form?.querySelector("button");
+  if (button) {
+    button.disabled = state.homeAiBusy;
+    button.textContent = state.homeAiBusy ?"Analisando..." : "Enviar";
+  }
+}
+
+async function askHomeAi(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const input = form.elements.question;
+  const question = String(input?.value || "").trim();
+  if (!question || state.homeAiBusy) return;
+  state.homeAiMessages.push({ role: "user", content: question });
+  input.value = "";
+  state.homeAiBusy = true;
+  state.homeAiMessages.push({ role: "assistant", content: "Montando contexto do banco, cruzando atletas, treinos, objetivos e histórico..." });
+  renderHomeAiMessages();
+  try {
+    const payload = await api("/api/ai/chat", {
+      method: "POST",
+      body: JSON.stringify({ question })
+    });
+    state.homeAiMessages[state.homeAiMessages.length - 1] = {
+      role: "assistant",
+      content: payload.text || "Não encontrei uma resposta textual para essa consulta."
+    };
+  } catch (error) {
+    state.homeAiMessages[state.homeAiMessages.length - 1] = {
+      role: "assistant",
+      content: friendlyAiError(error.message)
+    };
+  } finally {
+    state.homeAiBusy = false;
+    renderHomeAiMessages();
+  }
 }
 
 function latest3000Test(tests) {
@@ -4638,6 +4801,10 @@ document.addEventListener("click", async (event) => {
     openWorkoutDialog();
     return;
   }
+  if (event.target.closest("[data-open-bulk-activity-editor]")) {
+    openBulkActivityEditor();
+    return;
+  }
   const workoutModeButton = event.target.closest("[data-workout-mode]");
   if (workoutModeButton) {
     applyWorkoutMode(workoutModeButton.dataset.workoutMode);
@@ -4659,6 +4826,10 @@ document.addEventListener("click", async (event) => {
   }
   if (event.target.closest("[data-remove-workout-step]")) {
     event.target.closest("[data-workout-step]")?.remove();
+    return;
+  }
+  if (event.target.closest("[data-save-bulk-activities]")) {
+    await saveBulkActivities();
     return;
   }
   const editButton = event.target.closest("[data-edit-athlete]");
@@ -4868,6 +5039,9 @@ document.addEventListener("change", (event) => {
 document.addEventListener("submit", async (event) => {
   if (event.target?.id === "workoutBuilderForm") {
     await saveManualWorkoutSafely(event);
+  }
+  if (event.target?.id === "homeAiForm") {
+    await askHomeAi(event);
   }
 });
 

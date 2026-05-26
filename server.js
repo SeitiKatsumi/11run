@@ -1622,6 +1622,7 @@ function activityRowToApi(row) {
     pace: row.pace || "",
     load: row.load || "",
     externalUrl: row.external_url || "",
+    raw,
     distanceMeters,
     movingTimeSeconds,
     elapsedTimeSeconds: safeNumber(raw.elapsed_time, raw.moving_time),
@@ -2055,6 +2056,9 @@ async function updateActivityDetails(tenantId, athleteUserId, activityId, input 
   const title = String(input.title || "").trim() || "Treino";
   const description = String(input.description || "").trim();
   const distance = String(input.distance || "").trim();
+  const duration = String(input.duration || "").trim();
+  const pace = String(input.pace || "").trim();
+  const load = String(input.load || "").trim();
   const status = normalizeActivityStatus(input.status, "executed");
   const scheduledTime = String(input.scheduledTime || "").trim().slice(0, 8);
   const trainingType = normalizeTrainingType(input.trainingType);
@@ -2086,7 +2090,9 @@ async function updateActivityDetails(tenantId, athleteUserId, activityId, input 
       status,
       scheduledTime,
       trainingType,
-      load: String(analysis.aggressionScore || item.load || ""),
+      duration: duration || item.duration || "",
+      pace: pace || item.pace || "",
+      load: load || String(analysis.aggressionScore || item.load || ""),
       analysis,
       raw
     };
@@ -2117,8 +2123,10 @@ async function updateActivityDetails(tenantId, athleteUserId, activityId, input 
             description = $7,
             distance = $8,
             status = $9,
-            load = $10,
-            raw = $11::jsonb,
+            duration = $10,
+            pace = $11,
+            load = $12,
+            raw = $13::jsonb,
             updated_at = now()
       WHERE tenant_id = $1
         AND athlete_user_id = $2
@@ -2135,7 +2143,9 @@ async function updateActivityDetails(tenantId, athleteUserId, activityId, input 
       description,
       distance || current.distance || "",
       status,
-      String(analysis.aggressionScore || current.load || ""),
+      duration || current.duration || "",
+      pace || current.pace || "",
+      load || String(analysis.aggressionScore || current.load || ""),
       JSON.stringify({ ...raw, analysis })
     ]
   );
@@ -2171,6 +2181,15 @@ async function deleteActivity(tenantId, athleteUserId, activityId) {
     [tenantId, athleteUserId, provider, providerActivityId]
   );
   if (!deleted.rows[0]) throw httpError("Atividade nao encontrada para este atleta.", 404);
+  return listActivities(tenantId, athleteUserId);
+}
+
+async function updateActivitiesBulk(tenantId, athleteUserId, activities = []) {
+  const rows = Array.isArray(activities) ?activities.slice(0, 200) : [];
+  if (!rows.length) throw httpError("Nenhuma atividade enviada para edicao em lote.", 400);
+  for (const activity of rows) {
+    await updateActivityDetails(tenantId, athleteUserId, activity.activityId, activity);
+  }
   return listActivities(tenantId, athleteUserId);
 }
 
@@ -2958,6 +2977,133 @@ async function testOpenAiSettings(tenantId) {
   };
 }
 
+function compactActivityForSystemChat(activity) {
+  return {
+    id: activity.id,
+    date: activity.date,
+    status: activity.status,
+    title: activity.title,
+    source: activity.source,
+    distance: activity.distance,
+    duration: activity.duration,
+    pace: activity.pace,
+    load: activity.load,
+    trainingType: activity.trainingType,
+    description: activity.description,
+    feedback: activity.feedback || {},
+    is3000Test: Boolean(activity.is3000Test)
+  };
+}
+
+function compactAthleteForSystemChat(athlete, activities, goals) {
+  return {
+    id: athlete.id,
+    name: athlete.name,
+    email: athlete.email,
+    role: athlete.roleLabel || athlete.role,
+    teamName: athlete.teamName || "",
+    coachName: athlete.coachName || "",
+    focusDistanceM: athlete.focusDistanceM || "",
+    age: athlete.age || "",
+    weightKg: athlete.weightKg || "",
+    heightCm: athlete.heightCm || "",
+    historyTimeline: Array.isArray(athlete.historyTimeline) ?athlete.historyTimeline.slice(-40) : [],
+    tests3000: Array.isArray(athlete.tests3000) ?athlete.tests3000.slice(-8) : [],
+    goals: goals.slice(0, 12),
+    recentActivities: activities
+      .slice()
+      .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))
+      .slice(0, 50)
+      .map(compactActivityForSystemChat)
+  };
+}
+
+function localSystemSearch(question, context) {
+  const text = String(question || "").toLowerCase();
+  const hits = [];
+  for (const athlete of context.athletes || []) {
+    const athleteText = [athlete.name, athlete.email, athlete.teamName, athlete.coachName].join(" ").toLowerCase();
+    if (athleteText.includes(text) || text.includes(String(athlete.name || "").toLowerCase())) {
+      hits.push(`${athlete.name}: ${athlete.recentActivities?.length || 0} atividades recentes, ${athlete.goals?.length || 0} objetivos, equipe ${athlete.teamName || "sem equipe"}.`);
+    }
+    for (const activity of athlete.recentActivities || []) {
+      const activityText = [activity.title, activity.description, activity.trainingType, activity.date].join(" ").toLowerCase();
+      if (text.split(/\s+/).filter(Boolean).some((token) => token.length > 2 && activityText.includes(token))) {
+        hits.push(`${athlete.name} em ${activity.date}: ${activity.title} (${activity.distance || "--"}, ${activity.pace || "--"}, ${activity.status || "--"}).`);
+      }
+    }
+  }
+  return hits.slice(0, 10).join("\n") || "Nao encontrei correspondencia direta no indice local. Tente citar nome do atleta, data, tipo de treino, prova ou palavra do historico.";
+}
+
+async function buildSystemChatContext(tenantId, user, selectedAthleteId = "") {
+  const athletes = await listAthletes(tenantId, user);
+  const directory = await listDirectory(tenantId, user);
+  const visibleAthletes = selectedAthleteId && user?.role === "athlete"
+    ?athletes.filter((athlete) => String(athlete.id) === String(selectedAthleteId))
+    : athletes;
+  const compactAthletes = [];
+  for (const athlete of visibleAthletes.slice(0, 12)) {
+    const [activities, goals] = await Promise.all([
+      listActivities(tenantId, athlete.id),
+      listGoals(tenantId, athlete.id)
+    ]);
+    compactAthletes.push(compactAthleteForSystemChat(athlete, activities, goals));
+  }
+  return {
+    generatedAt: new Date().toISOString(),
+    requester: user ?{ id: user.id, name: user.name, role: user.role, email: user.email } : null,
+    selectedAthleteId,
+    directory: {
+      teams: (directory.teams || []).slice(0, 30),
+      coaches: (directory.coaches || []).slice(0, 30)
+    },
+    athletes: compactAthletes
+  };
+}
+
+async function answerSystemAiChat(tenantId, user, selectedAthleteId, question) {
+  const cleanQuestion = String(question || "").trim();
+  if (!cleanQuestion) throw httpError("Digite uma pergunta para a IA.", 400);
+  const context = await buildSystemChatContext(tenantId, user, selectedAthleteId);
+  const settings = await getRawAppSettings(tenantId);
+  const apiKey = settings.openai_api_key || settings.openaiApiKey || process.env.OPENAI_API_KEY || "";
+  const model = settings.openai_model || settings.openaiModel || DEFAULT_OPENAI_MODEL;
+  const enabled = Boolean(settings.openai_enabled || settings.openaiEnabled || process.env.OPENAI_API_KEY);
+  const prompt = [
+    "Voce e o agente de busca e analise do sistema 11RUN.",
+    "Voce tem acesso ao contexto JSON abaixo. Responda em portugues do Brasil.",
+    "Se a pergunta pedir atividade especifica, cite atleta, data, titulo e metricas. Se pedir equipe/atleta, resuma o que existe no contexto.",
+    "Nao invente dados que nao estejam no JSON. Quando faltar dado, diga exatamente o que falta.",
+    "Pergunta:",
+    cleanQuestion,
+    "Contexto do banco:",
+    JSON.stringify(context, null, 2)
+  ].join("\n");
+  if (!enabled || !apiKey) {
+    return {
+      ok: false,
+      model: "indice local 11RUN",
+      text: localSystemSearch(cleanQuestion, context)
+    };
+  }
+  try {
+    const result = await callOpenAiText(apiKey, model, prompt, 900);
+    return {
+      ok: true,
+      model: result.model || model,
+      endpoint: result.endpoint || "openai",
+      text: result.text || localSystemSearch(cleanQuestion, context)
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      model,
+      text: `${publicOpenAiError(error)}\n\nBusca local:\n${localSystemSearch(cleanQuestion, context)}`
+    };
+  }
+}
+
 async function handleStravaCallback(url, res) {
   const decodedState = decodeStravaState(url.searchParams.get("state"));
   const tenantSlug = decodedState.tenant || url.searchParams.get("tenant") || DEFAULT_TENANT_SLUG;
@@ -3238,6 +3384,18 @@ async function handleApi(req, res, url) {
       return;
     }
 
+    if (req.method === "POST" && url.pathname === "/api/activities/bulk") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      if (!athleteUserId || !(await canAccessAthlete(tenant.id, user, athleteUserId))) {
+        throw httpError("Usuario sem permissao para editar atividades deste atleta.", 403);
+      }
+      const activities = await updateActivitiesBulk(tenant.id, athleteUserId, body.activities);
+      sendJson(res, 200, { ok: true, activities });
+      return;
+    }
+
     if (req.method === "DELETE" && url.pathname === "/api/activities") {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
@@ -3410,6 +3568,14 @@ async function handleApi(req, res, url) {
         throw httpError("Usuario sem permissao para analisar este atleta.", 403);
       }
       sendJson(res, 200, await generateAiProjection(tenant.id, { ...body, athleteUserId }));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/ai/chat") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      sendJson(res, 200, await answerSystemAiChat(tenant.id, user, athleteUserId, body.question));
       return;
     }
 
