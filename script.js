@@ -1618,7 +1618,7 @@ function openWorkoutDialog() {
             <textarea name="audioNotes" rows="4" placeholder="Arquitetura preparada para transcrição. Por enquanto, cole ou descreva o treino para salvar como rascunho estruturado."></textarea>
           </label>
         </div>
-        <button class="primary-action compact" type="submit">Salvar treino</button>
+        <button class="primary-action compact" type="submit" data-save-workout>Salvar treino</button>
         <p class="form-message" id="workoutBuilderMessage"></p>
       </form>
     </section>
@@ -1669,6 +1669,51 @@ async function saveManualWorkout(event) {
     if (message) message.textContent = "Treinos salvos.";
   } catch (error) {
     if (message) message.textContent = error.message || "Não foi possível salvar os treinos.";
+  }
+}
+
+async function saveManualWorkoutSafely(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const message = document.querySelector("#workoutBuilderMessage");
+  const submitButton = form.querySelector("[data-save-workout]");
+  if (form.dataset.saving === "1") return;
+  form.dataset.saving = "1";
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.dataset.originalText = submitButton.textContent;
+    submitButton.textContent = "Salvando...";
+  }
+  if (message) message.textContent = "Preparando treino...";
+  try {
+    const mode = form.dataset.mode || "single";
+    const rows = Array.from(form.querySelectorAll("[data-workout-row]"));
+    const workoutPlan = readWorkoutPlan(form);
+    const activities = mode === "audio"
+      ?[{ date: form.elements.startDate?.value || dateKey(new Date()), title: "Treino por audio", description: form.elements.audioNotes?.value || "Entrada preparada para transcricao futura.", trainingType: "Treino", status: "planned", workoutPlan }]
+      : rows.map((row) => ({ ...readNamedFields(row), workoutPlan })).filter((item) => item.date || item.title || item.description);
+    if (!activities.length) {
+      if (message) message.textContent = "Informe pelo menos um treino.";
+      return;
+    }
+    if (message) message.textContent = "Salvando treino...";
+    const payload = await api("/api/activities/manual", {
+      method: "POST",
+      body: JSON.stringify({ mode, activities })
+    });
+    state.activities = payload.activities || [];
+    renderCalendar();
+    renderDashboard();
+    if (message) message.textContent = "Treino salvo. Calendario atualizado.";
+    setTimeout(() => document.querySelector("#workoutDialog")?.close(), 650);
+  } catch (error) {
+    if (message) message.textContent = error.message || "Nao foi possivel salvar o treino.";
+  } finally {
+    form.dataset.saving = "";
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = submitButton.dataset.originalText || "Salvar treino";
+    }
   }
 }
 
@@ -4714,7 +4759,7 @@ document.addEventListener("change", (event) => {
 
 document.addEventListener("submit", async (event) => {
   if (event.target?.id === "workoutBuilderForm") {
-    await saveManualWorkout(event);
+    await saveManualWorkoutSafely(event);
   }
 });
 

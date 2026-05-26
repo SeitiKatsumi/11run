@@ -2254,7 +2254,7 @@ async function createManualActivities(tenantId, athleteUserId, mode, activities)
     const distanceMeters = parseDistanceToMeters(activity.distance);
     const durationSeconds = parseTimeToSeconds(activity.duration || activity.time || "") || 0;
     const status = normalizeActivityStatus(activity.status, "executed");
-    const workoutPlan = normalizeWorkoutPlan(activity.workoutPlan || {});
+    const workoutPlan = activity.workoutPlan ? normalizeWorkoutPlan(activity.workoutPlan) : null;
     const scheduledTime = String(activity.scheduledTime || "").trim().slice(0, 8);
     const raw = {
       manual: true,
