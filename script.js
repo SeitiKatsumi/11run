@@ -253,6 +253,50 @@ const focusDistanceLabels = {
   42000: "42 km"
 };
 
+const trainingTypeOptions = [
+  "Treino",
+  "Leve / base",
+  "Regenerativo",
+  "Recuperação",
+  "Longo",
+  "Longo progressivo",
+  "Longo com variação",
+  "Ritmo / tempo",
+  "Limiar",
+  "Progressivo",
+  "Fartlek",
+  "Intervalado curto",
+  "Intervalado longo",
+  "VO2 / intervalado",
+  "Tiros curtos / strides",
+  "Montanha / subida",
+  "Técnica / educativos",
+  "Fortalecimento",
+  "Isometria",
+  "Pliometria",
+  "Mobilidade / alongamento",
+  "Cross-training",
+  "Prova",
+  "Teste"
+];
+
+function trainingTypeOptionsHtml(selected = "Treino") {
+  return trainingTypeOptions
+    .map((option) => `<option value="${escapeHtml(option)}" ${option === selected ?"selected" : ""}>${escapeHtml(option)}</option>`)
+    .join("");
+}
+
+function friendlyAiError(message = "") {
+  const text = String(message || "");
+  if (/request id|processing your request|help\.openai\.com/i.test(text)) {
+    return "OpenAI temporariamente indisponível. O modelo local 11RUN foi aplicado.";
+  }
+  if (/401|api key|unauthorized|invalid/i.test(text)) return "API key inválida ou sem permissão para chamadas OpenAI.";
+  if (/429|rate limit|quota/i.test(text)) return "Limite da OpenAI atingido. Tente novamente em instantes.";
+  if (/model|404|400/i.test(text)) return "Modelo OpenAI indisponível para esta chave. Ajuste o modelo nas configurações.";
+  return text || "Não foi possível concluir a análise externa. O modelo local 11RUN foi aplicado.";
+}
+
 const calendar = document.querySelector("#calendar");
 const dialog = document.querySelector("#activityDialog");
 const detail = document.querySelector("#activityDetail");
@@ -1435,7 +1479,7 @@ function workoutRows(count) {
       <label class="credential-field"><span>Título</span><input name="title" placeholder="Treino ${index + 1}" /></label>
       <label class="credential-field"><span>Distância</span><input name="distance" placeholder="8 km" /></label>
       <label class="credential-field"><span>Descrição</span><input name="description" placeholder="Objetivo, ritmo, observações" /></label>
-      <label class="credential-field"><span>Tipo</span><select name="trainingType"><option>Treino</option><option>Longo</option><option>Recuperação</option><option>Prova</option><option>Teste</option></select></label>
+      <label class="credential-field"><span>Tipo</span><select name="trainingType">${trainingTypeOptionsHtml("Treino")}</select></label>
     </div>
   `).join("");
 }
@@ -2759,7 +2803,7 @@ function openActivity(activityId) {
         <label class="credential-field">
           <span>Tipo de treino</span>
           <select name="trainingType">
-            ${["Treino", "Longo", "Recuperação", "Prova", "Teste"].map((option) => `<option value="${escapeHtml(option)}" ${option === trainingType ?"selected" : ""}>${escapeHtml(option)}</option>`).join("")}
+            ${trainingTypeOptionsHtml(trainingType)}
           </select>
         </label>
         <label class="credential-field">
@@ -4057,7 +4101,7 @@ async function refreshAiProjection() {
       body: JSON.stringify({ athlete, model, activities: activitiesSince(90).slice(-60) })
     });
   } catch (error) {
-    state.aiProjection = { text: `IA indisponível: ${error.message}` };
+    state.aiProjection = { text: `IA indisponível: ${friendlyAiError(error.message)}` };
   }
   renderFocusRoadmap();
 }
@@ -4118,7 +4162,7 @@ async function recalculateDashboardAnalysis() {
       ...localAnalysis,
       athleteId: athlete.id,
       status: "local",
-      aiText: `IA externa indisponível no recálculo (${error.message}). Modelo local aplicado com cronologia: ${localAnalysis.summary}`,
+      aiText: `${friendlyAiError(error.message)} Modelo local aplicado com cronologia: ${localAnalysis.summary}`,
       aiModel: "modelo local 11RUN"
     };
   } finally {

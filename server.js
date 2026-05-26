@@ -1646,7 +1646,32 @@ function clamp(number, min, max) {
   return Math.min(max, Math.max(min, number));
 }
 
-const TRAINING_TYPE_OPTIONS = ["Treino", "Longo", "Recuperação", "Prova", "Teste"];
+const TRAINING_TYPE_OPTIONS = [
+  "Treino",
+  "Leve / base",
+  "Regenerativo",
+  "Recuperação",
+  "Longo",
+  "Longo progressivo",
+  "Longo com variação",
+  "Ritmo / tempo",
+  "Limiar",
+  "Progressivo",
+  "Fartlek",
+  "Intervalado curto",
+  "Intervalado longo",
+  "VO2 / intervalado",
+  "Tiros curtos / strides",
+  "Montanha / subida",
+  "Técnica / educativos",
+  "Fortalecimento",
+  "Isometria",
+  "Pliometria",
+  "Mobilidade / alongamento",
+  "Cross-training",
+  "Prova",
+  "Teste"
+];
 
 function normalizeTrainingType(value, fallback = "Treino") {
   const text = String(value || "").trim();
@@ -1666,9 +1691,22 @@ function inferTrainingTypeFromActivity(activity = {}) {
   const distanceKm = safeNumber(activity.distance) / 1000;
   if (text.includes("prova") || text.includes("race") || activity.workout_type === 1) return "Prova";
   if (text.includes("teste") || text.includes("test") || text.includes("3000") || text.includes("3km")) return "Teste";
-  if (text.includes("recuper") || text.includes("regener") || text.includes("leve")) return "Recuperação";
+  if (text.includes("fortalec") || text.includes("muscula") || text.includes("força") || text.includes("strength")) return "Fortalecimento";
+  if (text.includes("isometr")) return "Isometria";
+  if (text.includes("pliometr")) return "Pliometria";
+  if (text.includes("along") || text.includes("mobilidade") || text.includes("mobility")) return "Mobilidade / alongamento";
+  if (text.includes("educativo") || text.includes("drill") || text.includes("técnica") || text.includes("tecnica")) return "Técnica / educativos";
+  if (text.includes("subida") || text.includes("montanha") || text.includes("hill")) return "Montanha / subida";
+  if (text.includes("fartlek")) return "Fartlek";
+  if (text.includes("limiar") || text.includes("threshold")) return "Limiar";
+  if (text.includes("tempo") || text.includes("ritmo")) return "Ritmo / tempo";
+  if (text.includes("progress")) return distanceKm >= 12 ?"Longo progressivo" : "Progressivo";
+  if (text.includes("interval") || text.includes("tiro") || text.includes("vo2")) return "VO2 / intervalado";
+  if (text.includes("recuper") || text.includes("regener")) return "Recuperação";
+  if (text.includes("leve") || text.includes("base")) return "Leve / base";
   if (text.includes("longo") || distanceKm >= 14) return "Longo";
   if (/run|corrida/i.test(type)) return "Treino";
+  if (/ride|bike|ciclismo|swim|strength|workout/i.test(type)) return "Cross-training";
   return "Treino";
 }
 
@@ -2449,6 +2487,15 @@ async function callOpenAiResponse(apiKey, model, prompt, maxOutputTokens = 420) 
   };
 }
 
+function publicOpenAiError(error) {
+  const status = Number(error?.statusCode || error?.status || 0);
+  if (status === 401) return "API key inválida ou sem permissão para chamadas OpenAI.";
+  if (status === 400 || status === 404) return "Modelo OpenAI indisponível para esta chave. Ajuste o modelo nas configurações.";
+  if (status === 429) return "Limite da OpenAI atingido. Tente novamente em instantes.";
+  if (status >= 500) return "OpenAI temporariamente indisponível. O modelo local 11RUN foi aplicado.";
+  return "Não foi possível concluir a análise externa. O modelo local 11RUN foi aplicado.";
+}
+
 async function generateAiProjection(tenantId, input = {}) {
   const settings = await getRawAppSettings(tenantId);
   const apiKey = settings.openai_api_key || settings.openaiApiKey || process.env.OPENAI_API_KEY || "";
@@ -2471,33 +2518,34 @@ async function generateAiProjection(tenantId, input = {}) {
     JSON.stringify(input, null, 2)
   ].join("\n");
 
-  const aiResult = await callOpenAiResponse(apiKey, model, prompt, 520);
-  return {
-    ok: true,
-    model,
-    text: aiResult.text || "A IA respondeu sem texto extraível. Verifique se o modelo configurado suporta saída textual na Responses API."
-  };
-
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model,
-      input: prompt,
-      max_output_tokens: 420
-    })
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw httpError(payload.error?.message || `OpenAI respondeu HTTP ${response.status}.`, response.status);
+  let aiResult = null;
+  let usedModel = model;
+  try {
+    aiResult = await callOpenAiResponse(apiKey, model, prompt, 520);
+  } catch (error) {
+    if (model !== DEFAULT_OPENAI_MODEL && [400, 404].includes(Number(error.statusCode || 0))) {
+      usedModel = DEFAULT_OPENAI_MODEL;
+      try {
+        aiResult = await callOpenAiResponse(apiKey, DEFAULT_OPENAI_MODEL, prompt, 520);
+      } catch (fallbackError) {
+        return {
+          ok: false,
+          model: usedModel,
+          text: publicOpenAiError(fallbackError)
+        };
+      }
+    } else {
+      return {
+        ok: false,
+        model,
+        text: publicOpenAiError(error)
+      };
+    }
   }
   return {
     ok: true,
-    model,
-    text: openaiTextFromResponse(payload) || "A IA não retornou texto para esta análise."
+    model: usedModel,
+    text: aiResult.text || "A IA respondeu sem texto extraível. Verifique se o modelo configurado suporta saída textual na Responses API."
   };
 }
 
