@@ -12,6 +12,7 @@ const state = {
   currentUser: null,
   appSettings: null,
   aiProjection: null,
+  dashboardAnalysis: null,
   editingAthleteId: "",
   editingAdminUserId: "",
   adminMode: "athlete",
@@ -810,12 +811,13 @@ function buildFocusModel(athlete) {
     .filter((entry) => entry.type === "vo2" && Number(entry.vo2 || 0) > 0)
     .sort((a, b) => String(b.startDate || "").localeCompare(String(a.startDate || "")))[0];
   const riskPenalty = /(les|dor|inflama|fadiga|cansa|viagem|pausa|doente|posterior)/i.test(history) ?12 : 0;
+  const chronology = buildChronologicalPerformanceAnalysis(athlete, tests3000);
   const gapPercent = targetSeconds && currentSeconds ?((currentSeconds - targetSeconds) / currentSeconds) * 100 : 0;
   const weeks = daysToRace / 7;
   const realisticGain = Math.max(0, weeks * (0.45 + consistency * 0.45 + testSignal * 0.18));
   const loadScore = (consistency * 28) + (Math.min(1.25, volumeTrend) * 18) + (freshness * 14) + (testSignal * 12);
   const probability = targetSeconds && currentSeconds
-    ?Math.round(Math.max(4, Math.min(96, 54 + loadScore + realisticGain - Math.max(0, gapPercent) * 5.2 - riskPenalty)))
+    ?Math.round(Math.max(4, Math.min(96, 54 + loadScore + realisticGain - Math.max(0, gapPercent) * 5.2 - riskPenalty + chronology.probabilityModifier)))
     : 0;
   const status = !targetSeconds || !currentSeconds ?"Dados insuficientes" : probability >= 72 ?"Alta viabilidade" : probability >= 45 ?"Viabilidade moderada" : "Alvo agressivo";
   const requiredGain = targetSeconds && currentSeconds ?Math.max(0, currentSeconds - targetSeconds) : 0;
@@ -1812,6 +1814,12 @@ function dashboardGoalProbability(goal, model) {
   const projectionLabel = model.currentSeconds ?formatDurationSeconds(model.currentSeconds) : "--";
   const gainLabel = model.requiredGain ?formatDurationSeconds(model.requiredGain) : "no alvo";
   const weekLabel = model.requiredPerWeek ?`${formatDurationSeconds(model.requiredPerWeek)}/sem` : "--";
+  const analysis = String(state.dashboardAnalysis?.athleteId || "") === String(getActiveAthlete()?.id || "")
+    ?state.dashboardAnalysis
+    : null;
+  const analysisLabel = analysis?.generatedAt
+    ?`Recalculado ${new Date(analysis.generatedAt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
+    : "Clique em Recalcular para reprocessar a cronologia";
   return `
     <article class="dashboard-goal-card">
       <div class="goal-probability-copy">
@@ -1824,6 +1832,7 @@ function dashboardGoalProbability(goal, model) {
           <small><b>${escapeHtml(gainLabel)}</b> ganho</small>
           <small><b>${escapeHtml(weekLabel)}</b> ritmo</small>
         </div>
+        <p class="goal-analysis-stamp">${escapeHtml(analysisLabel)}</p>
       </div>
       <div class="goal-probability-visual">
         <svg viewBox="0 0 120 120" aria-hidden="true">
@@ -1839,6 +1848,7 @@ function dashboardGoalProbability(goal, model) {
 function estimateVo2From3000(athlete, tests) {
   const lastTest = latest3000Test(tests);
   if (!lastTest?.seconds) return null;
+  const chronology = buildChronologicalPerformanceAnalysis(athlete, tests);
   const velocity = 3000 / (Number(lastTest.seconds) / 60);
   const oxygenCost = -4.6 + (0.182258 * velocity) + (0.000104 * velocity * velocity);
   const minutes = Number(lastTest.seconds) / 60;
@@ -1863,11 +1873,13 @@ function estimateVo2From3000(athlete, tests) {
   const riskHistory = history.replace(/sem dor/g, "");
   const riskHits = (riskHistory.match(/les|dor|inflama|fadiga|cansa|pausa|doente|panturrilha|posterior/g) || []).length;
   const boostHits = (history.match(/consist|regular|sem dor|evolu|volume|teste controlado|progress/g) || []).length;
-  const historyModifier = Math.max(-2.4, Math.min(1.2, (boostHits * 0.35) - (riskHits * 0.55)));
+  const historyModifier = Math.max(-3.2, Math.min(1.8, (boostHits * 0.25) - (riskHits * 0.42) + chronology.historyModifier));
   const trainingModifier = (consistency * 1.4) + volumeModifier + loadModifier + freshnessModifier;
   const estimatedFromPerformance = testVo2 + trainingModifier + historyModifier;
-  const estimated = Math.max(20, Math.min(85, measuredVo2 ?(estimatedFromPerformance * 0.62) + (Number(measuredVo2.vo2) * 0.38) : estimatedFromPerformance));
-  const confidence = Math.round(Math.max(45, Math.min(94, 58 + tests.length * 8 + consistency * 16 + (recent90.length ?10 : 0) - riskHits * 3)));
+  const measuredAge = chronology.vo2Age ?? 999;
+  const measuredWeight = measuredVo2 ?Math.max(0.14, Math.min(0.45, 0.45 - measuredAge / 520)) : 0;
+  const estimated = Math.max(20, Math.min(85, measuredVo2 ?(estimatedFromPerformance * (1 - measuredWeight)) + (Number(measuredVo2.vo2) * measuredWeight) : estimatedFromPerformance));
+  const confidence = Math.round(Math.max(45, Math.min(94, 58 + tests.length * 8 + consistency * 16 + (recent90.length ?10 : 0) - riskHits * 3 - Math.max(0, chronology.testAge || 0) / 24)));
   return {
     estimated,
     testVo2,
@@ -1880,7 +1892,8 @@ function estimateVo2From3000(athlete, tests) {
     volume30,
     riskHits,
     boostHits,
-    measuredVo2: measuredVo2 ?Number(measuredVo2.vo2) : 0
+    measuredVo2: measuredVo2 ?Number(measuredVo2.vo2) : 0,
+    chronology
   };
 }
 
@@ -1897,8 +1910,131 @@ function athleteHistoryText(athlete) {
   return `${athlete?.historyNotes || ""} ${timelineText}`.trim();
 }
 
+function eventDateFromKey(key) {
+  const normalized = normalizeDateKey(key);
+  if (!normalized) return null;
+  const date = new Date(`${normalized}T00:00:00`);
+  return Number.isNaN(date.getTime()) ?null : date;
+}
+
+function daysSinceDate(date, now = new Date()) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.round((today - target) / 86400000));
+}
+
+function chronologyWeight(date) {
+  const age = daysSinceDate(date);
+  if (age === null) return 0.2;
+  return Math.max(0.12, Math.exp(-age / 115));
+}
+
+function buildChronologicalPerformanceAnalysis(athlete, tests = collect3000Tests(athlete)) {
+  const historyEntries = Array.isArray(athlete?.historyTimeline) ?athlete.historyTimeline : [];
+  const events = [];
+  tests.forEach((test) => {
+    if (!test?.date) return;
+    events.push({
+      date: test.date,
+      type: "3000",
+      label: `Teste 3000 ${formatDurationSeconds(test.seconds)}`,
+      weight: chronologyWeight(test.date),
+      seconds: Number(test.seconds || 0)
+    });
+  });
+  historyEntries.forEach((entry) => {
+    const date = eventDateFromKey(entry.startDate || entry.endDate);
+    if (!date) return;
+    events.push({
+      date,
+      type: entry.type === "vo2" ?"vo2" : "historico",
+      label: [entry.title, entry.description, entry.vo2 ?`VO2 ${entry.vo2}` : ""].filter(Boolean).join(" - "),
+      weight: chronologyWeight(date),
+      vo2: Number(entry.vo2 || 0)
+    });
+  });
+  activitiesSince(180).filter(isRunningActivity).forEach((activity) => {
+    const date = eventDateFromKey(activity.date);
+    if (!date) return;
+    events.push({
+      date,
+      type: "treino",
+      label: activity.title || "Treino importado",
+      weight: chronologyWeight(date),
+      distanceKm: parseDistanceKm(activity.distance),
+      tss: activityTss(activity)
+    });
+  });
+  events.sort((a, b) => a.date - b.date);
+
+  const text = [athleteHistoryText(athlete), events.map((event) => event.label).join(" ")].join(" ").toLowerCase();
+  const riskText = text.replace(/sem dor/g, "");
+  const riskMatches = riskText.match(/les|dor|inflama|fadiga|cansa|pausa|parad|doente|panturrilha|posterior|retorno/g) || [];
+  const positiveMatches = text.match(/consist|regular|sem dor|evolu|volume|controlado|progress|forte|base/g) || [];
+  const riskScore = events
+    .filter((event) => /les|dor|inflama|fadiga|cansa|pausa|parad|doente|panturrilha|posterior|retorno/i.test(event.label))
+    .reduce((sum, event) => sum + event.weight, riskMatches.length ?riskMatches.length * 0.08 : 0);
+  const positiveScore = events
+    .filter((event) => /consist|regular|sem dor|evolu|volume|controlado|progress|forte|base/i.test(event.label))
+    .reduce((sum, event) => sum + event.weight, positiveMatches.length ?positiveMatches.length * 0.06 : 0);
+
+  const recent30 = activitiesSince(30).filter(isRunningActivity);
+  const previous30 = activitiesBetweenDays(60, 31).filter(isRunningActivity);
+  const volume30 = recent30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const previousVolume30 = previous30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const trendRatio = previousVolume30 ?volume30 / previousVolume30 : volume30 ?1.08 : 0;
+  const latestTest = latest3000Test(tests);
+  const latestVo2 = events.filter((event) => event.type === "vo2" && event.vo2 > 0).sort((a, b) => b.date - a.date)[0] || null;
+  const testAge = daysSinceDate(latestTest?.date);
+  const vo2Age = daysSinceDate(latestVo2?.date);
+  const stalePenalty = (testAge !== null && testAge > 90 ?Math.min(4, (testAge - 90) / 45) : 0)
+    + (vo2Age !== null && vo2Age > 120 ?Math.min(2.5, (vo2Age - 120) / 80) : 0);
+  const trainingTrendModifier = Math.max(-2.2, Math.min(2.2, (trendRatio - 1) * 2.4));
+  const historyModifier = Math.max(-3.2, Math.min(2.2, positiveScore * 0.7 - riskScore * 1.25 - stalePenalty * 0.35));
+  const probabilityModifier = Math.round(Math.max(-18, Math.min(12, trainingTrendModifier * 3 + historyModifier * 4)));
+  const summary = [
+    latestTest ?`ultimo 3000 em ${latestTest.date.toLocaleDateString("pt-BR")} (${formatDurationSeconds(latestTest.seconds)})` : "sem teste de 3000 registrado",
+    latestVo2 ?`VO2 medido ${latestVo2.vo2} em ${latestVo2.date.toLocaleDateString("pt-BR")}` : "sem VO2 medido",
+    `${recent30.length} treinos nos ultimos 30 dias`,
+    trendRatio ?`tendencia de volume ${(trendRatio * 100).toFixed(0)}% vs 30 dias anteriores` : "sem tendencia recente",
+    riskScore > 0.5 ?"historico recente exige prudencia" : "sem alerta cronologico dominante"
+  ].join(". ");
+  return {
+    generatedAt: new Date().toISOString(),
+    events: events.slice(-36),
+    latestVo2,
+    latestTest,
+    testAge,
+    vo2Age,
+    riskScore,
+    positiveScore,
+    trendRatio,
+    trainingTrendModifier,
+    historyModifier,
+    probabilityModifier,
+    summary
+  };
+}
+
+function activitiesBetweenDays(fromDaysAgo, toDaysAgo) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = addDays(today, -fromDaysAgo);
+  const end = addDays(today, -toDaysAgo);
+  return visibleActivities().filter((activity) => {
+    const date = eventDateFromKey(activity.date);
+    return date && date >= start && date <= end;
+  });
+}
+
 function dashboardVo2Panel(athlete, tests) {
   const vo2 = estimateVo2From3000(athlete, tests);
+  const dashboardAnalysis = String(state.dashboardAnalysis?.athleteId || "") === String(athlete?.id || "")
+    ?state.dashboardAnalysis
+    : null;
   if (!vo2) {
     return `
       <aside class="dashboard-vo2-panel">
@@ -1911,6 +2047,10 @@ function dashboardVo2Panel(athlete, tests) {
     `;
   }
   const riskLabel = vo2.riskHits ?`${vo2.riskHits} alerta(s) no histórico` : "histórico sem alerta forte";
+  const analysisText = dashboardAnalysis?.aiText || vo2.chronology.summary;
+  const analysisMeta = dashboardAnalysis?.generatedAt
+    ?`Recalculado em ${new Date(dashboardAnalysis.generatedAt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
+    : "Aguardando recalculo manual com IA";
   return `
     <aside class="dashboard-vo2-panel">
       <div class="vo2-panel-head">
@@ -1933,6 +2073,10 @@ function dashboardVo2Panel(athlete, tests) {
         <span><b>${vo2.weeklySessions.toFixed(1)}</b> sessões/semana nos últimos 90 dias</span>
         <span><b>${escapeHtml(formatKm(vo2.volume30))}</b> volume dos últimos 30 dias</span>
         <span><b>${vo2.boostHits}</b> sinal(is) positivos no histórico cronológico</span>
+      </div>
+      <div class="vo2-ai-analysis">
+        <span>${escapeHtml(analysisMeta)}</span>
+        <p>${escapeHtml(analysisText)}</p>
       </div>
     </aside>
   `;
@@ -3409,6 +3553,55 @@ async function refreshAiProjection() {
   renderFocusRoadmap();
 }
 
+async function recalculateDashboardAnalysis() {
+  const athlete = getActiveAthlete();
+  if (!athlete) return;
+  const tests = collect3000Tests(athlete);
+  const localAnalysis = buildChronologicalPerformanceAnalysis(athlete, tests);
+  state.dashboardAnalysis = {
+    ...localAnalysis,
+    athleteId: athlete.id,
+    status: "running",
+    aiText: "IA analisando cronologia, testes, registros de VO2 e carga recente antes de recalcular."
+  };
+  renderDashboard();
+  try {
+    const model = buildFocusModel(athlete);
+    const aiProjection = await api("/api/ai/projection", {
+      method: "POST",
+      body: JSON.stringify({
+        athleteId: athlete.id,
+        athlete,
+        model,
+        chronology: {
+          ...localAnalysis,
+          events: localAnalysis.events.map((event) => ({
+            ...event,
+            date: event.date instanceof Date ?event.date.toISOString().slice(0, 10) : event.date
+          }))
+        },
+        activities: activitiesSince(180).filter(isRunningActivity).slice(-90)
+      })
+    });
+    state.dashboardAnalysis = {
+      ...localAnalysis,
+      athleteId: athlete.id,
+      status: aiProjection?.ok ? "ready" : "local",
+      aiText: aiProjection?.text || localAnalysis.summary,
+      aiModel: aiProjection?.model || "modelo local 11RUN"
+    };
+  } catch (error) {
+    state.dashboardAnalysis = {
+      ...localAnalysis,
+      athleteId: athlete.id,
+      status: "local",
+      aiText: `IA externa indisponivel. Recalculo local aplicado com cronologia: ${localAnalysis.summary}`,
+      aiModel: "modelo local 11RUN"
+    };
+  }
+  renderDashboard();
+}
+
 async function loadAppVersion() {
   const versionTarget = document.querySelector("#appVersion");
   if (!versionTarget) return;
@@ -3661,6 +3854,10 @@ document.addEventListener("click", async (event) => {
   }
   if (event.target.closest("[data-refresh-ai]")) {
     await refreshAiProjection();
+    return;
+  }
+  if (event.target.closest("[data-recalculate-dashboard]")) {
+    await recalculateDashboardAnalysis();
     return;
   }
   const editGoalButton = event.target.closest("[data-edit-goal]");

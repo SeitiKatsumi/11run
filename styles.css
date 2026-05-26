@@ -1846,6 +1846,13 @@ dialog {
   white-space: nowrap;
 }
 
+.goal-analysis-stamp {
+  margin: 10px 0 0;
+  color: rgba(231, 227, 220, 0.52);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
 .goal-probability-visual {
   display: grid;
   justify-items: center;
@@ -2009,6 +2016,32 @@ dialog {
 .vo2-context-list b {
   color: #f1efe9;
   font-weight: 540;
+}
+
+.vo2-ai-analysis {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.vo2-ai-analysis span {
+  display: block;
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 560;
+  text-transform: uppercase;
+}
+
+.vo2-ai-analysis p {
+  margin: 6px 0 0;
+  color: rgba(231, 227, 220, 0.72);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dashboard-recalc {
+  align-self: start;
+  white-space: nowrap;
 }
 
 .performance-chart-panel {
