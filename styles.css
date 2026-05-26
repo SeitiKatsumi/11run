@@ -3226,6 +3226,7 @@ dialog {
   padding: 0;
   border-color: var(--line-strong);
   overflow: hidden;
+  overscroll-behavior: contain;
   background:
     linear-gradient(145deg, rgba(255, 75, 11, 0.08), rgba(255, 255, 255, 0.025) 34%, rgba(0, 0, 0, 0.08)),
     rgba(13, 14, 16, 0.96);
@@ -3242,7 +3243,7 @@ dialog::backdrop {
 }
 
 .workout-dialog {
-  width: min(860px, calc(100vw - 28px));
+  width: min(1120px, calc(100vw - 32px));
 }
 
 .modal-panel {
@@ -3250,9 +3251,15 @@ dialog::backdrop {
   gap: 18px;
   max-height: min(86vh, 820px);
   padding: clamp(22px, 3vw, 32px);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 75, 11, 0.58) rgba(255, 255, 255, 0.06);
+}
+
+.modal-panel *,
+.detail * {
+  min-width: 0;
 }
 
 .modal-panel.is-compact {
@@ -3273,9 +3280,28 @@ dialog::backdrop {
 }
 
 .modal-panel .segmented {
-  width: fit-content;
+  width: max-content;
   max-width: 100%;
   margin-top: -4px;
+  overflow: hidden;
+}
+
+.workout-mode-switch {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  width: min(100%, 520px);
+}
+
+.workout-mode-switch button {
+  min-width: 0;
+}
+
+.workout-mode-switch .system-control-button {
+  white-space: normal;
+}
+
+.workout-mode-switch .system-control-button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .workout-builder-form,
@@ -3293,12 +3319,19 @@ dialog::backdrop {
 
 .workout-row {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 138px), 1fr));
   gap: 12px;
   padding: 14px;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.025);
+}
+
+.workout-row .credential-field span,
+.workout-step label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .workout-structure,
@@ -3346,7 +3379,7 @@ dialog::backdrop {
 
 .workout-step {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr 0.8fr 0.9fr 1.2fr auto;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 148px), 1fr));
   gap: 8px;
   align-items: end;
   padding: 10px;
@@ -3358,6 +3391,11 @@ dialog::backdrop {
 .workout-step label {
   display: grid;
   gap: 5px;
+}
+
+.workout-step .danger-action {
+  min-height: 42px;
+  align-self: end;
 }
 
 .workout-step label span {
@@ -3400,11 +3438,46 @@ dialog::backdrop {
   font-size: 12px;
 }
 
+@media (max-width: 1180px) {
+  .workout-step .danger-action {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 760px) {
+  dialog,
+  .profile-dialog,
+  .workout-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .modal-panel {
+    max-height: calc(100dvh - 16px);
+    padding: 18px;
+  }
+
+  .workout-row,
+  .workout-step,
+  .workout-plan-meta,
+  .workout-range,
+  .activity-feedback-form {
+    grid-template-columns: 1fr;
+  }
+
+  .workout-structure-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 .workout-day-list {
   display: grid;
   gap: 12px;
   max-height: min(42vh, 430px);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 4px;
 }
 
