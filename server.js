@@ -2397,14 +2397,56 @@ async function testStravaConnection(tenantId, athleteUserId) {
 }
 
 function openaiTextFromResponse(payload) {
-  if (payload.output_text) return String(payload.output_text);
+  if (!payload || typeof payload !== "object") return "";
+  if (typeof payload.output_text === "string" && payload.output_text.trim()) return payload.output_text.trim();
   const chunks = [];
-  for (const item of payload.output || []) {
-    for (const content of item.content || []) {
-      if (content.text) chunks.push(content.text);
+  const visit = (value, parentKey = "") => {
+    if (value == null) return;
+    if (typeof value === "string") {
+      const key = String(parentKey || "").toLowerCase();
+      if (["text", "output_text", "content"].includes(key) && value.trim()) chunks.push(value.trim());
+      return;
     }
+    if (Array.isArray(value)) {
+      value.forEach((item) => visit(item, parentKey));
+      return;
+    }
+    if (typeof value !== "object") return;
+    if (typeof value.text === "string" && value.text.trim()) chunks.push(value.text.trim());
+    if (value.text && typeof value.text === "object" && typeof value.text.value === "string" && value.text.value.trim()) {
+      chunks.push(value.text.value.trim());
+    }
+    if (typeof value.output_text === "string" && value.output_text.trim()) chunks.push(value.output_text.trim());
+    Object.entries(value).forEach(([key, nested]) => {
+      if (["id", "object", "model", "status", "role", "type"].includes(key)) return;
+      visit(nested, key);
+    });
+  };
+  visit(payload);
+  return [...new Set(chunks)].join("\n").trim();
+}
+
+async function callOpenAiResponse(apiKey, model, prompt, maxOutputTokens = 420) {
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model,
+      input: prompt,
+      max_output_tokens: maxOutputTokens
+    })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw httpError(payload.error?.message || `OpenAI respondeu HTTP ${response.status}.`, response.status);
   }
-  return chunks.join("\n").trim();
+  return {
+    payload,
+    text: openaiTextFromResponse(payload)
+  };
 }
 
 async function generateAiProjection(tenantId, input = {}) {
@@ -2429,6 +2471,13 @@ async function generateAiProjection(tenantId, input = {}) {
     JSON.stringify(input, null, 2)
   ].join("\n");
 
+  const aiResult = await callOpenAiResponse(apiKey, model, prompt, 520);
+  return {
+    ok: true,
+    model,
+    text: aiResult.text || "A IA respondeu sem texto extraível. Verifique se o modelo configurado suporta saída textual na Responses API."
+  };
+
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -2449,6 +2498,20 @@ async function generateAiProjection(tenantId, input = {}) {
     ok: true,
     model,
     text: openaiTextFromResponse(payload) || "A IA não retornou texto para esta análise."
+  };
+}
+
+async function testOpenAiSettings(tenantId) {
+  const settings = await getRawAppSettings(tenantId);
+  const apiKey = settings.openai_api_key || settings.openaiApiKey || process.env.OPENAI_API_KEY || "";
+  const model = settings.openai_model || settings.openaiModel || DEFAULT_OPENAI_MODEL;
+  const enabled = Boolean(settings.openai_enabled || settings.openaiEnabled || process.env.OPENAI_API_KEY);
+  if (!enabled || !apiKey) throw httpError("IA externa não configurada ou desativada.", 400);
+  const result = await callOpenAiResponse(apiKey, model, "Responda exatamente com uma frase curta em português confirmando: IA 11RUN operacional.", 80);
+  return {
+    ok: Boolean(result.text),
+    model,
+    text: result.text || "Chamada aceita, mas sem texto extraível."
   };
 }
 
@@ -2846,6 +2909,13 @@ async function handleApi(req, res, url) {
         throw httpError("Usuario sem permissao para analisar este atleta.", 403);
       }
       sendJson(res, 200, await generateAiProjection(tenant.id, { ...body, athleteUserId }));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/ai/test") {
+      const { tenant, user } = await contextFromReq(req);
+      requireRole(user, ["admin"]);
+      sendJson(res, 200, await testOpenAiSettings(tenant.id));
       return;
     }
 

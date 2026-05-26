@@ -355,7 +355,7 @@ function applyI18n() {
 }
 
 async function api(path, options = {}) {
-  const scopedPaths = ["/api/integrations", "/api/activities", "/api/goals", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich", "/api/ai/projection"];
+  const scopedPaths = ["/api/integrations", "/api/activities", "/api/goals", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich", "/api/ai/projection", "/api/ai/test"];
   const shouldScopeAthlete = scopedPaths.some((prefix) => path.startsWith(prefix));
   const athleteHeaders = shouldScopeAthlete && state.selectedAthleteId ?{ "X-Athlete-Id": state.selectedAthleteId } : {};
   const response = await fetch(path, {
@@ -3924,6 +3924,18 @@ async function saveAiSettings(event) {
   }
 }
 
+async function testOpenAiSettings() {
+  if (!isSuperAdmin()) return;
+  const target = document.querySelector("#aiSettingsMessage");
+  if (target) target.textContent = "Testando IA configurada...";
+  try {
+    const result = await api("/api/ai/test", { method: "POST", body: JSON.stringify({}) });
+    if (target) target.textContent = `IA operacional (${result.model}): ${result.text}`;
+  } catch (error) {
+    if (target) target.textContent = `Falha no teste da IA: ${error.message}`;
+  }
+}
+
 async function refreshAiProjection() {
   const athlete = getActiveAthlete();
   if (!athlete) return;
@@ -4238,6 +4250,10 @@ document.addEventListener("click", async (event) => {
   }
   if (event.target.closest("[data-test-strava]")) {
     await testStrava();
+    return;
+  }
+  if (event.target.closest("[data-test-openai]")) {
+    await testOpenAiSettings();
     return;
   }
   if (event.target.closest("[data-refresh-ai]")) {
