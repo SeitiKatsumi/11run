@@ -354,6 +354,45 @@ function applyI18n() {
   });
 }
 
+const controlIconPaths = {
+  month: `<rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M8 2v4M16 2v4M3 10h18"></path>`,
+  quarter: `<path d="M4 5h16M4 12h16M4 19h16"></path><path d="M8 5v14M14 5v14"></path>`,
+  semester: `<path d="M4 6h16v12H4z"></path><path d="M8 6v12M12 6v12M16 6v12"></path>`,
+  year: `<circle cx="12" cy="12" r="8"></circle><path d="M12 4v16M4 12h16"></path>`,
+  athlete: `<circle cx="12" cy="8" r="3.2"></circle><path d="M5 20c1.3-3.6 4-5.4 7-5.4s5.7 1.8 7 5.4"></path>`,
+  coach: `<path d="M4 19V5l8-2 8 2v14"></path><path d="M8 11h8M8 15h5"></path>`,
+  team: `<circle cx="8" cy="9" r="2.5"></circle><circle cx="16" cy="9" r="2.5"></circle><path d="M4 20c.8-3.1 2.4-4.6 4-4.6s3.2 1.5 4 4.6M12 20c.8-3.1 2.4-4.6 4-4.6s3.2 1.5 4 4.6"></path>`,
+  admin: `<path d="M12 3l7 3v5c0 4.6-2.8 7.9-7 10-4.2-2.1-7-5.4-7-10V6l7-3z"></path><path d="M9 12l2 2 4-5"></path>`,
+  single: `<path d="M12 3v18"></path><path d="M7 8h10M7 16h10"></path>`,
+  week: `<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 14h.01M12 14h.01M16 14h.01"></path>`,
+  audio: `<path d="M12 4v16"></path><path d="M8 8v8M16 8v8M4 11v2M20 11v2"></path>`,
+  workout: `<path d="M6 19V5"></path><path d="M18 19V5"></path><path d="M3 9h3M18 9h3M3 15h3M18 15h3M8 12h8"></path>`
+};
+
+function controlIconSvg(key) {
+  return `<svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true">${controlIconPaths[key] || controlIconPaths.single}</svg>`;
+}
+
+function enhanceSystemControls() {
+  const controls = [
+    ...document.querySelectorAll("[data-calendar-view]"),
+    ...document.querySelectorAll("[data-admin-mode]"),
+    ...document.querySelectorAll("[data-workout-mode]"),
+    ...document.querySelectorAll("[data-open-workout-builder]")
+  ];
+  controls.forEach((button) => {
+    if (button.dataset.controlEnhanced === "1") return;
+    const label = button.textContent.trim();
+    const key = button.dataset.calendarView
+      || button.dataset.adminMode
+      || button.dataset.workoutMode
+      || (button.matches("[data-open-workout-builder]") ? "workout" : "single");
+    button.dataset.controlEnhanced = "1";
+    button.classList.add("system-control-button");
+    button.innerHTML = `${controlIconSvg(key)}<span>${escapeHtml(label)}</span>`;
+  });
+}
+
 async function api(path, options = {}) {
   const scopedPaths = ["/api/integrations", "/api/activities", "/api/goals", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich", "/api/ai/projection", "/api/ai/test"];
   const shouldScopeAthlete = scopedPaths.some((prefix) => path.startsWith(prefix));
@@ -1458,6 +1497,7 @@ function openWorkoutDialog() {
     </section>
   `;
   modal.showModal();
+  enhanceSystemControls();
   applyWorkoutMode("single");
 }
 
@@ -3096,7 +3136,7 @@ function renderAthletes() {
         <span>${escapeHtml(athlete.email)}</span>
         <span>${escapeHtml(athlete.roleLabel || "Atleta")}</span>
         <span>${escapeHtml(athlete.teamName || "Sem equipe")}</span>
-        <span>${escapeHtml(athlete.coachName || "Sem treinador")}</span>
+        <span>${athlete.role === "athlete" ?escapeHtml(athlete.coachName || "Sem treinador") : "--"}</span>
         <span>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</span>
       </button>
       ${athlete.isTeamRecord ? "" : `<div class="athlete-item-actions">
@@ -3108,7 +3148,7 @@ function renderAthletes() {
           <p><strong>Perfil:</strong> ${escapeHtml(athlete.roleLabel || athlete.role || "Atleta")}</p>
           <p><strong>Dados:</strong> ${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
           <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "Não tenho")}</p>
-          <p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "Não tenho")}</p>
+          ${athlete.role === "athlete" ?`<p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "Não tenho")}</p>` : ""}
           ${coachDetails}
           ${teamDetails}
           ${requestDetails}
@@ -3765,6 +3805,9 @@ function renderAdminMode() {
   document.querySelectorAll(".admin-athlete-field").forEach((field) => {
     field.hidden = isCoach || isTeam || isAdminMode;
   });
+  document.querySelectorAll(".admin-team-link-field").forEach((field) => {
+    field.hidden = isTeam || isAdminMode;
+  });
   document.querySelectorAll(".admin-coach-field").forEach((field) => {
     field.hidden = !isCoach;
   });
@@ -3788,6 +3831,7 @@ function editAdminUser(athleteId) {
   form.elements.whatsapp.value = athlete.whatsapp || "";
   if (form.elements.teamName) form.elements.teamName.value = athlete.teamName || "";
   if (form.elements.coachEmail) form.elements.coachEmail.value = athlete.coachEmail || "";
+  if (form.elements.focusDistanceM) form.elements.focusDistanceM.value = athlete.focusDistanceM || "";
   if (form.elements.education) form.elements.education.value = profile.education || "";
   if (form.elements.skills) form.elements.skills.value = profile.skills || "";
   if (form.elements.experience) form.elements.experience.value = profile.experience || "";
@@ -3808,12 +3852,13 @@ async function saveAdminUser(event) {
     body.role = "admin";
     body.teamName = "";
     body.coachEmail = "";
+    body.focusDistanceM = "";
     body.profileData = {};
   }
   if (state.adminMode === "coach") {
     body.role = "coach";
-    body.teamName = "";
     body.coachEmail = "";
+    body.focusDistanceM = "";
     body.profileData = {
       education: body.education || "",
       skills: body.skills || "",
@@ -4148,6 +4193,7 @@ async function boot() {
   renderTrainingInsights();
   renderDashboard();
   applyI18n();
+  enhanceSystemControls();
   renderDirectoryOptions(getCurrentUserAthlete());
   renderAdminMode();
   if (state.view === "athlete") editCurrentUserProfile();

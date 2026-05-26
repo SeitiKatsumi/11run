@@ -518,13 +518,45 @@ dialog {
   padding: 0 12px;
   background: transparent;
   color: var(--muted);
-  font-weight: 560;
+  font-weight: 520;
   text-transform: uppercase;
 }
 
 .segmented button.is-active {
   color: #f0ece5;
   background: rgba(255, 75, 11, 0.92);
+}
+
+.system-control-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 520;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.system-control-button .control-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.88;
+}
+
+.primary-action.system-control-button,
+.secondary-action.system-control-button,
+.segmented button.system-control-button {
+  font-size: 13px;
+  font-weight: 520;
 }
 
 .icon-button {
