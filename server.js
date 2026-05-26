@@ -2045,6 +2045,135 @@ async function updateActivityFeedback(tenantId, athleteUserId, activityId, feedb
   return listActivities(tenantId, athleteUserId);
 }
 
+async function updateActivityDetails(tenantId, athleteUserId, activityId, input = {}) {
+  const cleanActivityId = String(activityId || "").trim();
+  if (!cleanActivityId) throw httpError("Atividade invalida.", 400);
+  const date = formatDateOnly(input.date || new Date());
+  if (!date || Number.isNaN(new Date(`${date}T00:00:00`).getTime())) {
+    throw httpError("Informe uma data valida para o treino.", 400);
+  }
+  const title = String(input.title || "").trim() || "Treino";
+  const description = String(input.description || "").trim();
+  const distance = String(input.distance || "").trim();
+  const status = normalizeActivityStatus(input.status, "executed");
+  const scheduledTime = String(input.scheduledTime || "").trim().slice(0, 8);
+  const trainingType = normalizeTrainingType(input.trainingType);
+  const distanceMeters = parseDistanceToMeters(distance);
+
+  if (!pool) {
+    const activities = readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
+    const index = activities.findIndex((item) => String(item.id) === cleanActivityId);
+    if (index < 0) throw httpError("Atividade nao encontrada para este atleta.", 404);
+    const item = activities[index];
+    if (athleteUserId && String(item.athleteUserId || "") !== String(athleteUserId)) {
+      throw httpError("Atividade nao encontrada para este atleta.", 404);
+    }
+    const raw = {
+      ...(item.raw || {}),
+      status,
+      scheduledTime,
+      description,
+      trainingType,
+      distance: distanceMeters || (item.raw || {}).distance || 0
+    };
+    const analysis = calculateRunAnalysis(raw);
+    activities[index] = {
+      ...item,
+      date,
+      title,
+      description,
+      distance: distance || item.distance || "",
+      status,
+      scheduledTime,
+      trainingType,
+      load: String(analysis.aggressionScore || item.load || ""),
+      analysis,
+      raw
+    };
+    writeJson(ACTIVITIES_FILE, activities);
+    return listActivities(tenantId, athleteUserId);
+  }
+
+  const separator = cleanActivityId.indexOf("-");
+  if (separator < 0) throw httpError("Identificador de atividade invalido.", 400);
+  const provider = cleanActivityId.slice(0, separator);
+  const providerActivityId = cleanActivityId.slice(separator + 1);
+  if (!provider || !providerActivityId) throw httpError("Identificador de atividade invalido.", 400);
+  const current = await getActivityByApiId(tenantId, athleteUserId, cleanActivityId);
+  if (!current) throw httpError("Atividade nao encontrada para este atleta.", 404);
+  const raw = {
+    ...(current.raw || {}),
+    status,
+    scheduledTime,
+    description,
+    trainingType,
+    distance: distanceMeters || (current.raw || {}).distance || 0
+  };
+  const analysis = calculateRunAnalysis(raw);
+  const updated = await query(
+    `UPDATE activities
+        SET activity_date = $5,
+            title = $6,
+            description = $7,
+            distance = $8,
+            status = $9,
+            load = $10,
+            raw = $11::jsonb,
+            updated_at = now()
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND lower(provider) = lower($3)
+        AND provider_activity_id = $4
+      RETURNING provider_activity_id`,
+    [
+      tenantId,
+      athleteUserId,
+      provider,
+      providerActivityId,
+      date,
+      title,
+      description,
+      distance || current.distance || "",
+      status,
+      String(analysis.aggressionScore || current.load || ""),
+      JSON.stringify({ ...raw, analysis })
+    ]
+  );
+  if (!updated.rows[0]) throw httpError("Atividade nao encontrada para este atleta.", 404);
+  return listActivities(tenantId, athleteUserId);
+}
+
+async function deleteActivity(tenantId, athleteUserId, activityId) {
+  const cleanActivityId = String(activityId || "").trim();
+  if (!cleanActivityId) throw httpError("Atividade invalida.", 400);
+  if (!pool) {
+    const activities = readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
+    const next = activities.filter((item) => {
+      if (String(item.id) !== cleanActivityId) return true;
+      return athleteUserId && String(item.athleteUserId || "") !== String(athleteUserId);
+    });
+    if (next.length === activities.length) throw httpError("Atividade nao encontrada para este atleta.", 404);
+    writeJson(ACTIVITIES_FILE, next);
+    return listActivities(tenantId, athleteUserId);
+  }
+  const separator = cleanActivityId.indexOf("-");
+  if (separator < 0) throw httpError("Identificador de atividade invalido.", 400);
+  const provider = cleanActivityId.slice(0, separator);
+  const providerActivityId = cleanActivityId.slice(separator + 1);
+  if (!provider || !providerActivityId) throw httpError("Identificador de atividade invalido.", 400);
+  const deleted = await query(
+    `DELETE FROM activities
+      WHERE tenant_id = $1
+        AND athlete_user_id = $2
+        AND lower(provider) = lower($3)
+        AND provider_activity_id = $4
+      RETURNING provider_activity_id`,
+    [tenantId, athleteUserId, provider, providerActivityId]
+  );
+  if (!deleted.rows[0]) throw httpError("Atividade nao encontrada para este atleta.", 404);
+  return listActivities(tenantId, athleteUserId);
+}
+
 async function resolveAthleteIdFromActivity(tenantId, activityId) {
   const cleanActivityId = String(activityId || "").trim();
   if (!cleanActivityId) return "";
@@ -3092,6 +3221,32 @@ async function handleApi(req, res, url) {
         throw httpError("Usuário sem permissão para alterar esta atividade.", 403);
       }
       const activities = await updateActivityStatus(tenant.id, targetAthleteId, body.activityId, body.status);
+      sendJson(res, 200, { ok: true, activities });
+      return;
+    }
+
+    if (req.method === "PUT" && url.pathname === "/api/activities") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      const targetAthleteId = athleteUserId || await resolveAthleteIdFromActivity(tenant.id, body.activityId);
+      if (!targetAthleteId || !(await canAccessAthlete(tenant.id, user, targetAthleteId))) {
+        throw httpError("Usuario sem permissao para editar esta atividade.", 403);
+      }
+      const activities = await updateActivityDetails(tenant.id, targetAthleteId, body.activityId, body);
+      sendJson(res, 200, { ok: true, activities });
+      return;
+    }
+
+    if (req.method === "DELETE" && url.pathname === "/api/activities") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      const targetAthleteId = athleteUserId || await resolveAthleteIdFromActivity(tenant.id, body.activityId);
+      if (!targetAthleteId || !(await canAccessAthlete(tenant.id, user, targetAthleteId))) {
+        throw httpError("Usuario sem permissao para excluir esta atividade.", 403);
+      }
+      const activities = await deleteActivity(tenant.id, targetAthleteId, body.activityId);
       sendJson(res, 200, { ok: true, activities });
       return;
     }

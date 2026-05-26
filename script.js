@@ -2949,6 +2949,31 @@ function openActivity(activityId) {
         <div><span class="metric-label">Pace</span><strong>${escapeHtml(activity.pace)}</strong></div>
         <div><span class="metric-label">Carga</span><strong>${escapeHtml(activity.load)}</strong></div>
       </div>
+      <div class="activity-edit-form">
+        <span class="kicker">Editar treino</span>
+        <div class="workout-day-row">
+          <label class="credential-field"><span>Data</span><input name="date" type="date" value="${escapeHtml(activity.date || "")}" /></label>
+          <label class="credential-field"><span>Horario</span><input name="scheduledTime" type="time" value="${escapeHtml(activity.scheduledTime || activity.raw?.scheduledTime || "")}" /></label>
+          <label class="credential-field">
+            <span>Status</span>
+            <select name="status">
+              <option value="executed" ${status === "executed" ?"selected" : ""}>Executado</option>
+              <option value="planned" ${status === "planned" ?"selected" : ""}>Planejado</option>
+            </select>
+          </label>
+          <label class="credential-field"><span>Titulo</span><input name="title" value="${escapeHtml(activity.title || "")}" /></label>
+          <label class="credential-field"><span>Distancia</span><input name="distance" value="${escapeHtml(activity.distance || "")}" /></label>
+        </div>
+        <label class="credential-field wide-field"><span>Descricao</span><textarea name="description" rows="3">${escapeHtml(activity.description || "")}</textarea></label>
+        <label class="credential-field">
+          <span>Tipo de treino</span>
+          <select name="trainingType">${trainingTypeOptionsHtml(trainingType)}</select>
+        </label>
+        <div class="provider-actions">
+          <button class="primary-action compact" type="button" data-save-activity-details="${escapeHtml(activity.id)}">Salvar alteracoes</button>
+          <button class="danger-action compact" type="button" data-delete-activity="${escapeHtml(activity.id)}">Excluir treino</button>
+        </div>
+      </div>
       ${workoutPlanPanel}
       ${analysisPanel}
       <div class="activity-feedback-form">
@@ -3014,6 +3039,65 @@ async function saveActivityFeedback(activityId) {
   } catch (error) {
     setLog([error.message || "Não foi possível salvar a percepção da atividade."], true);
     window.alert(error.message || "Não foi possível salvar a percepção da atividade.");
+  }
+}
+
+async function saveActivityDetails(activityId) {
+  const wrapper = detail.querySelector(".activity-edit-form");
+  if (!wrapper) return;
+  const button = wrapper.querySelector("[data-save-activity-details]");
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Salvando...";
+  }
+  const body = {
+    activityId,
+    date: wrapper.querySelector('[name="date"]')?.value || "",
+    scheduledTime: wrapper.querySelector('[name="scheduledTime"]')?.value || "",
+    status: wrapper.querySelector('[name="status"]')?.value || "executed",
+    title: wrapper.querySelector('[name="title"]')?.value || "",
+    distance: wrapper.querySelector('[name="distance"]')?.value || "",
+    description: wrapper.querySelector('[name="description"]')?.value || "",
+    trainingType: wrapper.querySelector('[name="trainingType"]')?.value || "Treino"
+  };
+  try {
+    const payload = await api("/api/activities", {
+      method: "PUT",
+      body: JSON.stringify(body)
+    });
+    state.activities = payload.activities || [];
+    renderCalendar();
+    renderDashboard();
+    renderTrainingInsights();
+    if (dialog.open) openActivity(activityId);
+    setLog(["Treino atualizado."]);
+  } catch (error) {
+    setLog([error.message || "Nao foi possivel editar o treino."], true);
+    window.alert(error.message || "Nao foi possivel editar o treino.");
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "Salvar alteracoes";
+    }
+  }
+}
+
+async function deleteActivityFromDetail(activityId) {
+  if (!window.confirm("Excluir este treino definitivamente?")) return;
+  try {
+    const payload = await api("/api/activities", {
+      method: "DELETE",
+      body: JSON.stringify({ activityId })
+    });
+    state.activities = payload.activities || [];
+    renderCalendar();
+    renderDashboard();
+    renderTrainingInsights();
+    dialog.close();
+    setLog(["Treino excluido."]);
+  } catch (error) {
+    setLog([error.message || "Nao foi possivel excluir o treino."], true);
+    window.alert(error.message || "Nao foi possivel excluir o treino.");
   }
 }
 
@@ -4740,6 +4824,20 @@ document.addEventListener("click", async (event) => {
     event.preventDefault();
     event.stopPropagation();
     await saveActivityFeedback(feedbackButton.dataset.saveActivityFeedback);
+    return;
+  }
+  const activityDetailsButton = event.target.closest("[data-save-activity-details]");
+  if (activityDetailsButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    await saveActivityDetails(activityDetailsButton.dataset.saveActivityDetails);
+    return;
+  }
+  const deleteActivityButton = event.target.closest("[data-delete-activity]");
+  if (deleteActivityButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    await deleteActivityFromDetail(deleteActivityButton.dataset.deleteActivity);
     return;
   }
 });
