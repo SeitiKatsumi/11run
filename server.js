@@ -598,12 +598,27 @@ function formatAthlete(row) {
     bestTime: row.best_time_seconds == null ?"" : formatDuration(row.best_time_seconds),
     historyNotes: row.history_notes || "",
     historyTimeline: Array.isArray(historyTimeline) ?historyTimeline.map((entry) => ({
+      id: entry.id || "",
       type: entry.type || "context",
       startDate: entry.startDate || "",
       endDate: entry.endDate || "",
+      time: entry.time || "",
       title: entry.title || "",
       description: entry.description || "",
-      vo2: entry.vo2 || ""
+      originalContent: entry.originalContent || entry.description || "",
+      vo2: entry.vo2 || "",
+      weightKg: entry.weightKg || "",
+      heartRate: entry.heartRate || "",
+      power: entry.power || "",
+      pace: entry.pace || "",
+      sleepHours: entry.sleepHours || "",
+      perceivedEffort: entry.perceivedEffort || "",
+      painScore: entry.painScore === 0 ?0 : entry.painScore || "",
+      tags: Array.isArray(entry.tags) ?entry.tags : [],
+      importance: entry.importance || "",
+      relation: entry.relation || "",
+      possibleImpact: entry.possibleImpact || "",
+      createdAt: entry.createdAt || ""
     })) : [],
     tests3000: Array.isArray(tests3000) ?tests3000.map((test) => ({
       date: test.date || "",
@@ -655,6 +670,62 @@ function validateHistoryTimeline(value) {
       return { type, startDate, endDate, title, description, vo2: vo2 || "" };
     })
     .filter(Boolean);
+}
+
+function validateHistoryTimelineV2(value) {
+  const input = Array.isArray(value) ?value : [];
+  return input.slice(0, 500).map((item) => {
+    const startDate = String(item.startDate || "").trim();
+    const endDate = String(item.endDate || "").trim();
+    const allowedTypes = new Set(["context", "training", "sensation", "pain", "recovery", "nutrition", "competition", "test", "vo2", "weight", "routine"]);
+    const type = allowedTypes.has(String(item.type || "")) ?String(item.type) : "context";
+    const title = String(item.title || "").trim().slice(0, 140);
+    const description = String(item.description || "").trim().slice(0, 2400);
+    const originalContent = String(item.originalContent || description || title).trim().slice(0, 2600);
+    const time = String(item.time || "").trim().slice(0, 5);
+    const vo2 = item.vo2 === "" || item.vo2 == null ?"" : Number(item.vo2);
+    const weightKg = item.weightKg === "" || item.weightKg == null ?"" : Number(item.weightKg);
+    const heartRate = item.heartRate === "" || item.heartRate == null ?"" : Number(item.heartRate);
+    const power = item.power === "" || item.power == null ?"" : Number(item.power);
+    const sleepHours = item.sleepHours === "" || item.sleepHours == null ?"" : Number(item.sleepHours);
+    const perceivedEffort = item.perceivedEffort === "" || item.perceivedEffort == null ?"" : Number(item.perceivedEffort);
+    const painScore = item.painScore === "" || item.painScore == null ?"" : Number(item.painScore);
+    if (!startDate && !endDate && !title && !description && !vo2 && !weightKg && !heartRate && !power) return null;
+    if (!startDate || Number.isNaN(new Date(`${startDate}T00:00:00`).getTime())) throw new Error("Informe a data de início em cada item do histórico.");
+    if (time && !/^\d{2}:\d{2}$/.test(time)) throw new Error("Informe o horário no formato HH:mm.");
+    if (vo2 && (!Number.isFinite(vo2) || vo2 < 1 || vo2 > 100)) throw new Error("Informe um VO2 válido no histórico.");
+    if (weightKg && (!Number.isFinite(weightKg) || weightKg <= 0)) throw new Error("Informe um peso válido no histórico.");
+    if (heartRate && (!Number.isFinite(heartRate) || heartRate <= 0)) throw new Error("Informe uma FC válida no histórico.");
+    if (power && (!Number.isFinite(power) || power <= 0)) throw new Error("Informe uma potência válida no histórico.");
+    if (sleepHours !== "" && (!Number.isFinite(sleepHours) || sleepHours < 0 || sleepHours > 24)) throw new Error("Informe sono entre 0 e 24 horas.");
+    if (perceivedEffort !== "" && (!Number.isFinite(perceivedEffort) || perceivedEffort < 1 || perceivedEffort > 10)) throw new Error("Informe esforço de 1 a 10.");
+    if (painScore !== "" && (!Number.isFinite(painScore) || painScore < 0 || painScore > 10)) throw new Error("Informe dor de 0 a 10.");
+    if (endDate && Number.isNaN(new Date(`${endDate}T00:00:00`).getTime())) throw new Error("Informe uma data de fim válida no histórico.");
+    if (endDate && endDate < startDate) throw new Error("A data de fim não pode ser menor que a data de início.");
+    return {
+      id: String(item.id || crypto.randomUUID()).slice(0, 80),
+      type,
+      startDate,
+      endDate,
+      time,
+      title,
+      description,
+      originalContent,
+      vo2: vo2 || "",
+      weightKg: weightKg || "",
+      heartRate: heartRate || "",
+      power: power || "",
+      pace: String(item.pace || "").trim().slice(0, 16),
+      sleepHours: sleepHours === 0 ?0 : sleepHours || "",
+      perceivedEffort: perceivedEffort || "",
+      painScore: painScore === 0 ?0 : painScore || "",
+      tags: Array.isArray(item.tags) ?item.tags.map((tag) => String(tag).slice(0, 32)).slice(0, 16) : [],
+      importance: String(item.importance || "").trim().slice(0, 24),
+      relation: String(item.relation || "").trim().slice(0, 120),
+      possibleImpact: String(item.possibleImpact || "").trim().slice(0, 260),
+      createdAt: String(item.createdAt || new Date().toISOString()).slice(0, 40)
+    };
+  }).filter(Boolean);
 }
 
 function parseTimeToSeconds(value) {
@@ -864,7 +935,7 @@ function validateAthlete(input, actorUser = null) {
   const bestTimeSeconds = parseTimeToSeconds(input.bestTime || input.bestTimeSeconds);
   const targetDate = String(input.targetDate || "").trim();
   const historyNotes = String(input.historyNotes || "").trim().slice(0, 4000);
-  const historyTimeline = validateHistoryTimeline(input.historyTimeline);
+  const historyTimeline = validateHistoryTimelineV2(input.historyTimeline);
   const tests3000 = validateTests3000(input.tests3000);
   const profileData = parseJsonObject(input.profileData);
   const requestedRole = String(input.role || "athlete").trim();

@@ -2655,19 +2655,147 @@ dialog {
 
 .history-timeline-list {
   display: grid;
-  gap: 10px;
+  gap: 14px;
   margin-bottom: 10px;
 }
 
-.history-entry-row {
+.history-composer,
+.history-record-card,
+.history-dossier {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
-  padding: 10px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 75, 11, 0.07), rgba(255, 255, 255, 0.02) 42%),
+    rgba(255, 255, 255, 0.02);
+}
+
+.history-composer-grid,
+.history-metric-grid {
   display: grid;
-  grid-template-columns: 0.8fr 0.8fr minmax(0, 1fr) minmax(0, 1.4fr) auto;
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
   align-items: end;
-  background: rgba(255, 255, 255, 0.02);
+}
+
+.history-metric-grid {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  margin-top: 10px;
+}
+
+.history-actions,
+.history-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.history-toolbar {
+  justify-content: space-between;
+}
+
+.history-counter {
+  display: grid;
+  justify-items: end;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.history-counter strong {
+  color: #f1efe9;
+  font-size: 22px;
+  font-weight: 560;
+}
+
+.history-output:empty {
+  display: none;
+}
+
+.history-month-group {
+  display: grid;
+  gap: 10px;
+}
+
+.history-month-group h4 {
+  margin: 8px 0 0;
+  color: var(--orange);
+  font-size: 11px;
+  font-weight: 560;
+  text-transform: uppercase;
+}
+
+.history-record-card {
+  margin-top: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.history-record-card summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 13px;
+  cursor: pointer;
+}
+
+.history-record-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.history-record-card span,
+.history-dossier .section-title span {
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 560;
+  text-transform: uppercase;
+}
+
+.history-record-card strong {
+  display: block;
+  margin-top: 5px;
+  color: #f1efe9;
+  font-size: 15px;
+}
+
+.history-record-card p {
+  margin: 5px 0 0;
+  color: rgba(231, 227, 220, 0.68);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.history-record-meta,
+.history-dossier-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 13px 13px;
+}
+
+.history-record-meta small,
+.history-dossier-grid small {
+  padding: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.history-record-meta b,
+.history-dossier-grid b {
+  display: block;
+  margin-bottom: 4px;
+  color: #f1efe9;
+}
+
+.history-dossier p {
+  margin: 9px 0 0;
+  color: rgba(231, 227, 220, 0.74);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .wide-field {
@@ -3307,6 +3435,13 @@ dialog::backdrop {
 }
 
 @media (max-width: 1080px) {
+  .history-composer-grid,
+  .history-metric-grid,
+  .history-record-meta,
+  .history-dossier-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .training-grid,
   .settings-grid,
   .athlete-grid,
@@ -3345,6 +3480,14 @@ dialog::backdrop {
 }
 
 @media (max-width: 900px) {
+  .history-composer-grid,
+  .history-metric-grid,
+  .history-record-meta,
+  .history-dossier-grid,
+  .history-record-card summary {
+    grid-template-columns: 1fr;
+  }
+
   .menu-toggle,
   .shell.rail-collapsed .menu-toggle {
     left: 14px;

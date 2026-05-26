@@ -13,6 +13,9 @@ const state = {
   appSettings: null,
   aiProjection: null,
   dashboardAnalysis: null,
+  historyTimelineDraft: [],
+  historyTimelineFilter: "all",
+  historyTimelineOutput: null,
   editingAthleteId: "",
   editingAdminUserId: "",
   adminMode: "athlete",
@@ -1898,14 +1901,26 @@ function estimateVo2From3000(athlete, tests) {
 }
 
 function athleteHistoryText(athlete) {
-  const timeline = Array.isArray(athlete?.historyTimeline) ?athlete.historyTimeline : [];
+  const timeline = (Array.isArray(athlete?.historyTimeline) ?athlete.historyTimeline : []).map(normalizeHistoryEntry);
   const timelineText = timeline.map((entry) => [
     entry.startDate,
     entry.endDate,
+    entry.time,
     entry.type,
     entry.title,
     entry.description,
-    entry.vo2 ?`VO2 ${entry.vo2}` : ""
+    entry.originalContent,
+    entry.tags?.join(" "),
+    entry.importance,
+    entry.relation,
+    entry.vo2 ?`VO2 ${entry.vo2}` : "",
+    entry.weightKg ?`peso ${entry.weightKg}` : "",
+    entry.heartRate ?`FC ${entry.heartRate}` : "",
+    entry.power ?`potencia ${entry.power}` : "",
+    entry.pace ?`ritmo ${entry.pace}` : "",
+    entry.sleepHours ?`sono ${entry.sleepHours}` : "",
+    entry.perceivedEffort ?`esforco ${entry.perceivedEffort}` : "",
+    entry.painScore !== "" && entry.painScore != null ?`dor ${entry.painScore}` : ""
   ].filter(Boolean).join(" ")).join(" ");
   return `${athlete?.historyNotes || ""} ${timelineText}`.trim();
 }
@@ -1933,7 +1948,7 @@ function chronologyWeight(date) {
 }
 
 function buildChronologicalPerformanceAnalysis(athlete, tests = collect3000Tests(athlete)) {
-  const historyEntries = Array.isArray(athlete?.historyTimeline) ?athlete.historyTimeline : [];
+  const historyEntries = (Array.isArray(athlete?.historyTimeline) ?athlete.historyTimeline : []).map(normalizeHistoryEntry);
   const events = [];
   tests.forEach((test) => {
     if (!test?.date) return;
@@ -1951,9 +1966,12 @@ function buildChronologicalPerformanceAnalysis(athlete, tests = collect3000Tests
     events.push({
       date,
       type: entry.type === "vo2" ?"vo2" : "historico",
-      label: [entry.title, entry.description, entry.vo2 ?`VO2 ${entry.vo2}` : ""].filter(Boolean).join(" - "),
+      label: [entry.title, entry.description, entry.originalContent, entry.tags?.join(" "), entry.vo2 ?`VO2 ${entry.vo2}` : "", entry.painScore !== "" ?`dor ${entry.painScore}` : ""].filter(Boolean).join(" - "),
       weight: chronologyWeight(date),
-      vo2: Number(entry.vo2 || 0)
+      vo2: Number(entry.vo2 || 0),
+      importance: entry.importance,
+      relation: entry.relation,
+      possibleImpact: entry.possibleImpact
     });
   });
   activitiesSince(180).filter(isRunningActivity).forEach((activity) => {
@@ -2017,6 +2035,117 @@ function buildChronologicalPerformanceAnalysis(athlete, tests = collect3000Tests
     probabilityModifier,
     summary
   };
+}
+
+function buildPerformanceDossier(athlete = getActiveAthlete()) {
+  const tests = collect3000Tests(athlete);
+  const chronology = buildChronologicalPerformanceAnalysis(athlete, tests);
+  const recent90 = activitiesSince(90).filter(isRunningActivity);
+  const recent30 = activitiesSince(30).filter(isRunningActivity);
+  const previous30 = activitiesBetweenDays(60, 31).filter(isRunningActivity);
+  const volume90 = recent90.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const volume30 = recent30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const previousVolume30 = previous30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss90 = recent90.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const hardSessions = recent90.filter((activity) => activityTss(activity) >= 85 || /interval|tiro|forte|prova|teste/i.test(activity.trainingType || activity.title || "")).length;
+  const entries = (Array.isArray(athlete?.historyTimeline) ?athlete.historyTimeline : []).map(normalizeHistoryEntry);
+  const riskEntries = entries.filter((entry) => entry.tags?.includes("risco") || entry.type === "pain");
+  const positiveEntries = entries.filter((entry) => entry.tags?.includes("evolucao"));
+  const vo2Entries = entries.filter((entry) => entry.type === "vo2" && Number(entry.vo2 || 0) > 0);
+  const latestTest = latest3000Test(tests);
+  const vo2 = estimateVo2From3000(athlete, tests);
+  const weeklyVolume = volume90 / Math.max(1, 90 / 7);
+  const weeklySessions = recent90.length / Math.max(1, 90 / 7);
+  const volumeTrend = previousVolume30 ?((volume30 - previousVolume30) / previousVolume30) * 100 : 0;
+  const fatigueScore = Math.max(0, Math.min(100,
+    (hardSessions / Math.max(1, recent90.length)) * 35
+    + Math.max(0, volumeTrend) * 0.45
+    + riskEntries.length * 8
+    + entries.filter((entry) => /fadiga|cansa|sono ruim|dor/i.test(`${entry.title} ${entry.description}`)).length * 7
+  ));
+  const injuryRisk = Math.max(0, Math.min(100, riskEntries.length * 16 + Math.max(0, volumeTrend - 20) * 0.7 + (fatigueScore > 65 ?18 : 0)));
+  const confidence = Math.round(Math.max(42, Math.min(94, 52 + tests.length * 7 + vo2Entries.length * 6 + Math.min(20, recent90.length / 2) - riskEntries.length * 2)));
+  const diagnosis = fatigueScore > 70
+    ? "Carga e sinais subjetivos sugerem cautela antes de intensificar."
+    : injuryRisk > 55
+      ? "Há sinais relevantes de risco físico que precisam moderar as projeções."
+      : positiveEntries.length || volumeTrend > 5
+        ? "Momento com sinais de evolução, desde que a recuperação acompanhe a carga."
+        : "Momento neutro, dependente de consistência e novos marcadores objetivos.";
+  return {
+    generatedAt: new Date().toISOString(),
+    athleteName: athlete?.name || "Atleta",
+    entries,
+    chronology,
+    tests,
+    latestTest,
+    vo2,
+    metrics: {
+      volume90,
+      volume30,
+      previousVolume30,
+      weeklyVolume,
+      weeklySessions,
+      tss90,
+      hardSessions,
+      volumeTrend,
+      fatigueScore,
+      injuryRisk,
+      confidence
+    },
+    sections: {
+      evolution: positiveEntries.slice(-5).map((entry) => entry.title),
+      risks: riskEntries.slice(-6).map((entry) => `${entry.startDate}: ${entry.title}`),
+      physiology: vo2Entries.slice(-4).map((entry) => `${entry.startDate}: VO2 ${entry.vo2}`),
+      subjective: entries.filter((entry) => ["sensation", "recovery", "pain"].includes(entry.type)).slice(-6).map((entry) => `${entry.startDate}: ${entry.title}`)
+    },
+    diagnosis
+  };
+}
+
+function renderHistoryDossier(action = "dossier") {
+  const athlete = { ...(getActiveAthlete() || {}), historyTimeline: state.historyTimelineDraft };
+  const dossier = buildPerformanceDossier(athlete);
+  const m = dossier.metrics;
+  const heading = {
+    dossier: "Dossiê cronológico gerado",
+    deep: "Análise profunda",
+    projection: "Projeção contextual",
+    alerts: "Alertas inteligentes",
+    compare: "Comparação de períodos"
+  }[action] || "Dossiê cronológico";
+  const alerts = [
+    m.fatigueScore > 70 ? "Risco de fadiga acumulada alto: reduzir densidade de intensidade e observar sono/dor." : "",
+    m.injuryRisk > 55 ? "Risco de lesão relevante: há registros de dor/lesão combinados com carga recente." : "",
+    m.volumeTrend > 25 ? "Progressão de carga agressiva nos últimos 30 dias." : "",
+    m.weeklySessions < 3 ? "Consistência semanal baixa para projeções competitivas confiáveis." : "",
+    dossier.sections.evolution.length ? "Sinais positivos de evolução registrados no histórico." : ""
+  ].filter(Boolean);
+  const projection = dossier.vo2
+    ?`VO2 estimado ${dossier.vo2.estimated.toFixed(1)} com confiança ${dossier.vo2.confidence}%, calibrado pelo último 3000${dossier.latestTest ?` (${formatDurationSeconds(dossier.latestTest.seconds)})` : ""}, carga recente e registros subjetivos.`
+    : "Sem teste de 3000 suficiente para calibrar projeção fisiológica.";
+  state.historyTimelineOutput = `
+    <article class="history-dossier">
+      <div class="section-title">
+        <span>${escapeHtml(heading)}</span>
+        <h3>${escapeHtml(dossier.athleteName)}</h3>
+      </div>
+      <div class="history-dossier-grid">
+        <small><b>${dossier.entries.length}</b> registros estruturados</small>
+        <small><b>${escapeHtml(formatKm(m.volume90))}</b> volume 90 dias</small>
+        <small><b>${m.weeklySessions.toFixed(1)}</b> sessões/semana</small>
+        <small><b>${Math.round(m.fatigueScore)}%</b> fadiga</small>
+        <small><b>${Math.round(m.injuryRisk)}%</b> risco lesão</small>
+        <small><b>${m.confidence}%</b> confiança</small>
+      </div>
+      <p><b>Diagnóstico:</b> ${escapeHtml(dossier.diagnosis)}</p>
+      <p><b>Projeção:</b> ${escapeHtml(projection)}</p>
+      <p><b>Comparação 30 dias:</b> ${escapeHtml(formatKm(m.volume30))} agora vs ${escapeHtml(formatKm(m.previousVolume30))} no período anterior (${m.volumeTrend.toFixed(0)}%).</p>
+      <p><b>Alertas:</b> ${escapeHtml(alerts.join(" ") || "Nenhum alerta crítico no dossiê atual.")}</p>
+      <p><b>Próximas ações:</b> ${escapeHtml(m.injuryRisk > 55 ? "priorizar recuperação, registrar dor diariamente e evitar novo pico de carga." : "manter registros após treinos-chave, atualizar VO2/3000 e comparar blocos semelhantes.")}</p>
+    </article>
+  `;
+  renderHistoryTimelineEditor();
 }
 
 function activitiesBetweenDays(fromDaysAgo, toDaysAgo) {
@@ -3037,6 +3166,8 @@ function resetAthleteForm(message = "") {
   const form = document.querySelector("#athleteForm");
   if (!form) return;
   form.reset();
+  state.historyTimelineDraft = [];
+  state.historyTimelineOutput = "";
   renderHistoryTimelineEditor([]);
   renderTests3000Editor([]);
   render3000ActivityPicker();
@@ -3093,6 +3224,237 @@ function renderHistoryTimelineEditor(entries = []) {
     : historyTimelineRowTemplate({});
 }
 
+function historyRecordTypeLabel(type) {
+  return {
+    context: "Registro",
+    training: "Treino",
+    sensation: "Sensação",
+    pain: "Dor / lesão",
+    recovery: "Recuperação",
+    nutrition: "Nutrição",
+    competition: "Competição",
+    test: "Teste físico",
+    vo2: "Teste de VO2",
+    weight: "Peso",
+    routine: "Rotina"
+  }[type] || "Registro";
+}
+
+function inferHistoryRecord(raw = {}) {
+  const content = [raw.type, raw.title, raw.description, raw.originalContent].filter(Boolean).join(" ").toLowerCase();
+  const type = raw.type && raw.type !== "context" ?raw.type
+    : /vo2/.test(content) ? "vo2"
+    : /3000|teste|cooper|time trial|prova controlada/.test(content) ? "test"
+    : /compet|campeonato|prova|corrida oficial/.test(content) ? "competition"
+    : /dor|les|incômodo|incomodo|panturrilha|posterior|joelho|tend/.test(content) ? "pain"
+    : /sono|recuper|descanso|fadiga|cansa/.test(content) ? "recovery"
+    : /peso|kg|massa/.test(content) ? "weight"
+    : /aliment|suplement|creatina|carbo|prote/.test(content) ? "nutrition"
+    : /treino|rodagem|interval|tiro|longão|longo|ritmo|pace|km/.test(content) ? "training"
+    : /ansiedade|motiva|confiança|sensação|leve|pesado/.test(content) ? "sensation"
+    : /viagem|trabalho|rotina|mudança/.test(content) ? "routine"
+    : "context";
+  const tags = new Set(Array.isArray(raw.tags) ?raw.tags : []);
+  [
+    ["performance", /ritmo|pace|tempo|prova|teste|3000|5000|vo2|potência|potencia/],
+    ["saude", /dor|les|sono|fadiga|doente|inflama|recuper/],
+    ["carga", /volume|km|tss|longão|longo|interval|treino/],
+    ["evolucao", /melhor|evolu|progress|recorde|forte|consist/],
+    ["risco", /dor|les|fadiga|queda|parad|cansa|panturrilha/],
+    ["rotina", /sono|aliment|viagem|trabalho|rotina|suplement/]
+  ].forEach(([tag, pattern]) => {
+    if (pattern.test(content)) tags.add(tag);
+  });
+  const importance = /les|dor forte|parad|vo2|recorde|melhor marca|compet|prova|teste/.test(content) ? "alta"
+    : /fadiga|sono|peso|ritmo|volume|cansa|desconforto/.test(content) ? "média"
+    : "normal";
+  const relation = [
+    /ritmo|pace|tempo|prova|teste|vo2|potência|potencia/.test(content) ? "performance" : "",
+    /dor|les|fadiga|sono|recuper|doente/.test(content) ? "saúde/fadiga" : "",
+    /melhor|evolu|progress|consist|volume/.test(content) ? "evolução" : ""
+  ].filter(Boolean).join(", ") || "contexto";
+  const possibleImpact = importance === "alta"
+    ? "Pode alterar projeções, risco e leitura de resposta ao treino."
+    : relation.includes("saúde")
+      ? "Pode indicar necessidade de ajuste de carga e recuperação."
+      : relation.includes("performance")
+        ? "Ajuda a calibrar projeções e comparação de treinos similares."
+        : "Serve como contexto para análises futuras.";
+  return { type, tags: [...tags], importance, relation, possibleImpact };
+}
+
+function normalizeHistoryEntry(entry = {}) {
+  const inferred = inferHistoryRecord(entry);
+  const startDate = normalizeDateKey(entry.startDate || entry.date) || dateKey(new Date());
+  return {
+    id: entry.id || `hist-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    type: inferred.type,
+    startDate,
+    endDate: normalizeDateKey(entry.endDate) || "",
+    time: String(entry.time || "").trim().slice(0, 5),
+    title: String(entry.title || entry.event || historyRecordTypeLabel(inferred.type)).trim().slice(0, 140),
+    description: String(entry.description || entry.originalContent || "").trim().slice(0, 2400),
+    originalContent: String(entry.originalContent || entry.description || entry.title || "").trim().slice(0, 2600),
+    vo2: entry.vo2 === "" || entry.vo2 == null ?"" : Number(entry.vo2),
+    weightKg: entry.weightKg === "" || entry.weightKg == null ?"" : Number(entry.weightKg),
+    heartRate: entry.heartRate === "" || entry.heartRate == null ?"" : Number(entry.heartRate),
+    power: entry.power === "" || entry.power == null ?"" : Number(entry.power),
+    pace: String(entry.pace || "").trim().slice(0, 16),
+    sleepHours: entry.sleepHours === "" || entry.sleepHours == null ?"" : Number(entry.sleepHours),
+    perceivedEffort: entry.perceivedEffort === "" || entry.perceivedEffort == null ?"" : Number(entry.perceivedEffort),
+    painScore: entry.painScore === "" || entry.painScore == null ?"" : Number(entry.painScore),
+    tags: inferred.tags,
+    importance: inferred.importance,
+    relation: inferred.relation,
+    possibleImpact: inferred.possibleImpact,
+    createdAt: entry.createdAt || new Date().toISOString()
+  };
+}
+
+function sortHistoryEntries(entries) {
+  return [...entries].sort((a, b) => {
+    const dateDiff = String(a.startDate || "").localeCompare(String(b.startDate || ""));
+    if (dateDiff) return dateDiff;
+    return String(a.time || "").localeCompare(String(b.time || ""));
+  });
+}
+
+function historyEntryMatchesFilter(entry, filter) {
+  if (!filter || filter === "all") return true;
+  if (filter === "analysis") return ["performance", "saude", "carga", "evolucao", "risco"].some((tag) => entry.tags?.includes(tag));
+  if (filter === "training") return entry.type === "training" || entry.tags?.includes("carga");
+  if (filter === "test") return entry.type === "test" || entry.type === "vo2";
+  if (filter === "pain") return entry.type === "pain" || entry.tags?.includes("risco");
+  return entry.type === filter;
+}
+
+function historyRecordComposerTemplate() {
+  return `
+    <div class="history-composer">
+      <div class="history-composer-grid">
+        <label class="credential-field"><span>Data</span><input type="date" data-history-new-date value="${escapeHtml(dateKey(new Date()))}" /></label>
+        <label class="credential-field"><span>Hora</span><input type="time" data-history-new-time /></label>
+        <label class="credential-field">
+          <span>Tipo</span>
+          <select data-history-new-type>
+            <option value="context">Automático / registro livre</option>
+            <option value="training">Treino</option>
+            <option value="sensation">Sensação</option>
+            <option value="pain">Dor / lesão</option>
+            <option value="recovery">Recuperação / sono</option>
+            <option value="nutrition">Alimentação / suplementação</option>
+            <option value="competition">Competição</option>
+            <option value="test">Teste físico</option>
+            <option value="vo2">Teste de VO2</option>
+            <option value="weight">Peso</option>
+            <option value="routine">Mudança de rotina</option>
+          </select>
+        </label>
+        <label class="credential-field"><span>Título curto</span><input data-history-new-title placeholder="Ex.: Voltei a correr, teste de VO2, dor na panturrilha" /></label>
+      </div>
+      <label class="credential-field wide-field">
+        <span>Registro cronológico</span>
+        <textarea data-history-new-content rows="4" placeholder="Descreva qualquer fato relevante: treino, sensação, dor, peso, FC, potência, ritmo, sono, alimentação, prova, teste, rotina ou observação subjetiva."></textarea>
+      </label>
+      <div class="history-metric-grid">
+        <label class="credential-field"><span>VO2</span><input data-history-new-vo2 type="number" min="1" max="100" step="0.1" placeholder="ml/kg/min" /></label>
+        <label class="credential-field"><span>Peso</span><input data-history-new-weight type="number" min="1" step="0.1" placeholder="kg" /></label>
+        <label class="credential-field"><span>FC média</span><input data-history-new-hr type="number" min="1" placeholder="bpm" /></label>
+        <label class="credential-field"><span>Potência</span><input data-history-new-power type="number" min="1" placeholder="W" /></label>
+        <label class="credential-field"><span>Ritmo</span><input data-history-new-pace placeholder="min/km" /></label>
+        <label class="credential-field"><span>Sono</span><input data-history-new-sleep type="number" min="0" max="24" step="0.1" placeholder="h" /></label>
+        <label class="credential-field"><span>Esforço</span><select data-history-new-rpe><option value="">--</option>${Array.from({ length: 10 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join("")}</select></label>
+        <label class="credential-field"><span>Dor</span><select data-history-new-pain><option value="">--</option>${Array.from({ length: 11 }, (_, i) => `<option value="${i}">${i}</option>`).join("")}</select></label>
+      </div>
+      <div class="history-actions">
+        <button class="primary-action compact" type="button" data-save-history-record>Salvar registro</button>
+        <button class="secondary-action compact" type="button" data-history-action="dossier">Gerar dossiê</button>
+        <button class="secondary-action compact" type="button" data-history-action="deep">Gerar análise profunda</button>
+        <button class="secondary-action compact" type="button" data-history-action="projection">Gerar projeção</button>
+        <button class="secondary-action compact" type="button" data-history-action="alerts">Ver alertas</button>
+        <button class="secondary-action compact" type="button" data-history-action="compare">Comparar períodos</button>
+      </div>
+    </div>
+  `;
+}
+
+function historyRecordCard(entry) {
+  const metrics = [
+    entry.vo2 ?`VO2 ${entry.vo2}` : "",
+    entry.weightKg ?`${entry.weightKg} kg` : "",
+    entry.heartRate ?`FC ${entry.heartRate}` : "",
+    entry.power ?`${entry.power} W` : "",
+    entry.pace ?`ritmo ${entry.pace}` : "",
+    entry.sleepHours ?`sono ${entry.sleepHours}h` : "",
+    entry.perceivedEffort ?`RPE ${entry.perceivedEffort}/10` : "",
+    entry.painScore !== "" && entry.painScore != null ?`dor ${entry.painScore}/10` : ""
+  ].filter(Boolean);
+  return `
+    <details class="history-record-card" data-history-id="${escapeHtml(entry.id)}">
+      <summary>
+        <div>
+          <span>${escapeHtml(entry.startDate.split("-").reverse().join("/"))}${entry.time ?` ${escapeHtml(entry.time)}` : ""} · ${escapeHtml(historyRecordTypeLabel(entry.type))}</span>
+          <strong>${escapeHtml(entry.title || "Registro cronológico")}</strong>
+          <p>${escapeHtml(entry.description || entry.originalContent || "")}</p>
+        </div>
+        <button class="danger-action compact" type="button" data-remove-history-entry="${escapeHtml(entry.id)}">Remover</button>
+      </summary>
+      <div class="history-record-meta">
+        <small><b>Tags</b>${escapeHtml((entry.tags || []).join(", ") || "contexto")}</small>
+        <small><b>Importância</b>${escapeHtml(entry.importance)}</small>
+        <small><b>Relação</b>${escapeHtml(entry.relation)}</small>
+        <small><b>Impacto futuro</b>${escapeHtml(entry.possibleImpact)}</small>
+        ${metrics.length ?`<small><b>Métricas</b>${escapeHtml(metrics.join(" · "))}</small>` : ""}
+      </div>
+    </details>
+  `;
+}
+
+function historyGroupedList(entries) {
+  const groups = entries.reduce((acc, entry) => {
+    const month = entry.startDate?.slice(0, 7) || "sem-data";
+    if (!acc[month]) acc[month] = [];
+    acc[month].push(entry);
+    return acc;
+  }, {});
+  return Object.entries(groups).map(([month, items]) => `
+    <section class="history-month-group">
+      <h4>${escapeHtml(month === "sem-data" ? "Sem data" : new Date(`${month}-01T00:00:00`).toLocaleDateString("pt-BR", { month: "long", year: "numeric" }))}</h4>
+      <div>${items.map((entry) => historyRecordCard(entry)).join("")}</div>
+    </section>
+  `).join("") || `<div class="empty-state">Nenhum registro cronológico salvo ainda.</div>`;
+}
+
+function renderHistoryTimelineEditor(entries = state.historyTimelineDraft) {
+  const target = document.querySelector("#historyTimelineList");
+  if (!target) return;
+  if (entries !== state.historyTimelineDraft) {
+    state.historyTimelineDraft = sortHistoryEntries((Array.isArray(entries) ?entries : []).map(normalizeHistoryEntry));
+  }
+  const filter = state.historyTimelineFilter || "all";
+  const filtered = state.historyTimelineDraft.filter((entry) => historyEntryMatchesFilter(entry, filter));
+  target.innerHTML = `
+    ${historyRecordComposerTemplate()}
+    <div class="history-toolbar">
+      <label class="credential-field">
+        <span>Filtrar linha do tempo</span>
+        <select data-history-filter>
+          <option value="all" ${filter === "all" ?"selected" : ""}>Todos</option>
+          <option value="training" ${filter === "training" ?"selected" : ""}>Treino</option>
+          <option value="test" ${filter === "test" ?"selected" : ""}>Teste</option>
+          <option value="pain" ${filter === "pain" ?"selected" : ""}>Dor / risco</option>
+          <option value="competition" ${filter === "competition" ?"selected" : ""}>Competição</option>
+          <option value="recovery" ${filter === "recovery" ?"selected" : ""}>Recuperação</option>
+          <option value="analysis" ${filter === "analysis" ?"selected" : ""}>Relevantes para análise</option>
+        </select>
+      </label>
+      <div class="history-counter"><strong>${filtered.length}</strong><span>registros exibidos de ${state.historyTimelineDraft.length}</span></div>
+    </div>
+    <div class="history-output" id="historyAnalysisOutput">${state.historyTimelineOutput || ""}</div>
+    <div class="history-saved-list">${historyGroupedList(filtered)}</div>
+  `;
+}
+
 function test3000RowTemplate(test = {}, index = 1) {
   return `
     <article class="test3000-row">
@@ -3122,15 +3484,41 @@ function renderTests3000Editor(tests = []) {
 }
 
 function readHistoryTimelineForm(form) {
-  const rows = [...form.querySelectorAll(".history-entry-row")];
-  return rows.map((row) => ({
-    type: row.querySelector("[data-history-type]")?.value || "context",
-    startDate: row.querySelector("[data-history-start]")?.value || "",
-    endDate: row.querySelector("[data-history-end]")?.value || "",
-    title: row.querySelector("[data-history-title]")?.value || "",
-    description: row.querySelector("[data-history-description]")?.value || "",
-    vo2: row.querySelector("[data-history-vo2]")?.value || ""
-  }));
+  const pending = readHistoryComposer(form);
+  const entries = pending ?[...state.historyTimelineDraft, pending] : state.historyTimelineDraft;
+  return sortHistoryEntries(entries.map(normalizeHistoryEntry));
+}
+
+function readHistoryComposer(scope = document) {
+  const content = scope.querySelector("[data-history-new-content]")?.value?.trim() || "";
+  const title = scope.querySelector("[data-history-new-title]")?.value?.trim() || "";
+  const hasMetric = [
+    "[data-history-new-vo2]",
+    "[data-history-new-weight]",
+    "[data-history-new-hr]",
+    "[data-history-new-power]",
+    "[data-history-new-pace]",
+    "[data-history-new-sleep]",
+    "[data-history-new-rpe]",
+    "[data-history-new-pain]"
+  ].some((selector) => scope.querySelector(selector)?.value);
+  if (!content && !title && !hasMetric) return null;
+  return normalizeHistoryEntry({
+    startDate: scope.querySelector("[data-history-new-date]")?.value || dateKey(new Date()),
+    time: scope.querySelector("[data-history-new-time]")?.value || "",
+    type: scope.querySelector("[data-history-new-type]")?.value || "context",
+    title,
+    description: content,
+    originalContent: content,
+    vo2: scope.querySelector("[data-history-new-vo2]")?.value || "",
+    weightKg: scope.querySelector("[data-history-new-weight]")?.value || "",
+    heartRate: scope.querySelector("[data-history-new-hr]")?.value || "",
+    power: scope.querySelector("[data-history-new-power]")?.value || "",
+    pace: scope.querySelector("[data-history-new-pace]")?.value || "",
+    sleepHours: scope.querySelector("[data-history-new-sleep]")?.value || "",
+    perceivedEffort: scope.querySelector("[data-history-new-rpe]")?.value || "",
+    painScore: scope.querySelector("[data-history-new-pain]")?.value || ""
+  });
 }
 
 function readTests3000Form(form) {
@@ -3878,6 +4266,24 @@ document.addEventListener("click", async (event) => {
     await approveRelationshipRequest(approveRelationshipButton.dataset.approveRelationship);
     return;
   }
+  if (event.target.closest("[data-save-history-record]")) {
+    const record = readHistoryComposer(document);
+    if (!record) {
+      setAthleteMessage("Preencha o registro cronológico antes de salvar.", true);
+      return;
+    }
+    state.historyTimelineDraft = sortHistoryEntries([...state.historyTimelineDraft, record]);
+    state.historyTimelineOutput = "";
+    renderHistoryTimelineEditor();
+    setAthleteMessage("Registro cronológico salvo na linha do tempo. Clique em Salvar meu perfil para gravar no banco.");
+    return;
+  }
+  const historyAction = event.target.closest("[data-history-action]");
+  if (historyAction) {
+    event.preventDefault();
+    renderHistoryDossier(historyAction.dataset.historyAction);
+    return;
+  }
   if (event.target.closest("#addHistoryEntry")) {
     const list = document.querySelector("#historyTimelineList");
     if (list) list.insertAdjacentHTML("beforeend", historyTimelineRowTemplate({}));
@@ -3905,12 +4311,17 @@ document.addEventListener("click", async (event) => {
     return;
   }
   if (event.target.closest("[data-remove-history-entry]")) {
-    const row = event.target.closest(".history-entry-row");
-    const list = document.querySelector("#historyTimelineList");
-    if (row) row.remove();
-    if (list && !list.querySelector(".history-entry-row")) {
-      list.innerHTML = historyTimelineRowTemplate({});
+    const removeButton = event.target.closest("[data-remove-history-entry]");
+    const recordId = removeButton?.dataset.removeHistoryEntry || "";
+    if (recordId) {
+      state.historyTimelineDraft = state.historyTimelineDraft.filter((entry) => String(entry.id) !== String(recordId));
+      state.historyTimelineOutput = "";
+      renderHistoryTimelineEditor();
+      setAthleteMessage("Registro removido da linha do tempo. Clique em Salvar meu perfil para gravar a alteração.");
+      return;
     }
+    const row = event.target.closest(".history-entry-row");
+    if (row) row.remove();
     return;
   }
   if (event.target.closest("[data-remove-3000-test]")) {
@@ -3955,6 +4366,10 @@ document.addEventListener("change", (event) => {
   }
   if (event.target?.closest("#workoutBuilderForm") && ["startDate", "endDate"].includes(event.target.name)) {
     syncWorkoutDates();
+  }
+  if (event.target?.matches("[data-history-filter]")) {
+    state.historyTimelineFilter = event.target.value || "all";
+    renderHistoryTimelineEditor();
   }
 });
 
