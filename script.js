@@ -949,19 +949,52 @@ function goalResultPerformance(goal) {
   return candidates.sort((a, b) => a.seconds - b.seconds)[0] || null;
 }
 
-function goalProjectionRoute(goal, model, actualSeconds = 0) {
+function goalProjectionProtocol(goal, model, actualSeconds = 0) {
   const current = Number(actualSeconds || model.currentSeconds || 0);
   const target = Number(goal.targetTimeSeconds || model.targetSeconds || 0);
-  if (!current || !target) return `<div class="goal-route-empty">Dados insuficientes para gerar a escala preditiva.</div>`;
+  if (!current || !target) return null;
   const weeks = Math.max(0.5, Number(model.daysToRace || 0) / 7);
+  const consistency = Math.min(1, Number(model.weeklySessions || 0) / 5);
+  const testSignal = Math.min(1, Number(model.tests3000?.length || 0) / 3);
+  const riskFactor = model.historyRisk ?0.72 : 1;
+  const conservativeRate = (0.0018 + consistency * 0.0014 + testSignal * 0.0004) * riskFactor;
+  const challengingRate = (0.0055 + consistency * 0.003 + testSignal * 0.001) * riskFactor;
+  const conservativeEnd = current * (1 - Math.min(0.045, weeks * conservativeRate));
+  const challengingEnd = current * (1 - Math.min(0.12, weeks * challengingRate));
+  const requiredGain = Math.max(0, current - target);
+  const conservativeGain = Math.max(0, current - conservativeEnd);
+  const challengingGain = Math.max(conservativeGain + 1, current - challengingEnd);
+  let probability = 0;
+  if (!requiredGain) {
+    probability = 94;
+  } else if (requiredGain <= conservativeGain) {
+    probability = 78 + (1 - requiredGain / Math.max(1, conservativeGain)) * 16;
+  } else if (requiredGain <= challengingGain) {
+    probability = 38 + (1 - ((requiredGain - conservativeGain) / Math.max(1, challengingGain - conservativeGain))) * 40;
+  } else {
+    probability = Math.max(4, 38 - ((requiredGain - challengingGain) / current) * 420);
+  }
+  const rounded = Math.round(Math.max(4, Math.min(94, probability)));
+  return {
+    current,
+    target,
+    conservativeEnd,
+    challengingEnd,
+    conservativeGain: Math.round(conservativeGain),
+    challengingGain: Math.round(challengingGain),
+    probability: rounded,
+    status: rounded >= 78 ?"Dentro da faixa conservadora" : rounded >= 38 ?"Possivel, mas desafiador" : "Acima da faixa tangivel"
+  };
+}
+
+function goalProjectionRoute(goal, model, actualSeconds = 0) {
+  const protocol = goalProjectionProtocol(goal, model, actualSeconds);
+  if (!protocol) return `<div class="goal-route-empty">Dados insuficientes para gerar a escala preditiva.</div>`;
+  const { current, target, conservativeEnd, challengingEnd, conservativeGain, challengingGain } = protocol;
   const width = 620;
   const height = 132;
   const pad = { left: 58, right: 26, top: 16, bottom: 28 };
-  const optimisticRate = 0.009;
-  const conservativeRate = 0.0025;
-  const optimisticEnd = current * (1 - Math.min(0.12, weeks * optimisticRate));
-  const conservativeEnd = current * (1 - Math.min(0.04, weeks * conservativeRate));
-  const values = [current, target, optimisticEnd, conservativeEnd].filter(Boolean);
+  const values = [current, target, challengingEnd, conservativeEnd].filter(Boolean);
   const fastest = Math.min(...values);
   const slowest = Math.max(...values);
   const spread = Math.max(20, slowest - fastest);
@@ -976,10 +1009,8 @@ function goalProjectionRoute(goal, model, actualSeconds = 0) {
   }).reverse();
   const targetY = y(target);
   const currentY = y(current);
-  const optimisticY = y(optimisticEnd);
+  const challengingY = y(challengingEnd);
   const conservativeY = y(conservativeEnd);
-  const optimisticGain = Math.max(0, Math.round(current - optimisticEnd));
-  const conservativeGain = Math.max(0, Math.round(current - conservativeEnd));
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const raceKey = normalizeDateKey(goal.raceDate);
@@ -1004,18 +1035,18 @@ function goalProjectionRoute(goal, model, actualSeconds = 0) {
           <text class="goal-route-label" x="${tick.x.toFixed(1)}" y="${height - 8}" text-anchor="${tick.ratio === 0 ?"start" : tick.ratio === 1 ?"end" : "middle"}">${escapeHtml(tick.label)}</text>
         `).join("")}
         <line class="goal-route-target" x1="${pad.left}" y1="${targetY.toFixed(1)}" x2="${width - pad.right}" y2="${targetY.toFixed(1)}"></line>
-        <path class="goal-route-optimistic" d="${curve(optimisticEnd)}"></path>
+        <path class="goal-route-optimistic" d="${curve(challengingEnd)}"></path>
         <path class="goal-route-conservative" d="${curve(conservativeEnd)}"></path>
         <circle class="goal-route-now" cx="${x(0).toFixed(1)}" cy="${currentY.toFixed(1)}" r="2.7"></circle>
         <circle class="goal-route-target-dot" cx="${x(1).toFixed(1)}" cy="${targetY.toFixed(1)}" r="3.2"></circle>
-        <circle class="goal-route-optimistic-dot" cx="${x(1).toFixed(1)}" cy="${optimisticY.toFixed(1)}" r="2.4"></circle>
+        <circle class="goal-route-optimistic-dot" cx="${x(1).toFixed(1)}" cy="${challengingY.toFixed(1)}" r="2.4"></circle>
         <circle class="goal-route-conservative-dot" cx="${x(1).toFixed(1)}" cy="${conservativeY.toFixed(1)}" r="2.4"></circle>
-        <text class="goal-route-tag" x="${width - pad.right}" y="${Math.max(16, targetY - 8).toFixed(1)}" text-anchor="end">Alvo ${escapeHtml(formatDurationSeconds(target))}</text>
+        <text class="goal-route-tag" x="${width - pad.right}" y="${Math.max(16, targetY - 8).toFixed(1)}" text-anchor="end">Objetivo ${escapeHtml(formatDurationSeconds(target))}</text>
       </svg>
       <div class="goal-route-legend">
-        <span><i class="is-optimistic"></i>Otimista: ganho plausivel ate ${escapeHtml(formatDurationSeconds(optimisticGain))}</span>
-        <span><i class="is-conservative"></i>Pessimista: ganho conservador ${escapeHtml(formatDurationSeconds(conservativeGain))}</span>
-        <span><i class="is-target"></i>Tempo alvo</span>
+        <span><i class="is-target"></i>Linha do objetivo</span>
+        <span><i class="is-conservative"></i>Conservadora mais possivel: ${escapeHtml(formatDurationSeconds(conservativeGain))}</span>
+        <span><i class="is-optimistic"></i>Possivel e desafiadora: ${escapeHtml(formatDurationSeconds(challengingGain))}</span>
       </div>
     </div>
   `;
@@ -1033,11 +1064,13 @@ function renderGoalCard(goal, resultMode = false) {
     : gap <= 0
       ?`${formatDurationSeconds(Math.abs(gap))} abaixo do objetivo`
       : `${formatDurationSeconds(gap)} acima do objetivo`;
+  const protocol = goalProjectionProtocol(goal, model, resultMode && actualSeconds ?actualSeconds : 0);
+  const protocolProbability = protocol?.probability || 0;
   const analysis = resultMode
     ?actualSeconds
       ?`Resultado ${detectedResult ?`detectado em ${detectedResult.title}` : "registrado"}: ${gapLabel}.`
       : "Data da prova vencida. Registre o resultado para gerar a análise versus objetivo."
-    : `${model.status || "Dados insuficientes"} - ${model.probability || 0}% de probabilidade.`;
+    : `${protocol?.status || "Dados insuficientes"} - ${protocolProbability || 0}% pela faixa tangivel.`;
   return `
     <article class="goal-card ${resultMode ?"goal-card-result" : ""}">
       <div class="goal-card-head">
@@ -1051,7 +1084,7 @@ function renderGoalCard(goal, resultMode = false) {
       <div class="goal-metrics">
         <div><span>Tempo alvo</span><strong>${escapeHtml(formatDurationSeconds(targetSeconds))}</strong></div>
         <div><span>Diferença</span><strong>${escapeHtml(gapLabel)}</strong></div>
-        <div><span>Probabilidade</span><strong>${model.probability || "--"}%</strong></div>
+        <div><span>Probabilidade tangivel</span><strong>${protocolProbability || "--"}%</strong></div>
         <div><span>Ganho necessário</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong></div>
       </div>
       ${goalProjectionRoute(goal, model, resultMode && actualSeconds ?actualSeconds : 0)}
