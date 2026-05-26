@@ -1780,6 +1780,135 @@ dialog {
   font-weight: 560;
 }
 
+.goal-probability-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.55fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.goal-probability-list {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-vo2-panel {
+  min-height: 100%;
+  padding: 16px;
+  border: 1px solid rgba(255, 75, 11, 0.22);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(150deg, rgba(255, 75, 11, 0.11), rgba(255, 255, 255, 0.025) 46%),
+    rgba(255, 255, 255, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-vo2-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 68px),
+    linear-gradient(180deg, transparent, rgba(255, 75, 11, 0.06));
+}
+
+.dashboard-vo2-panel > * {
+  position: relative;
+}
+
+.vo2-panel-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 12px;
+  align-items: start;
+}
+
+.vo2-panel-head span,
+.vo2-source-grid span {
+  color: var(--orange);
+  font-size: 10px;
+  font-weight: 560;
+  text-transform: uppercase;
+}
+
+.vo2-panel-head strong {
+  display: block;
+  margin-top: 6px;
+  color: #f1efe9;
+  font-size: 46px;
+  line-height: 0.95;
+  font-weight: 560;
+}
+
+.vo2-panel-head p,
+.dashboard-vo2-panel > p,
+.vo2-source-grid p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.vo2-panel-head svg {
+  width: 140px;
+  max-width: 100%;
+  margin-top: 4px;
+}
+
+.vo2-panel-head path {
+  fill: none;
+  stroke: rgba(255, 75, 11, 0.72);
+  stroke-width: 2;
+}
+
+.vo2-panel-head circle {
+  fill: #f1efe9;
+  stroke: var(--orange);
+  stroke-width: 2;
+}
+
+.vo2-source-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.vo2-source-grid article {
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.vo2-source-grid strong {
+  display: block;
+  margin-top: 6px;
+  color: #f1efe9;
+  font-size: 18px;
+  font-weight: 540;
+}
+
+.vo2-context-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.vo2-context-list span {
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.vo2-context-list b {
+  color: #f1efe9;
+  font-weight: 540;
+}
+
 .performance-chart-panel {
   margin-bottom: 18px;
   position: relative;
@@ -3445,12 +3574,18 @@ dialog::backdrop {
 
   .dashboard-metrics,
   .test-timeline,
-  .dashboard-goal-card {
+  .dashboard-goal-card,
+  .goal-probability-layout {
     grid-template-columns: 1fr;
   }
 
   .goal-probability-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vo2-panel-head,
+  .vo2-source-grid {
+    grid-template-columns: 1fr;
   }
 
   .dashboard-orbit {

@@ -1734,6 +1734,90 @@ function dashboardGoalProbability(goal, model) {
     </article>`;
 }
 
+function estimateVo2From3000(athlete, tests) {
+  const lastTest = latest3000Test(tests);
+  if (!lastTest?.seconds) return null;
+  const velocity = 3000 / (Number(lastTest.seconds) / 60);
+  const oxygenCost = -4.6 + (0.182258 * velocity) + (0.000104 * velocity * velocity);
+  const minutes = Number(lastTest.seconds) / 60;
+  const effortFraction = 0.8 + (0.1894393 * Math.exp(-0.012778 * minutes)) + (0.2989558 * Math.exp(-0.1932605 * minutes));
+  const testVo2 = oxygenCost / effortFraction;
+  const recent90 = activitiesSince(90).filter(isRunningActivity);
+  const recent30 = activitiesSince(30).filter(isRunningActivity);
+  const recent14 = activitiesSince(14).filter(isRunningActivity);
+  const volume90 = recent90.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const volume30 = recent30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss30 = recent30.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const weeklySessions = recent90.length / Math.max(1, 90 / 7);
+  const weeklyVolume = volume90 / Math.max(1, 90 / 7);
+  const consistency = Math.min(1, weeklySessions / 5);
+  const volumeModifier = Math.max(-1.2, Math.min(2.2, (weeklyVolume - 35) / 18));
+  const loadModifier = Math.max(-0.8, Math.min(1.2, (tss30 / 4 - 260) / 260));
+  const freshnessModifier = recent14.length ?Math.min(0.9, recent14.length / 12) : -0.7;
+  const history = String(athlete?.historyNotes || "").toLowerCase();
+  const riskHistory = history.replace(/sem dor/g, "");
+  const riskHits = (riskHistory.match(/les|dor|inflama|fadiga|cansa|pausa|doente|panturrilha|posterior/g) || []).length;
+  const boostHits = (history.match(/consist|regular|sem dor|evolu|volume|teste controlado|progress/g) || []).length;
+  const historyModifier = Math.max(-2.4, Math.min(1.2, (boostHits * 0.35) - (riskHits * 0.55)));
+  const trainingModifier = (consistency * 1.4) + volumeModifier + loadModifier + freshnessModifier;
+  const estimated = Math.max(20, Math.min(85, testVo2 + trainingModifier + historyModifier));
+  const confidence = Math.round(Math.max(45, Math.min(94, 58 + tests.length * 8 + consistency * 16 + (recent90.length ?10 : 0) - riskHits * 3)));
+  return {
+    estimated,
+    testVo2,
+    trainingModifier,
+    historyModifier,
+    confidence,
+    lastTest,
+    weeklySessions,
+    weeklyVolume,
+    volume30,
+    riskHits,
+    boostHits
+  };
+}
+
+function dashboardVo2Panel(athlete, tests) {
+  const vo2 = estimateVo2From3000(athlete, tests);
+  if (!vo2) {
+    return `
+      <aside class="dashboard-vo2-panel">
+        <div class="vo2-panel-head">
+          <span>VO2 estimado</span>
+          <strong>--</strong>
+        </div>
+        <p>Marque um teste de 3000 m para cruzar performance, treinos recentes e histórico do perfil.</p>
+      </aside>
+    `;
+  }
+  const riskLabel = vo2.riskHits ?`${vo2.riskHits} alerta(s) no histórico` : "histórico sem alerta forte";
+  return `
+    <aside class="dashboard-vo2-panel">
+      <div class="vo2-panel-head">
+        <div>
+          <span>VO2 estimado</span>
+          <strong>${vo2.estimated.toFixed(1)}</strong>
+          <p>ml/kg/min - confiança ${vo2.confidence}%</p>
+        </div>
+        <svg viewBox="0 0 140 70" aria-hidden="true">
+          <path d="M8 58 C30 12, 48 50, 67 28 S103 38, 132 10"></path>
+          <circle cx="${Math.min(132, Math.max(8, 8 + (vo2.estimated - 35) * 2.25)).toFixed(1)}" cy="28" r="5"></circle>
+        </svg>
+      </div>
+      <div class="vo2-source-grid">
+        <article><span>Teste 3000</span><strong>${vo2.testVo2.toFixed(1)}</strong><p>${escapeHtml(formatDurationSeconds(vo2.lastTest.seconds))}</p></article>
+        <article><span>Treinos</span><strong>${vo2.trainingModifier >= 0 ?"+" : ""}${vo2.trainingModifier.toFixed(1)}</strong><p>${escapeHtml(formatKm(vo2.weeklyVolume))}/sem</p></article>
+        <article><span>Histórico</span><strong>${vo2.historyModifier >= 0 ?"+" : ""}${vo2.historyModifier.toFixed(1)}</strong><p>${escapeHtml(riskLabel)}</p></article>
+      </div>
+      <div class="vo2-context-list">
+        <span><b>${vo2.weeklySessions.toFixed(1)}</b> sessões/semana nos últimos 90 dias</span>
+        <span><b>${escapeHtml(formatKm(vo2.volume30))}</b> volume dos últimos 30 dias</span>
+        <span><b>${vo2.boostHits}</b> sinal(is) positivos no histórico cronológico</span>
+      </div>
+    </aside>
+  `;
+}
+
 function buildHomeMotivation() {
   const athlete = getActiveAthlete();
   const activeGoals = (state.goals || []).filter((goal) => !isPastGoal(goal));
@@ -1830,11 +1914,23 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
   testTarget.innerHTML = dashboardTestSvg(tests, athlete);
   typeTarget.innerHTML = dashboardTypeChart(types);
   goalTarget.innerHTML = activeGoals.length
-    ?activeGoals.slice(0, 4).map((goal) => {
-      const model = buildFocusModel(goalAsAthlete(goal));
-      return dashboardGoalProbability(goal, model);
-    }).join("")
-    : `<div class="empty-state">Crie objetivos para acompanhar status e rota preditiva.</div>`;
+    ?`
+      <div class="goal-probability-layout">
+        <div class="goal-probability-list">
+          ${activeGoals.slice(0, 4).map((goal) => {
+            const model = buildFocusModel(goalAsAthlete(goal));
+            return dashboardGoalProbability(goal, model);
+          }).join("")}
+        </div>
+        ${dashboardVo2Panel(athlete, tests)}
+      </div>
+    `
+    : `
+      <div class="goal-probability-layout">
+        <div class="empty-state">Crie objetivos para acompanhar status e rota preditiva.</div>
+        ${dashboardVo2Panel(athlete, tests)}
+      </div>
+    `;
 }
 
 function chartRange() {
