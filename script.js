@@ -949,6 +949,78 @@ function goalResultPerformance(goal) {
   return candidates.sort((a, b) => a.seconds - b.seconds)[0] || null;
 }
 
+function goalProjectionRoute(goal, model, actualSeconds = 0) {
+  const current = Number(actualSeconds || model.currentSeconds || 0);
+  const target = Number(goal.targetTimeSeconds || model.targetSeconds || 0);
+  if (!current || !target) return `<div class="goal-route-empty">Dados insuficientes para gerar a escala preditiva.</div>`;
+  const weeks = Math.max(0.5, Number(model.daysToRace || 0) / 7);
+  const width = 720;
+  const height = 160;
+  const pad = { left: 74, right: 34, top: 20, bottom: 32 };
+  const optimisticRate = 0.009;
+  const conservativeRate = 0.0025;
+  const optimisticEnd = current * (1 - Math.min(0.12, weeks * optimisticRate));
+  const conservativeEnd = current * (1 - Math.min(0.04, weeks * conservativeRate));
+  const values = [current, target, optimisticEnd, conservativeEnd].filter(Boolean);
+  const fastest = Math.min(...values);
+  const slowest = Math.max(...values);
+  const spread = Math.max(20, slowest - fastest);
+  const minYValue = Math.max(1, fastest - spread * 0.18);
+  const maxYValue = slowest + spread * 0.18;
+  const x = (ratio) => pad.left + ratio * (width - pad.left - pad.right);
+  const y = (seconds) => pad.top + ((seconds - minYValue) / Math.max(1, maxYValue - minYValue)) * (height - pad.top - pad.bottom);
+  const curve = (end) => `M ${x(0).toFixed(1)} ${y(current).toFixed(1)} C ${x(0.32).toFixed(1)} ${y(current - (current - end) * 0.28).toFixed(1)}, ${x(0.66).toFixed(1)} ${y(current - (current - end) * 0.72).toFixed(1)}, ${x(1).toFixed(1)} ${y(end).toFixed(1)}`;
+  const ticks = Array.from({ length: 4 }, (_, index) => {
+    const value = minYValue + ((maxYValue - minYValue) * index / 3);
+    return { value, y: y(value) };
+  }).reverse();
+  const targetY = y(target);
+  const currentY = y(current);
+  const optimisticY = y(optimisticEnd);
+  const conservativeY = y(conservativeEnd);
+  const optimisticGain = Math.max(0, Math.round(current - optimisticEnd));
+  const conservativeGain = Math.max(0, Math.round(current - conservativeEnd));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const raceKey = normalizeDateKey(goal.raceDate);
+  const raceDate = raceKey ?new Date(`${raceKey}T00:00:00`) : addDays(today, Number(model.daysToRace || 0));
+  const dateLabel = (date) => date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  const timelineTicks = [0, 0.33, 0.66, 1].map((ratio) => ({
+    ratio,
+    x: x(ratio),
+    label: ratio === 0 ?`Hoje ${dateLabel(today)}` : ratio === 1 ?`Meta ${dateLabel(raceDate)}` : dateLabel(addDays(today, Math.round(Number(model.daysToRace || 0) * ratio)))
+  }));
+  return `
+    <div class="goal-route">
+      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Rota preditiva com escala de tempo">
+        ${ticks.map((tick) => `
+          <line class="goal-route-grid" x1="${pad.left}" y1="${tick.y.toFixed(1)}" x2="${width - pad.right}" y2="${tick.y.toFixed(1)}"></line>
+          <text class="goal-route-y" x="${pad.left - 10}" y="${(tick.y + 4).toFixed(1)}" text-anchor="end">${escapeHtml(formatDurationSeconds(tick.value))}</text>
+        `).join("")}
+        <line class="goal-route-axis" x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}"></line>
+        <line class="goal-route-axis" x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}"></line>
+        ${timelineTicks.map((tick) => `
+          <line class="goal-route-time-tick" x1="${tick.x.toFixed(1)}" y1="${height - pad.bottom}" x2="${tick.x.toFixed(1)}" y2="${height - pad.bottom + 6}"></line>
+          <text class="goal-route-label" x="${tick.x.toFixed(1)}" y="${height - 8}" text-anchor="${tick.ratio === 0 ?"start" : tick.ratio === 1 ?"end" : "middle"}">${escapeHtml(tick.label)}</text>
+        `).join("")}
+        <line class="goal-route-target" x1="${pad.left}" y1="${targetY.toFixed(1)}" x2="${width - pad.right}" y2="${targetY.toFixed(1)}"></line>
+        <path class="goal-route-optimistic" d="${curve(optimisticEnd)}"></path>
+        <path class="goal-route-conservative" d="${curve(conservativeEnd)}"></path>
+        <circle class="goal-route-now" cx="${x(0).toFixed(1)}" cy="${currentY.toFixed(1)}" r="4"></circle>
+        <circle class="goal-route-target-dot" cx="${x(1).toFixed(1)}" cy="${targetY.toFixed(1)}" r="4"></circle>
+        <circle class="goal-route-optimistic-dot" cx="${x(1).toFixed(1)}" cy="${optimisticY.toFixed(1)}" r="3"></circle>
+        <circle class="goal-route-conservative-dot" cx="${x(1).toFixed(1)}" cy="${conservativeY.toFixed(1)}" r="3"></circle>
+        <text class="goal-route-tag" x="${width - pad.right}" y="${Math.max(16, targetY - 8).toFixed(1)}" text-anchor="end">Alvo ${escapeHtml(formatDurationSeconds(target))}</text>
+      </svg>
+      <div class="goal-route-legend">
+        <span><i class="is-optimistic"></i>Otimista: ganho plausivel ate ${escapeHtml(formatDurationSeconds(optimisticGain))}</span>
+        <span><i class="is-conservative"></i>Pessimista: ganho conservador ${escapeHtml(formatDurationSeconds(conservativeGain))}</span>
+        <span><i class="is-target"></i>Tempo alvo</span>
+      </div>
+    </div>
+  `;
+}
+
 function renderGoalCard(goal, resultMode = false) {
   const model = buildFocusModel(goalAsAthlete(goal));
   const detectedResult = resultMode ?goalResultPerformance(goal) : null;
@@ -982,14 +1054,7 @@ function renderGoalCard(goal, resultMode = false) {
         <div><span>Probabilidade</span><strong>${model.probability || "--"}%</strong></div>
         <div><span>Ganho necessário</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong></div>
       </div>
-      <div class="goal-route">
-        <svg viewBox="0 0 560 70" role="img" aria-label="Rota preditiva do objetivo">
-          <line x1="18" y1="46" x2="542" y2="46"></line>
-          <path d="M 18 22 C 150 26, 280 38, 542 46"></path>
-          <circle cx="18" cy="22" r="3"></circle>
-          <circle cx="542" cy="46" r="3"></circle>
-        </svg>
-      </div>
+      ${goalProjectionRoute(goal, model, resultMode && actualSeconds ?actualSeconds : 0)}
       <p class="goal-analysis">${escapeHtml(analysis)}</p>
       ${goal.notes ?`<p class="goal-notes">${escapeHtml(goal.notes)}</p>` : ""}
       ${!resultMode ?`
