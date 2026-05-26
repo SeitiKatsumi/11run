@@ -4559,6 +4559,16 @@ document.addEventListener("click", async (event) => {
     applyWorkoutMode(workoutModeButton.dataset.workoutMode);
     return;
   }
+  const workoutSaveButton = event.target.closest("[data-save-workout]");
+  if (workoutSaveButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    const form = workoutSaveButton.closest("#workoutBuilderForm");
+    if (form) {
+      await saveManualWorkoutSafely({ preventDefault() {}, currentTarget: form });
+    }
+    return;
+  }
   if (event.target.closest("[data-add-workout-step]")) {
     document.querySelector("#workoutStepList")?.insertAdjacentHTML("beforeend", workoutStepTemplate({ kind: "work", label: "Nova etapa" }));
     return;

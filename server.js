@@ -31,6 +31,13 @@ const STRAVA_REQUIRED_ACTIVITY_SCOPES = ["activity:read", "activity:read_all"];
 const FOCUS_DISTANCES = new Set([800, 1500, 3000, 5000, 10000, 15000, 21000, 42000]);
 const USER_ROLES = new Set(["admin", "manager", "coach", "athlete"]);
 const DEFAULT_OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+const OPENAI_FALLBACK_MODELS = [
+  process.env.OPENAI_FALLBACK_MODEL,
+  DEFAULT_OPENAI_MODEL,
+  "gpt-4.1-mini",
+  "gpt-4o-mini"
+].filter(Boolean);
+const OPENAI_TIMEOUT_MS = Number(process.env.OPENAI_TIMEOUT_MS || 45000);
 
 const pool = DATABASE_URL && Pool
   ?new Pool({
@@ -2673,27 +2680,89 @@ function openaiTextFromResponse(payload) {
   return [...new Set(chunks)].join("\n").trim();
 }
 
-async function callOpenAiResponse(apiKey, model, prompt, maxOutputTokens = 420) {
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model,
-      input: prompt,
-      max_output_tokens: maxOutputTokens
-    })
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw httpError(payload.error?.message || `OpenAI respondeu HTTP ${response.status}.`, response.status);
+function uniqueOpenAiModels(model) {
+  return [...new Set([model, ...OPENAI_FALLBACK_MODELS].filter(Boolean).map((item) => String(item).trim()).filter(Boolean))];
+}
+
+async function fetchOpenAiJson(url, apiKey, body) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw httpError(payload.error?.message || `OpenAI respondeu HTTP ${response.status}.`, response.status);
+    }
+    return payload;
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw httpError(`OpenAI excedeu ${Math.round(OPENAI_TIMEOUT_MS / 1000)}s sem responder.`, 504);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
+}
+
+async function callOpenAiResponse(apiKey, model, prompt, maxOutputTokens = 420) {
+  const payload = await fetchOpenAiJson("https://api.openai.com/v1/responses", apiKey, {
+    model,
+    input: prompt,
+    max_output_tokens: maxOutputTokens
+  });
   return {
     payload,
     text: openaiTextFromResponse(payload)
   };
+}
+
+async function callOpenAiChatCompletion(apiKey, model, prompt, maxOutputTokens = 420) {
+  const payload = await fetchOpenAiJson("https://api.openai.com/v1/chat/completions", apiKey, {
+    model,
+    messages: [
+      { role: "system", content: "Voce e a IA tecnica do 11RUN para analise esportiva. Responda em portugues do Brasil, com objetividade." },
+      { role: "user", content: prompt }
+    ],
+    max_tokens: maxOutputTokens,
+    temperature: 0.2
+  });
+  return {
+    payload,
+    text: String(payload.choices?.[0]?.message?.content || "").trim()
+  };
+}
+
+async function callOpenAiText(apiKey, model, prompt, maxOutputTokens = 420) {
+  const errors = [];
+  for (const candidate of uniqueOpenAiModels(model)) {
+    try {
+      const result = await callOpenAiResponse(apiKey, candidate, prompt, maxOutputTokens);
+      if (result.text) return { ...result, model: candidate, endpoint: "responses" };
+      errors.push(httpError(`OpenAI ${candidate} respondeu sem texto extraivel na Responses API.`, 502));
+    } catch (error) {
+      errors.push(error);
+    }
+    try {
+      const result = await callOpenAiChatCompletion(apiKey, candidate, prompt, maxOutputTokens);
+      if (result.text) return { ...result, model: candidate, endpoint: "chat.completions" };
+      errors.push(httpError(`OpenAI ${candidate} respondeu sem texto extraivel no Chat Completions.`, 502));
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  const terminalError = errors.find((error) => Number(error?.statusCode || error?.status || 0) === 401)
+    || errors.find((error) => Number(error?.statusCode || error?.status || 0) === 429)
+    || errors.at(-1)
+    || httpError("OpenAI nao retornou uma resposta utilizavel.", 502);
+  throw terminalError;
 }
 
 function publicOpenAiError(error) {
@@ -2728,33 +2797,20 @@ async function generateAiProjection(tenantId, input = {}) {
   ].join("\n");
 
   let aiResult = null;
-  let usedModel = model;
   try {
-    aiResult = await callOpenAiResponse(apiKey, model, prompt, 520);
+    aiResult = await callOpenAiText(apiKey, model, prompt, 520);
   } catch (error) {
-    if (model !== DEFAULT_OPENAI_MODEL && [400, 404].includes(Number(error.statusCode || 0))) {
-      usedModel = DEFAULT_OPENAI_MODEL;
-      try {
-        aiResult = await callOpenAiResponse(apiKey, DEFAULT_OPENAI_MODEL, prompt, 520);
-      } catch (fallbackError) {
-        return {
-          ok: false,
-          model: usedModel,
-          text: publicOpenAiError(fallbackError)
-        };
-      }
-    } else {
-      return {
-        ok: false,
-        model,
-        text: publicOpenAiError(error)
-      };
-    }
+    return {
+      ok: false,
+      model,
+      text: publicOpenAiError(error)
+    };
   }
   return {
     ok: true,
-    model: usedModel,
-    text: aiResult.text || "A IA respondeu sem texto extraível. Verifique se o modelo configurado suporta saída textual na Responses API."
+    model: aiResult.model || model,
+    endpoint: aiResult.endpoint || "openai",
+    text: aiResult.text || "A IA respondeu sem texto extraivel. Verifique se o modelo configurado suporta saida textual."
   };
 }
 
@@ -2764,11 +2820,12 @@ async function testOpenAiSettings(tenantId) {
   const model = settings.openai_model || settings.openaiModel || DEFAULT_OPENAI_MODEL;
   const enabled = Boolean(settings.openai_enabled || settings.openaiEnabled || process.env.OPENAI_API_KEY);
   if (!enabled || !apiKey) throw httpError("IA externa não configurada ou desativada.", 400);
-  const result = await callOpenAiResponse(apiKey, model, "Responda exatamente com uma frase curta em português confirmando: IA 11RUN operacional.", 80);
+  const result = await callOpenAiText(apiKey, model, "Responda exatamente com uma frase curta em portugues confirmando: IA 11RUN operacional.", 80);
   return {
     ok: Boolean(result.text),
-    model,
-    text: result.text || "Chamada aceita, mas sem texto extraível."
+    model: result.model || model,
+    endpoint: result.endpoint || "openai",
+    text: result.text || "Chamada aceita, mas sem texto extraivel."
   };
 }
 
