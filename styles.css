@@ -1,21 +1,81 @@
-:root {
+﻿:root,
+html[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #050607;
-  --panel: rgba(15, 16, 18, 0.82);
-  --panel-strong: rgba(23, 24, 27, 0.94);
-  --line: rgba(255, 255, 255, 0.12);
-  --line-strong: rgba(255, 78, 15, 0.55);
-  --text: #e6e4de;
-  --heading: #f1efe9;
-  --muted: #aaa9a4;
-  --soft: #777872;
-  --orange: #ff4b0b;
-  --amber: #ff9f1a;
-  --cyan: #74e6ff;
-  --green: #45f2a8;
-  --danger: #ff3d55;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: rgba(24, 24, 27, 0.88);
+  --card-foreground: #fafafa;
+  --popover: #09090b;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #09090b;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted-surface: #18181b;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #3f3f46;
+  --destructive-foreground: #fafafa;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.14);
+  --ring: #d4d4d8;
   --radius: 8px;
-  --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+
+  --bg: var(--background);
+  --panel: rgba(24, 24, 27, 0.78);
+  --panel-strong: rgba(24, 24, 27, 0.95);
+  --line: var(--border);
+  --line-strong: rgba(250, 250, 250, 0.42);
+  --text: var(--foreground);
+  --heading: var(--foreground);
+  --muted: var(--muted-foreground);
+  --soft: #71717a;
+  --tone-primary: var(--primary);
+  --tone-muted: #d4d4d8;
+  --tone-subtle: #e4e4e7;
+  --tone-strong: #fafafa;
+  --danger: #a1a1aa;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #09090b;
+  --card: rgba(255, 255, 255, 0.92);
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted-surface: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #e4e4e7;
+  --destructive-foreground: #18181b;
+  --border: rgba(9, 9, 11, 0.12);
+  --input: rgba(9, 9, 11, 0.16);
+  --ring: #18181b;
+  --shadow: 0 24px 70px rgba(24, 24, 27, 0.12);
+
+  --bg: var(--background);
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel-strong: rgba(255, 255, 255, 0.98);
+  --line: var(--border);
+  --line-strong: rgba(24, 24, 27, 0.34);
+  --text: var(--foreground);
+  --heading: var(--foreground);
+  --muted: var(--muted-foreground);
+  --soft: #71717a;
+  --tone-primary: var(--primary);
+  --tone-muted: #52525b;
+  --tone-subtle: #3f3f46;
+  --tone-strong: #18181b;
+  --danger: #52525b;
 }
 
 * {
@@ -26,9 +86,7 @@ body {
   margin: 0;
   min-width: 320px;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
-  background:
-    radial-gradient(circle at 78% 12%, rgba(255, 75, 11, 0.16), transparent 27%),
-    linear-gradient(135deg, #050607 0%, #0d0e10 52%, #15100f 100%);
+  background: var(--background);
   color: var(--text);
 }
 
@@ -50,7 +108,7 @@ button {
   padding: 24px;
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.58)),
-    url("assets/hero-runner.png") center / cover no-repeat;
+    url("assets/hero-runner-bw.png") center / cover no-repeat;
 }
 
 .login-screen[hidden],
@@ -82,7 +140,7 @@ button {
 .login-message {
   min-height: 20px;
   margin: 0;
-  color: #ffb3bd;
+  color: var(--muted-foreground);
 }
 
 .form-message {
@@ -92,7 +150,7 @@ button {
 }
 
 .form-message.is-error {
-  color: #ffb3bd;
+  color: var(--muted-foreground);
 }
 
 .shell {
@@ -220,7 +278,7 @@ nav a:hover,
 nav a.is-active {
   color: var(--heading);
   border-color: var(--line-strong);
-  background: linear-gradient(90deg, rgba(255, 75, 11, 0.22), rgba(255, 255, 255, 0.04));
+  background: linear-gradient(90deg, rgba(250, 250, 250, 0.22), rgba(255, 255, 255, 0.04));
 }
 
 .shell.rail-collapsed {
@@ -285,7 +343,7 @@ nav a.is-active {
 .provider-card small,
 .insight-list span,
 .athlete-card span {
-  color: var(--orange);
+  color: var(--tone-primary);
   text-transform: uppercase;
   letter-spacing: 0;
   font-size: 11px;
@@ -408,7 +466,7 @@ h3 {
   max-width: min(720px, 58vw);
   margin: clamp(20px, 3vw, 34px) 0 0;
   padding-top: 18px;
-  border-top: 1px solid rgba(255, 75, 11, 0.34);
+  border-top: 1px solid rgba(250, 250, 250, 0.34);
   color: rgba(241, 239, 233, 0.92);
   font-size: clamp(18px, 2vw, 28px);
   font-weight: 520;
@@ -424,10 +482,10 @@ h3 {
   display: grid;
   gap: 14px;
   padding: 18px;
-  border: 1px solid rgba(255, 75, 11, 0.34);
+  border: 1px solid rgba(250, 250, 250, 0.34);
   border-radius: var(--radius);
   background:
-    linear-gradient(140deg, rgba(255, 75, 11, 0.13), rgba(255, 255, 255, 0.035) 42%, rgba(0, 0, 0, 0.22)),
+    linear-gradient(140deg, rgba(250, 250, 250, 0.13), rgba(255, 255, 255, 0.035) 42%, rgba(0, 0, 0, 0.22)),
     rgba(13, 14, 16, 0.72);
   backdrop-filter: blur(16px);
 }
@@ -447,7 +505,7 @@ h3 {
   overflow-y: auto;
   padding-right: 4px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 75, 11, 0.56) rgba(255, 255, 255, 0.06);
+  scrollbar-color: rgba(250, 250, 250, 0.56) rgba(255, 255, 255, 0.06);
 }
 
 .home-ai-message {
@@ -458,14 +516,14 @@ h3 {
 }
 
 .home-ai-message.is-user {
-  border-color: rgba(255, 75, 11, 0.42);
-  background: rgba(255, 75, 11, 0.1);
+  border-color: rgba(250, 250, 250, 0.42);
+  background: rgba(250, 250, 250, 0.1);
 }
 
 .home-ai-message span {
   display: block;
   margin-bottom: 4px;
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -515,8 +573,8 @@ h3 {
 
 .primary-action {
   padding: 0 18px;
-  background: var(--orange);
-  box-shadow: 0 16px 36px rgba(255, 75, 11, 0.24);
+  background: var(--tone-primary);
+  box-shadow: 0 16px 36px rgba(250, 250, 250, 0.24);
 }
 
 .primary-action:disabled,
@@ -537,7 +595,7 @@ h3 {
   padding: 0 14px;
   border: 1px solid rgba(255, 61, 85, 0.48);
   border-radius: var(--radius);
-  color: #ffb3bd;
+  color: var(--muted-foreground);
   font-size: 13px;
   font-weight: 700;
   background: rgba(255, 61, 85, 0.1);
@@ -603,7 +661,7 @@ dialog {
 
 .segmented button.is-active {
   color: #ffffff;
-  background: rgba(255, 75, 11, 0.92);
+  background: rgba(250, 250, 250, 0.92);
 }
 
 .segmented button.is-active,
@@ -739,7 +797,7 @@ dialog {
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: var(--radius);
   background:
-    linear-gradient(145deg, rgba(255, 75, 11, 0.055), rgba(255, 255, 255, 0.025) 38%, rgba(0, 0, 0, 0.06)),
+    linear-gradient(145deg, rgba(250, 250, 250, 0.055), rgba(255, 255, 255, 0.025) 38%, rgba(0, 0, 0, 0.06)),
     rgba(255, 255, 255, 0.018);
 }
 
@@ -756,7 +814,7 @@ dialog {
 }
 
 .profile-history-panel {
-  border-color: rgba(255, 75, 11, 0.2);
+  border-color: rgba(250, 250, 250, 0.2);
 }
 
 .relationship-note {
@@ -777,9 +835,9 @@ dialog {
   margin-bottom: 18px;
   position: relative;
   overflow: hidden;
-  border-color: rgba(255, 75, 11, 0.22);
+  border-color: rgba(250, 250, 250, 0.22);
   background:
-    linear-gradient(120deg, rgba(255, 75, 11, 0.13), rgba(255, 255, 255, 0.035) 42%, rgba(0, 0, 0, 0.08)),
+    linear-gradient(120deg, rgba(250, 250, 250, 0.13), rgba(255, 255, 255, 0.035) 42%, rgba(0, 0, 0, 0.08)),
     var(--panel);
 }
 
@@ -826,7 +884,7 @@ dialog {
 }
 
 .focus-projection-head > strong {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: clamp(26px, 4vw, 42px);
   font-weight: 520;
   line-height: 1;
@@ -848,7 +906,7 @@ dialog {
 
 .focus-projection-grid span,
 .focus-projection-empty span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
@@ -874,13 +932,13 @@ dialog {
 .focus-history {
   margin: -4px 0 16px;
   padding: 12px;
-  border: 1px solid rgba(255, 75, 11, 0.18);
+  border: 1px solid rgba(250, 250, 250, 0.18);
   border-radius: var(--radius);
-  background: rgba(255, 75, 11, 0.045);
+  background: rgba(250, 250, 250, 0.045);
 }
 
 .focus-history span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
@@ -909,9 +967,9 @@ dialog {
 
 .focus-roadmap-panel {
   margin-bottom: 18px;
-  border-color: rgba(255, 75, 11, 0.18);
+  border-color: rgba(250, 250, 250, 0.18);
   background:
-    linear-gradient(110deg, rgba(255, 75, 11, 0.075), rgba(255, 255, 255, 0.025) 40%, rgba(0, 0, 0, 0.08)),
+    linear-gradient(110deg, rgba(250, 250, 250, 0.075), rgba(255, 255, 255, 0.025) 40%, rgba(0, 0, 0, 0.08)),
     var(--panel);
 }
 
@@ -933,7 +991,7 @@ dialog {
 .probability-badge {
   display: grid;
   justify-items: end;
-  color: var(--orange);
+  color: var(--tone-primary);
 }
 
 .probability-badge strong {
@@ -962,7 +1020,7 @@ dialog {
 }
 
 .roadmap-metric span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
@@ -1008,7 +1066,7 @@ dialog {
 
 .roadmap-chart .roadmap-current {
   fill: none;
-  stroke: rgba(255, 75, 11, 0.7);
+  stroke: rgba(250, 250, 250, 0.7);
   stroke-width: 0.75;
 }
 
@@ -1052,10 +1110,10 @@ dialog {
 
 .goal-card {
   padding: 14px;
-  border: 1px solid rgba(255, 75, 11, 0.22);
+  border: 1px solid rgba(250, 250, 250, 0.22);
   border-radius: var(--radius);
   background:
-    linear-gradient(120deg, rgba(255, 75, 11, 0.09), rgba(255, 255, 255, 0.025) 42%, rgba(0, 0, 0, 0.08)),
+    linear-gradient(120deg, rgba(250, 250, 250, 0.09), rgba(255, 255, 255, 0.025) 42%, rgba(0, 0, 0, 0.08)),
     rgba(18, 18, 20, 0.86);
 }
 
@@ -1074,7 +1132,7 @@ dialog {
 
 .goal-card-head span,
 .goal-metrics span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
@@ -1097,7 +1155,7 @@ dialog {
 }
 
 .goal-card-head > strong {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 28px;
   font-weight: 460;
 }
@@ -1155,7 +1213,7 @@ dialog {
 }
 
 .goal-route-time-tick {
-  stroke: rgba(255, 75, 11, 0.38);
+  stroke: rgba(250, 250, 250, 0.38);
   stroke-width: 0.5;
 }
 
@@ -1173,11 +1231,11 @@ dialog {
 }
 
 .goal-route-optimistic {
-  stroke: rgba(255, 75, 11, 0.78);
+  stroke: rgba(250, 250, 250, 0.78);
 }
 
 .goal-route-conservative {
-  stroke: rgba(217, 66, 9, 0.45);
+  stroke: rgba(82, 82, 91, 0.45);
   stroke-dasharray: 3 6;
 }
 
@@ -1185,12 +1243,12 @@ dialog {
 .goal-route-target-dot,
 .goal-route-optimistic-dot,
 .goal-route-conservative-dot {
-  fill: var(--orange);
+  fill: var(--tone-primary);
 }
 
 .goal-route-target-dot {
   fill: #f1efe9;
-  stroke: var(--orange);
+  stroke: var(--tone-primary);
   stroke-width: 0.9;
 }
 
@@ -1207,7 +1265,7 @@ dialog {
 }
 
 .goal-route-tag {
-  fill: rgba(255, 75, 11, 0.88);
+  fill: rgba(250, 250, 250, 0.88);
   text-transform: uppercase;
 }
 
@@ -1230,11 +1288,11 @@ dialog {
   width: 18px;
   height: 1px;
   border-radius: 99px;
-  background: rgba(255, 75, 11, 0.86);
+  background: rgba(250, 250, 250, 0.86);
 }
 
 .goal-route-legend .is-conservative {
-  background: repeating-linear-gradient(90deg, rgba(217, 66, 9, 0.55) 0 5px, transparent 5px 8px);
+  background: repeating-linear-gradient(90deg, rgba(82, 82, 91, 0.55) 0 5px, transparent 5px 8px);
 }
 
 .goal-route-legend .is-target {
@@ -1282,8 +1340,8 @@ dialog {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 16% 20%, rgba(255, 75, 11, 0.18), transparent 24%),
-    linear-gradient(105deg, rgba(255, 75, 11, 0.08), transparent 38%),
+    radial-gradient(circle at 16% 20%, rgba(250, 250, 250, 0.18), transparent 24%),
+    linear-gradient(105deg, rgba(250, 250, 250, 0.08), transparent 38%),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 76px);
   opacity: 0.72;
 }
@@ -1313,14 +1371,14 @@ dialog {
   place-items: center;
   border-radius: 50%;
   background:
-    radial-gradient(circle, rgba(255, 75, 11, 0.22), transparent 34%),
+    radial-gradient(circle, rgba(250, 250, 250, 0.22), transparent 34%),
     rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-orbit span {
   position: absolute;
   inset: 18px;
-  border: 1px solid rgba(255, 75, 11, 0.4);
+  border: 1px solid rgba(250, 250, 250, 0.4);
   border-top-color: rgba(255, 255, 255, 0.5);
   border-radius: 50%;
   animation: dashboardOrbit 12s linear infinite;
@@ -1329,7 +1387,7 @@ dialog {
 .dashboard-orbit span:nth-child(2) {
   inset: 34px;
   border-color: rgba(255, 255, 255, 0.16);
-  border-left-color: rgba(255, 75, 11, 0.7);
+  border-left-color: rgba(250, 250, 250, 0.7);
   animation-duration: 9s;
   animation-direction: reverse;
 }
@@ -1350,7 +1408,7 @@ dialog {
 .dashboard-orbit small {
   position: absolute;
   top: 116px;
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 520;
   text-transform: uppercase;
@@ -1414,7 +1472,7 @@ dialog {
 }
 
 .dash-line-volume {
-  stroke: rgba(255, 75, 11, 0.68);
+  stroke: rgba(250, 250, 250, 0.68);
 }
 
 .dash-line-tss {
@@ -1423,7 +1481,7 @@ dialog {
 }
 
 .dash-node {
-  fill: rgba(255, 75, 11, 0.58);
+  fill: rgba(250, 250, 250, 0.58);
   stroke: rgba(248, 243, 232, 0.5);
   stroke-width: 0.35;
   transform-box: fill-box;
@@ -1438,7 +1496,7 @@ dialog {
 }
 
 .dashboard-trend-svg .dash-month-label {
-  fill: rgba(255, 75, 11, 0.82);
+  fill: rgba(250, 250, 250, 0.82);
   font-size: 10px;
   font-weight: 520;
   letter-spacing: 0.08em;
@@ -1479,7 +1537,7 @@ dialog {
 .dashboard-barcode span {
   height: var(--bar);
   border-radius: 99px 99px 0 0;
-  background: linear-gradient(180deg, rgba(255, 75, 11, 0.95), rgba(255, 75, 11, 0.08));
+  background: linear-gradient(180deg, rgba(250, 250, 250, 0.95), rgba(250, 250, 250, 0.08));
   animation: dashboardBar 1.2s ease both;
 }
 
@@ -1502,14 +1560,14 @@ dialog {
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: var(--radius);
   background:
-    linear-gradient(145deg, rgba(255, 75, 11, 0.08), rgba(255, 255, 255, 0.025)),
+    linear-gradient(145deg, rgba(250, 250, 250, 0.08), rgba(255, 255, 255, 0.025)),
     rgba(255, 255, 255, 0.025);
 }
 
 .dashboard-metric-card span,
 .dashboard-goal-card span,
 .timeline-card span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 520;
   text-transform: uppercase;
@@ -1573,7 +1631,7 @@ dialog {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius);
   background:
-    linear-gradient(145deg, rgba(255, 75, 11, 0.08), rgba(255, 255, 255, 0.02)),
+    linear-gradient(145deg, rgba(250, 250, 250, 0.08), rgba(255, 255, 255, 0.02)),
     rgba(255, 255, 255, 0.025);
 }
 
@@ -1584,7 +1642,7 @@ dialog {
 .test-base-card span,
 .test-param-card span,
 .test-param-title span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 560;
   text-transform: uppercase;
@@ -1694,7 +1752,7 @@ dialog {
   height: 4px;
   border-radius: 99px;
   background:
-    linear-gradient(90deg, rgba(255, 75, 11, 0.9) var(--pct), rgba(255, 255, 255, 0.08) var(--pct));
+    linear-gradient(90deg, rgba(250, 250, 250, 0.9) var(--pct), rgba(255, 255, 255, 0.08) var(--pct));
 }
 
 .type-radar {
@@ -1712,7 +1770,7 @@ dialog {
   place-items: center;
   position: relative;
   background: var(--donut);
-  box-shadow: 0 0 38px rgba(255, 75, 11, 0.15);
+  box-shadow: 0 0 38px rgba(250, 250, 250, 0.15);
   animation: dashboardGlow 3s ease-in-out infinite;
 }
 
@@ -1738,14 +1796,14 @@ dialog {
 }
 
 .dashboard-donut small {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 520;
   text-transform: uppercase;
 }
 
 @keyframes dashboardGlow {
-  50% { box-shadow: 0 0 52px rgba(255, 75, 11, 0.24); }
+  50% { box-shadow: 0 0 52px rgba(250, 250, 250, 0.24); }
 }
 
 .type-bars {
@@ -1807,7 +1865,7 @@ dialog {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius);
   background:
-    linear-gradient(145deg, rgba(255, 75, 11, 0.08), rgba(255, 255, 255, 0.02)),
+    linear-gradient(145deg, rgba(250, 250, 250, 0.08), rgba(255, 255, 255, 0.02)),
     rgba(255, 255, 255, 0.025);
 }
 
@@ -1817,7 +1875,7 @@ dialog {
 
 .type-summary-strip span,
 .type-insight-head span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 560;
   text-transform: uppercase;
@@ -1855,7 +1913,7 @@ dialog {
   position: absolute;
   inset: 0 auto 0 0;
   width: 3px;
-  background: linear-gradient(180deg, rgba(255, 75, 11, 0.95), rgba(185, 55, 8, 0.2));
+  background: linear-gradient(180deg, rgba(250, 250, 250, 0.95), rgba(82, 82, 91, 0.2));
 }
 
 .type-insight-head {
@@ -1877,7 +1935,7 @@ dialog {
   margin: 12px 0 10px;
   border-radius: 6px;
   background:
-    linear-gradient(90deg, rgba(255, 75, 11, 0.18) var(--count), transparent var(--count)),
+    linear-gradient(90deg, rgba(250, 250, 250, 0.18) var(--count), transparent var(--count)),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 20%);
   border: 1px solid rgba(255, 255, 255, 0.07);
   overflow: hidden;
@@ -1888,7 +1946,7 @@ dialog {
   display: block;
   height: 100%;
   width: var(--vol);
-  background: linear-gradient(90deg, rgba(255, 75, 11, 0.82), rgba(217, 66, 9, 0.2));
+  background: linear-gradient(90deg, rgba(250, 250, 250, 0.82), rgba(82, 82, 91, 0.2));
   animation: dashboardWidth 1.3s ease both;
 }
 
@@ -1919,10 +1977,10 @@ dialog {
   gap: 18px;
   align-items: center;
   padding: 15px;
-  border: 1px solid rgba(255, 75, 11, 0.22);
+  border: 1px solid rgba(250, 250, 250, 0.22);
   border-radius: var(--radius);
   background:
-    linear-gradient(140deg, rgba(255, 75, 11, 0.09), rgba(255, 255, 255, 0.025) 44%),
+    linear-gradient(140deg, rgba(250, 250, 250, 0.09), rgba(255, 255, 255, 0.025) 44%),
     rgba(255, 255, 255, 0.03);
   position: relative;
   overflow: hidden;
@@ -1933,7 +1991,7 @@ dialog {
   position: absolute;
   inset: 0 auto 0 0;
   width: 3px;
-  background: linear-gradient(180deg, rgba(255, 75, 11, 0.95), rgba(185, 55, 8, 0.18));
+  background: linear-gradient(180deg, rgba(250, 250, 250, 0.95), rgba(82, 82, 91, 0.18));
 }
 
 .goal-probability-copy {
@@ -1980,7 +2038,7 @@ dialog {
 .dashboard-goal-card.is-recalculating,
 .dashboard-vo2-panel.is-recalculating {
   border-color: rgba(255, 255, 255, 0.34);
-  box-shadow: 0 0 0 1px rgba(255, 75, 11, 0.08), 0 18px 50px rgba(255, 75, 11, 0.08);
+  box-shadow: 0 0 0 1px rgba(250, 250, 250, 0.08), 0 18px 50px rgba(250, 250, 250, 0.08);
 }
 
 .goal-probability-visual {
@@ -2010,7 +2068,7 @@ dialog {
 
 .goal-ring-progress {
   fill: none;
-  stroke: var(--orange);
+  stroke: var(--tone-primary);
   stroke-width: 8;
   stroke-linecap: round;
   stroke-dasharray: 283;
@@ -2034,10 +2092,10 @@ dialog {
 .dashboard-vo2-panel {
   min-height: 100%;
   padding: 16px;
-  border: 1px solid rgba(255, 75, 11, 0.22);
+  border: 1px solid rgba(250, 250, 250, 0.22);
   border-radius: var(--radius);
   background:
-    linear-gradient(150deg, rgba(255, 75, 11, 0.11), rgba(255, 255, 255, 0.025) 46%),
+    linear-gradient(150deg, rgba(250, 250, 250, 0.11), rgba(255, 255, 255, 0.025) 46%),
     rgba(255, 255, 255, 0.03);
   position: relative;
   overflow: hidden;
@@ -2050,7 +2108,7 @@ dialog {
   pointer-events: none;
   background:
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 68px),
-    linear-gradient(180deg, transparent, rgba(255, 75, 11, 0.06));
+    linear-gradient(180deg, transparent, rgba(250, 250, 250, 0.06));
 }
 
 .dashboard-vo2-panel > * {
@@ -2066,7 +2124,7 @@ dialog {
 
 .vo2-panel-head span,
 .vo2-source-grid span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 560;
   text-transform: uppercase;
@@ -2098,13 +2156,13 @@ dialog {
 
 .vo2-panel-head path {
   fill: none;
-  stroke: rgba(255, 75, 11, 0.72);
+  stroke: rgba(250, 250, 250, 0.72);
   stroke-width: 2;
 }
 
 .vo2-panel-head circle {
   fill: #f1efe9;
-  stroke: var(--orange);
+  stroke: var(--tone-primary);
   stroke-width: 2;
 }
 
@@ -2158,7 +2216,7 @@ dialog {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 560;
   text-transform: uppercase;
@@ -2186,7 +2244,7 @@ dialog {
   width: 11px;
   height: 11px;
   border: 2px solid rgba(255, 255, 255, 0.18);
-  border-top-color: var(--orange);
+  border-top-color: var(--tone-primary);
   border-radius: 50%;
   animation: spinLoader 0.75s linear infinite;
   flex: 0 0 auto;
@@ -2210,7 +2268,7 @@ dialog {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(100deg, rgba(255, 75, 11, 0.1), transparent 36%),
+    linear-gradient(100deg, rgba(250, 250, 250, 0.1), transparent 36%),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 72px);
   opacity: 0.7;
 }
@@ -2260,8 +2318,8 @@ dialog {
 }
 
 .legend-volume {
-  background: rgba(255, 75, 11, 0.86);
-  box-shadow: 0 0 8px rgba(255, 75, 11, 0.32);
+  background: rgba(250, 250, 250, 0.86);
+  box-shadow: 0 0 8px rgba(250, 250, 250, 0.32);
 }
 
 .legend-tss {
@@ -2330,7 +2388,7 @@ dialog {
 }
 
 .volume-line {
-  stroke: var(--orange);
+  stroke: var(--tone-primary);
   stroke-opacity: 0.62;
 }
 
@@ -2350,7 +2408,7 @@ dialog {
 }
 
 .tss-points circle {
-  fill: rgba(255, 75, 11, 0.56);
+  fill: rgba(250, 250, 250, 0.56);
   stroke: rgba(248, 243, 232, 0.56);
   stroke-width: 0.65;
 }
@@ -2391,7 +2449,7 @@ dialog {
 
 .period-month-head span {
   display: block;
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 11px;
   font-weight: 560;
   text-transform: uppercase;
@@ -2451,7 +2509,7 @@ dialog {
 }
 
 .period-week-head span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 11px;
   font-weight: 480;
 }
@@ -2544,7 +2602,7 @@ dialog {
 
 .month-week-header strong small {
   margin-left: 6px;
-  color: rgba(255, 75, 11, 0.78);
+  color: rgba(250, 250, 250, 0.78);
   font-size: 10px;
   font-weight: 500;
   text-transform: none;
@@ -2592,10 +2650,10 @@ dialog {
   display: block;
   text-align: left;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 3px solid var(--orange);
+  border-left: 3px solid var(--tone-primary);
   border-radius: 6px;
   color: var(--text);
-  background: linear-gradient(135deg, rgba(255, 75, 11, 0.2), rgba(255, 255, 255, 0.05));
+  background: linear-gradient(135deg, rgba(250, 250, 250, 0.2), rgba(255, 255, 255, 0.05));
 }
 
 .activity.is-planned {
@@ -2621,7 +2679,7 @@ dialog {
 .activity span {
   display: block;
   margin-top: 5px;
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 11px;
   line-height: 1.25;
   font-weight: 440;
@@ -2666,7 +2724,7 @@ dialog {
 }
 
 .activity-feedback .pain-high {
-  color: #ff6a5a;
+  color: var(--foreground);
 }
 
 .activity-feedback-form {
@@ -2678,15 +2736,15 @@ dialog {
 }
 
 .activity[data-source="Garmin"] {
-  border-left-color: var(--cyan);
+  border-left-color: var(--tone-subtle);
 }
 
 .activity[data-source="Polar"] {
-  border-left-color: var(--green);
+  border-left-color: var(--tone-strong);
 }
 
 .activity[data-source="Suunto"] {
-  border-left-color: var(--amber);
+  border-left-color: var(--tone-muted);
 }
 
 .activity[data-source="COROS"] {
@@ -2782,7 +2840,7 @@ dialog {
 
 .tests-field legend {
   padding: 0 6px;
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
@@ -2812,7 +2870,7 @@ dialog {
 
 .history-field legend {
   padding: 0 6px;
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
@@ -2831,7 +2889,7 @@ dialog {
   border-radius: 8px;
   padding: 14px;
   background:
-    linear-gradient(135deg, rgba(255, 75, 11, 0.07), rgba(255, 255, 255, 0.02) 42%),
+    linear-gradient(135deg, rgba(250, 250, 250, 0.07), rgba(255, 255, 255, 0.02) 42%),
     rgba(255, 255, 255, 0.02);
 }
 
@@ -2885,7 +2943,7 @@ dialog {
 
 .history-month-group h4 {
   margin: 8px 0 0;
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 11px;
   font-weight: 560;
   text-transform: uppercase;
@@ -2912,7 +2970,7 @@ dialog {
 
 .history-record-card span,
 .history-dossier .section-title span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 560;
   text-transform: uppercase;
@@ -3025,9 +3083,9 @@ select {
   place-items: center;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
-  color: var(--orange);
+  color: var(--tone-primary);
   font-weight: 700;
-  background: rgba(255, 75, 11, 0.1);
+  background: rgba(250, 250, 250, 0.1);
 }
 
 .provider-card h4 {
@@ -3078,13 +3136,13 @@ select {
 
 .provider-warning {
   margin-top: 10px !important;
-  color: #ffb3bd !important;
+  color: var(--muted-foreground) !important;
   font-weight: 650;
 }
 
 .provider-state a,
 .detail-link {
-  color: var(--orange);
+  color: var(--tone-primary);
   text-decoration: none;
 }
 
@@ -3144,8 +3202,8 @@ select optgroup {
 
 select option:checked {
   color: #fffaf4 !important;
-  background: #ff4b0b !important;
-  background-color: #ff4b0b !important;
+  background: var(--tone-primary) !important;
+  background-color: var(--tone-primary) !important;
 }
 
 select option:hover,
@@ -3166,9 +3224,9 @@ select option:focus {
 .credential-field input:focus,
 .credential-field select:focus,
 .credential-field textarea:focus {
-  border-color: rgba(255, 75, 11, 0.72);
+  border-color: rgba(250, 250, 250, 0.72);
   background: rgba(0, 0, 0, 0.36);
-  box-shadow: 0 0 0 3px rgba(255, 75, 11, 0.11);
+  box-shadow: 0 0 0 3px rgba(250, 250, 250, 0.11);
 }
 
 .provider-actions {
@@ -3288,7 +3346,7 @@ select option:focus {
 input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: var(--orange);
+  accent-color: var(--tone-primary);
 }
 
 .import-log ol {
@@ -3305,7 +3363,7 @@ input[type="checkbox"] {
 }
 
 .import-log ol.is-error {
-  color: #ffb3bd;
+  color: var(--muted-foreground);
 }
 
 dialog {
@@ -3317,7 +3375,7 @@ dialog {
   overflow: hidden;
   overscroll-behavior: contain;
   background:
-    linear-gradient(145deg, rgba(255, 75, 11, 0.08), rgba(255, 255, 255, 0.025) 34%, rgba(0, 0, 0, 0.08)),
+    linear-gradient(145deg, rgba(250, 250, 250, 0.08), rgba(255, 255, 255, 0.025) 34%, rgba(0, 0, 0, 0.08)),
     rgba(13, 14, 16, 0.96);
 }
 
@@ -3343,7 +3401,7 @@ dialog::backdrop {
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 75, 11, 0.58) rgba(255, 255, 255, 0.06);
+  scrollbar-color: rgba(250, 250, 250, 0.58) rgba(255, 255, 255, 0.06);
 }
 
 .modal-panel *,
@@ -3419,7 +3477,7 @@ dialog::backdrop {
   justify-content: space-between;
   gap: 16px;
   background:
-    linear-gradient(145deg, rgba(255, 75, 11, 0.08), rgba(255, 255, 255, 0.025) 34%, rgba(0, 0, 0, 0.08)),
+    linear-gradient(145deg, rgba(250, 250, 250, 0.08), rgba(255, 255, 255, 0.025) 34%, rgba(0, 0, 0, 0.08)),
     rgba(13, 14, 16, 0.98);
 }
 
@@ -3442,7 +3500,7 @@ dialog::backdrop {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 75, 11, 0.58) rgba(255, 255, 255, 0.06);
+  scrollbar-color: rgba(250, 250, 250, 0.58) rgba(255, 255, 255, 0.06);
 }
 
 .bulk-activity-table {
@@ -3464,7 +3522,7 @@ dialog::backdrop {
   position: sticky;
   top: 0;
   z-index: 1;
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 11px;
   text-transform: uppercase;
   background: rgba(15, 15, 17, 0.98);
@@ -3557,9 +3615,9 @@ dialog::backdrop {
   display: grid;
   gap: 12px;
   padding: 14px;
-  border: 1px solid rgba(255, 75, 11, 0.28);
+  border: 1px solid rgba(250, 250, 250, 0.28);
   border-radius: var(--radius);
-  background: linear-gradient(135deg, rgba(255, 75, 11, 0.08), rgba(255, 255, 255, 0.035));
+  background: linear-gradient(135deg, rgba(250, 250, 250, 0.08), rgba(255, 255, 255, 0.035));
 }
 
 .workout-structure-head {
@@ -3597,7 +3655,7 @@ dialog::backdrop {
 
 .workout-structure-head span {
   display: block;
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 11px;
   font-weight: 650;
   text-transform: uppercase;
@@ -3664,7 +3722,7 @@ dialog::backdrop {
 }
 
 .workout-step-strip span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 10px;
   font-weight: 650;
   text-transform: uppercase;
@@ -3772,25 +3830,25 @@ dialog::backdrop {
 .sync-loader {
   width: min(420px, 100%);
   padding: 28px;
-  border: 1px solid rgba(255, 75, 11, 0.7);
+  border: 1px solid rgba(250, 250, 250, 0.7);
   border-radius: var(--radius);
   background: rgba(12, 12, 13, 0.94);
-  box-shadow: 0 28px 80px rgba(255, 75, 11, 0.18);
+  box-shadow: 0 28px 80px rgba(250, 250, 250, 0.18);
 }
 
 .sync-orbit {
   width: 54px;
   height: 54px;
   margin-bottom: 18px;
-  border: 2px solid rgba(255, 75, 11, 0.22);
-  border-top-color: var(--orange);
-  border-right-color: var(--orange);
+  border: 2px solid rgba(250, 250, 250, 0.22);
+  border-top-color: var(--tone-primary);
+  border-right-color: var(--tone-primary);
   border-radius: 50%;
   animation: sync-spin 0.8s linear infinite;
 }
 
 .sync-loader span {
-  color: var(--orange);
+  color: var(--tone-primary);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -3822,7 +3880,7 @@ dialog::backdrop {
   width: 42%;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, transparent, var(--orange), transparent);
+  background: linear-gradient(90deg, transparent, var(--tone-primary), transparent);
   animation: sync-slide 1.1s ease-in-out infinite;
 }
 
@@ -3878,9 +3936,9 @@ dialog::backdrop {
 }
 
 .close-button:hover {
-  border-color: rgba(255, 75, 11, 0.55);
+  border-color: rgba(250, 250, 250, 0.55);
   color: var(--heading);
-  background: rgba(255, 75, 11, 0.13);
+  background: rgba(250, 250, 250, 0.13);
 }
 
 .detail {
@@ -3923,9 +3981,9 @@ dialog::backdrop {
 .analysis-panel {
   margin-top: 16px;
   padding: 14px;
-  border: 1px solid rgba(255, 75, 11, 0.38);
+  border: 1px solid rgba(250, 250, 250, 0.38);
   border-radius: var(--radius);
-  background: linear-gradient(135deg, rgba(255, 75, 11, 0.12), rgba(255, 255, 255, 0.035));
+  background: linear-gradient(135deg, rgba(250, 250, 250, 0.12), rgba(255, 255, 255, 0.035));
 }
 
 .analysis-panel h4 {
@@ -4469,4 +4527,164 @@ dialog::backdrop {
     grid-auto-flow: row;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* Final shadcn/ui monochrome enforcement layer */
+html[data-theme="dark"] body,
+html[data-theme="dark"] .shell,
+html[data-theme="dark"] main,
+html[data-theme="light"] body,
+html[data-theme="light"] .shell,
+html[data-theme="light"] main {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+.login-screen {
+  background:
+    linear-gradient(90deg, rgba(9, 9, 11, 0.92), rgba(9, 9, 11, 0.62)),
+    url("assets/hero-runner-bw.png") center / cover no-repeat !important;
+}
+
+html[data-theme="light"] .login-screen {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.56)),
+    url("assets/hero-runner-bw.png") center / cover no-repeat !important;
+}
+
+.login-screen,
+.hero-bg,
+.brand img,
+.login-card img,
+.hero-logo {
+  filter: grayscale(1) contrast(1.08) !important;
+}
+
+.rail,
+.login-card,
+.panel,
+.metric-card,
+.calendar-month .day,
+.calendar-period .day,
+.period-week-card,
+.profile-edit-panel,
+.profile-history-panel,
+.activity-card,
+.goal-card,
+.type-card,
+.vo2-estimate-card,
+.modal-panel,
+.detail,
+.home-ai-agent,
+.home-ai-message,
+.timeline-item,
+.admin-user-row,
+.bulk-editor-shell {
+  background: var(--card) !important;
+  color: var(--card-foreground) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
+
+input,
+select,
+textarea {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  border-color: var(--input) !important;
+}
+
+select option {
+  background: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+}
+
+.primary-action,
+.segmented button.is-active,
+.system-control-button.is-active,
+.calendar-view-switch button.is-active,
+nav a.is-active {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-color: var(--primary) !important;
+  box-shadow: none !important;
+}
+
+.primary-action *,
+.segmented button.is-active *,
+.system-control-button.is-active *,
+.calendar-view-switch button.is-active *,
+nav a.is-active * {
+  color: var(--primary-foreground) !important;
+  stroke: currentColor !important;
+}
+
+.secondary-action,
+.icon-button,
+.close-button,
+.menu-toggle,
+.theme-toggle,
+.calendar-view-switch,
+.segmented,
+.system-control-button {
+  background: var(--secondary) !important;
+  color: var(--secondary-foreground) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+}
+
+.kicker,
+.section-title span,
+.app-version,
+.metric-label,
+.activity-meta,
+.muted,
+.empty-state,
+.timeline-meta,
+.form-message,
+.login-message {
+  color: var(--muted-foreground) !important;
+}
+
+.section-title h3,
+.page-header h2,
+.hero h1,
+.modal-panel h3,
+.detail h2,
+.goal-card h4,
+.activity-card strong {
+  color: var(--foreground) !important;
+  letter-spacing: 0 !important;
+}
+
+.theme-toggle {
+  width: calc(100% - 32px);
+  margin: auto 16px 12px;
+  display: inline-flex;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.theme-toggle .nav-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.shell.rail-collapsed .theme-toggle {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
+}
+
+.shell.rail-collapsed .theme-toggle .nav-label {
+  display: none;
+}
+
+.performance-chart path,
+.dashboard-hero-chart path,
+.activity-chart path,
+.goal-projection-chart path,
+.sparkline path {
+  stroke-width: 1.1 !important;
 }

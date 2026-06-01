@@ -4,6 +4,7 @@ const state = {
   cursor: new Date(),
   activities: [],
   goals: [],
+  theme: localStorage.getItem("uiTheme") || "dark",
   language: localStorage.getItem("appLanguage") || "pt-BR",
   integrations: {},
   directory: { teams: [], coaches: [] },
@@ -393,11 +394,26 @@ function t(key) {
   return translations[state.language]?.[key] || translations["pt-BR"][key] || key;
 }
 
+function applyTheme() {
+  const theme = state.theme === "light" ? "light" : "dark";
+  state.theme = theme;
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  localStorage.setItem("uiTheme", theme);
+  document.querySelectorAll("[data-theme-label]").forEach((node) => {
+    node.textContent = theme === "dark" ? "Modo claro" : "Modo escuro";
+  });
+  document.querySelectorAll("[data-toggle-theme]").forEach((button) => {
+    button.setAttribute("aria-pressed", theme === "light" ? "true" : "false");
+  });
+}
+
 function applyI18n() {
   document.documentElement.lang = state.language;
   document.querySelectorAll("[data-i18n]").forEach((node) => {
     node.textContent = t(node.dataset.i18n);
   });
+  applyTheme();
 }
 
 const controlIconPaths = {
@@ -983,8 +999,8 @@ function renderFocusRoadmap() {
         <line x1="${startX}" y1="${targetY}" x2="${endX}" y2="${targetY}" />
         <path class="roadmap-required" d="M ${startX} ${startY} C ${width * 0.38} ${startY + 8}, ${width * 0.62} ${targetY - 10}, ${endX} ${targetY}" />
         <path class="roadmap-current" d="M ${startX} ${startY} C ${width * 0.28} ${startY + 2}, ${width * 0.42} ${startY + 10}, ${width * 0.52} ${startY + 14}" />
-        <circle cx="${startX}" cy="${startY}" r="3" fill="#ff4b0b" />
-        <circle cx="${endX}" cy="${targetY}" r="3" fill="#f3efe8" />
+        <circle cx="${startX}" cy="${startY}" r="3" fill="currentColor" />
+        <circle cx="${endX}" cy="${targetY}" r="3" fill="currentColor" />
         <text x="${startX}" y="${height - 10}" text-anchor="start">Hoje - ${escapeHtml(formatDurationSeconds(model.currentSeconds))}</text>
         <text x="${endX}" y="${height - 10}" text-anchor="end">${escapeHtml(targetLabel)} - ${escapeHtml(formatDurationSeconds(model.targetSeconds))}</text>
       </svg>
@@ -2814,8 +2830,8 @@ function renderPerformanceChart() {
     <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Gráfico de volume e 11TSS">
       <defs>
         <linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stop-color="#ff4b0b" stop-opacity="0.07" />
-          <stop offset="100%" stop-color="#ff4b0b" stop-opacity="0" />
+          <stop offset="0%" stop-color="currentColor" stop-opacity="0.07" />
+          <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
         </linearGradient>
         <filter id="chartGlow">
           <feGaussianBlur stdDeviation="0.65" result="blur" />
@@ -4672,6 +4688,7 @@ async function boot() {
   if (status.get("strava") === "state_error") setLog(["Erro Strava: estado OAuth inválido ou expirado. Clique em Conectar Strava novamente."], true);
 }
 
+applyTheme();
 if (shell && localStorage.getItem("railCollapsed") === "1") setRailCollapsed(true);
 if (menuToggle) menuToggle.addEventListener("click", toggleMenu);
 if (railBackdrop) railBackdrop.addEventListener("click", () => setMenuOpen(false));
@@ -4760,6 +4777,11 @@ calendar.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", async (event) => {
+  if (event.target.closest("[data-toggle-theme]")) {
+    state.theme = state.theme === "dark" ? "light" : "dark";
+    applyTheme();
+    return;
+  }
   const panelToggle = event.target.closest("[data-toggle-panel]");
   if (panelToggle) {
     const key = panelToggle.dataset.togglePanel;

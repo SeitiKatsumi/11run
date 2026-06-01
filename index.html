@@ -4,12 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>11RUN | Treinamento atlético com IA</title>
+    <script>
+      document.documentElement.dataset.theme = localStorage.getItem("uiTheme") || "dark";
+    </script>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <section class="login-screen" id="loginScreen" hidden>
       <form class="login-card" id="loginForm">
-        <img src="assets/logo-orange-white.png" alt="11RUN" />
+        <img src="assets/logo-bw.png" alt="11RUN" />
         <p class="kicker">Acesso</p>
         <h1>Entrar no painel</h1>
         <label class="credential-field">
@@ -34,7 +37,7 @@
       <div class="rail-backdrop" id="railBackdrop" aria-hidden="true"></div>
       <aside class="rail" aria-label="Menu principal">
         <a class="brand" href="#home" data-view-link="home" aria-label="11RUN início">
-          <img src="assets/logo-orange-white.png" alt="11RUN" />
+          <img src="assets/logo-bw.png" alt="11RUN" />
           <span id="appVersion" class="app-version">versão --</span>
         </a>
         <nav>
@@ -45,6 +48,10 @@
           <a href="#preferencias" data-view-link="athlete"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 21a7 7 0 0 1 14 0"></path></svg></span><span class="nav-label" data-i18n="nav.preferences">PREFERÊNCIAS</span></a>
           <a href="#configuracoes" class="manager-only" data-view-link="settings" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg></span><span class="nav-label" data-i18n="nav.settings">CONFIGURAÇÕES</span></a>
         </nav>
+        <button class="theme-toggle secondary-action compact" type="button" data-toggle-theme aria-label="Alternar tema claro e escuro">
+          <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg></span>
+          <span class="nav-label" data-theme-label>Modo claro</span>
+        </button>
         <div class="athlete-chip">
           <span>Perfil ativo</span>
           <strong id="sidebarAthleteName">Atleta não cadastrado</strong>
@@ -54,10 +61,10 @@
       <main>
         <section class="view home-view is-visible" data-view="home">
           <div class="hero">
-            <img class="hero-bg" src="assets/hero-runner.png" alt="Corredora futurista em cidade tecnológica" />
+            <img class="hero-bg" src="assets/hero-runner-bw.png" alt="Corredora futurista em cidade tecnológica" />
             <div class="hero-shade"></div>
             <div class="hero-content">
-              <img class="hero-logo" src="assets/logo-orange-white.png" alt="11RUN" />
+              <img class="hero-logo" src="assets/logo-bw.png" alt="11RUN" />
               <p class="kicker">Perfil do atleta</p>
               <h1>The world's smartest AI-powered training manager.</h1>
               <p id="homeMotivation" class="hero-motivation">Carregando leitura do ciclo atual.</p>
