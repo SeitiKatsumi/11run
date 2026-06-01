@@ -5180,3 +5180,110 @@ nav a.is-active .nav-icon {
     height: 16px;
   }
 }
+
+/* Home composition guard: keeps the AI panel from breaking the hero layout. */
+.home-view .hero {
+  min-height: 100dvh;
+  display: block;
+}
+
+.home-view .hero-content {
+  position: absolute;
+  z-index: 2;
+  left: clamp(28px, 5vw, 74px);
+  bottom: clamp(44px, 7vh, 92px);
+  width: min(600px, 46vw);
+  padding: 0;
+}
+
+.home-view .hero-logo {
+  width: min(270px, 28vw);
+}
+
+.home-view .hero h1 {
+  max-width: 560px;
+  font-size: clamp(2.35rem, 3.8vw, 3.5rem) !important;
+}
+
+.home-view .hero-motivation {
+  max-width: 100%;
+  margin-top: 22px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 75, 11, 0.26);
+  border-radius: var(--radius);
+  background: rgba(24, 24, 27, 0.62);
+  backdrop-filter: blur(12px);
+  font-size: clamp(1rem, 1.2vw, 1.25rem) !important;
+}
+
+.home-view .home-ai-agent {
+  position: absolute !important;
+  z-index: 3;
+  right: clamp(24px, 4vw, 64px);
+  bottom: clamp(42px, 7vh, 92px);
+  width: min(430px, 30vw);
+  max-height: min(56vh, 520px);
+  overflow: hidden;
+}
+
+.home-view .home-ai-messages {
+  max-height: min(24vh, 220px);
+}
+
+@media (max-width: 1180px) {
+  .home-view .hero-content {
+    width: min(560px, 52vw);
+    left: 28px;
+  }
+
+  .home-view .home-ai-agent {
+    right: 24px;
+    width: min(360px, 34vw);
+  }
+}
+
+@media (max-width: 900px) {
+  .home-view .hero {
+    min-height: auto;
+    display: grid;
+    gap: 16px;
+    padding: 92px 16px 18px;
+  }
+
+  .home-view .hero-bg,
+  .home-view .hero-shade {
+    position: fixed;
+  }
+
+  .home-view .hero-content,
+  .home-view .home-ai-agent {
+    position: relative !important;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    max-width: none;
+  }
+
+  .home-view .hero-content {
+    padding: 0;
+  }
+
+  .home-view .hero-logo {
+    width: min(220px, 58vw);
+  }
+
+  .home-view .hero h1 {
+    max-width: 100%;
+    font-size: clamp(2rem, 9vw, 3rem) !important;
+  }
+
+  .home-view .hero-motivation {
+    font-size: 1rem !important;
+  }
+
+  .home-view .home-ai-agent {
+    margin: 0;
+    max-height: none;
+  }
+}
