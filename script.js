@@ -436,6 +436,49 @@ function controlIconSvg(key) {
   return `<svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true">${controlIconPaths[key] || controlIconPaths.single}</svg>`;
 }
 
+const actionIconPaths = {
+  add: `<path d="M12 5v14"></path><path d="M5 12h14"></path>`,
+  save: `<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><path d="M17 21v-8H7v8"></path><path d="M7 3v5h8"></path>`,
+  edit: `<path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path>`,
+  delete: `<path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path>`,
+  refresh: `<path d="M20 12a8 8 0 0 1-14.9 4"></path><path d="M4 12A8 8 0 0 1 18.9 8"></path><path d="M20 4v4h-4"></path><path d="M4 20v-4h4"></path>`,
+  import: `<path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path>`,
+  search: `<circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>`,
+  ai: `<path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M4.93 4.93l2.83 2.83"></path><path d="M16.24 16.24l2.83 2.83"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><path d="M4.93 19.07l2.83-2.83"></path><path d="M16.24 7.76l2.83-2.83"></path><circle cx="12" cy="12" r="3"></circle>`,
+  arrow: `<path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path>`
+};
+
+function actionIconSvg(key) {
+  return `<svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">${actionIconPaths[key] || actionIconPaths.arrow}</svg>`;
+}
+
+function inferActionIcon(button) {
+  const text = (button.textContent || "").toLowerCase();
+  const dataset = button.dataset || {};
+  if (dataset.openWorkoutBuilder || text.includes("adicionar")) return "add";
+  if (dataset.saveWorkout || dataset.saveProvider || text.includes("salvar")) return "save";
+  if (dataset.openBulkActivityEditor || text.includes("editar")) return "edit";
+  if (dataset.deleteActivity || text.includes("excluir") || text.includes("remover")) return "delete";
+  if (dataset.recalculateDashboard || text.includes("recalcular") || text.includes("atualizar")) return "refresh";
+  if (dataset.importDemo || text.includes("importar")) return "import";
+  if (dataset.testOpenai || text.includes("ia") || text.includes("análise")) return "ai";
+  if (text.includes("buscar") || text.includes("search")) return "search";
+  return "";
+}
+
+function decorateActionIcons(root = document) {
+  root.querySelectorAll(".primary-action, .secondary-action, .danger-action, .icon-button").forEach((button) => {
+    if (button.dataset.iconDecorated === "1") return;
+    if (button.querySelector(".action-icon, .control-icon")) return;
+    const key = inferActionIcon(button);
+    if (!key) return;
+    const label = button.textContent.trim();
+    button.dataset.iconDecorated = "1";
+    button.classList.add("iconized-action");
+    button.innerHTML = `${actionIconSvg(key)}<span>${escapeHtml(label)}</span>`;
+  });
+}
+
 function enhanceSystemControls() {
   const controls = [
     ...document.querySelectorAll("[data-calendar-view]"),
@@ -456,6 +499,7 @@ function enhanceSystemControls() {
     button.classList.add("system-control-button");
     button.innerHTML = `${controlIconSvg(key)}<span>${escapeHtml(label)}</span>`;
   });
+  decorateActionIcons();
 }
 
 async function api(path, options = {}) {

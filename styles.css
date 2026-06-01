@@ -2,13 +2,23 @@
 html[data-theme="dark"] {
   color-scheme: dark;
   --background: #09090b;
+  --page-background:
+    radial-gradient(circle at 78% 12%, rgba(255, 75, 11, 0.16), transparent 27%),
+    linear-gradient(135deg, #050607 0%, #0d0e10 52%, #15100f 100%);
   --foreground: #fafafa;
   --card: rgba(24, 24, 27, 0.88);
   --card-foreground: #fafafa;
   --popover: #09090b;
   --popover-foreground: #fafafa;
-  --primary: #fafafa;
-  --primary-foreground: #09090b;
+  --primary: #ff4b0b;
+  --primary-foreground: #fffaf4;
+  --orange-50: #fff7ed;
+  --orange-100: #ffedd5;
+  --orange-300: #fdba74;
+  --orange-500: #ff4b0b;
+  --orange-600: #ea580c;
+  --orange-700: #c2410c;
+  --orange-900: #7c2d12;
   --secondary: #27272a;
   --secondary-foreground: #fafafa;
   --muted-surface: #18181b;
@@ -19,7 +29,7 @@ html[data-theme="dark"] {
   --destructive-foreground: #fafafa;
   --border: rgba(255, 255, 255, 0.12);
   --input: rgba(255, 255, 255, 0.14);
-  --ring: #d4d4d8;
+  --ring: #ff4b0b;
   --radius: 8px;
   --shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
 
@@ -27,28 +37,38 @@ html[data-theme="dark"] {
   --panel: rgba(24, 24, 27, 0.78);
   --panel-strong: rgba(24, 24, 27, 0.95);
   --line: var(--border);
-  --line-strong: rgba(250, 250, 250, 0.42);
+  --line-strong: rgba(255, 75, 11, 0.55);
   --text: var(--foreground);
   --heading: var(--foreground);
   --muted: var(--muted-foreground);
   --soft: #71717a;
   --tone-primary: var(--primary);
-  --tone-muted: #d4d4d8;
-  --tone-subtle: #e4e4e7;
-  --tone-strong: #fafafa;
+  --tone-muted: #ff9f1a;
+  --tone-subtle: #f1efe9;
+  --tone-strong: #fffaf4;
   --danger: #a1a1aa;
 }
 
 html[data-theme="light"] {
   color-scheme: light;
   --background: #ffffff;
+  --page-background:
+    radial-gradient(circle at 78% 12%, rgba(255, 75, 11, 0.1), transparent 24%),
+    linear-gradient(135deg, #ffffff 0%, #fafafa 58%, #fff7f3 100%);
   --foreground: #09090b;
   --card: rgba(255, 255, 255, 0.92);
   --card-foreground: #09090b;
   --popover: #ffffff;
   --popover-foreground: #09090b;
-  --primary: #18181b;
+  --primary: #ff4b0b;
   --primary-foreground: #fafafa;
+  --orange-50: #fff7ed;
+  --orange-100: #ffedd5;
+  --orange-300: #fdba74;
+  --orange-500: #ff4b0b;
+  --orange-600: #ea580c;
+  --orange-700: #c2410c;
+  --orange-900: #7c2d12;
   --secondary: #f4f4f5;
   --secondary-foreground: #18181b;
   --muted-surface: #f4f4f5;
@@ -59,20 +79,20 @@ html[data-theme="light"] {
   --destructive-foreground: #18181b;
   --border: rgba(9, 9, 11, 0.12);
   --input: rgba(9, 9, 11, 0.16);
-  --ring: #18181b;
+  --ring: #ff4b0b;
   --shadow: 0 24px 70px rgba(24, 24, 27, 0.12);
 
   --bg: var(--background);
   --panel: rgba(255, 255, 255, 0.82);
   --panel-strong: rgba(255, 255, 255, 0.98);
   --line: var(--border);
-  --line-strong: rgba(24, 24, 27, 0.34);
+  --line-strong: rgba(255, 75, 11, 0.42);
   --text: var(--foreground);
   --heading: var(--foreground);
   --muted: var(--muted-foreground);
   --soft: #71717a;
   --tone-primary: var(--primary);
-  --tone-muted: #52525b;
+  --tone-muted: #b45309;
   --tone-subtle: #3f3f46;
   --tone-strong: #18181b;
   --danger: #52525b;
@@ -86,7 +106,7 @@ body {
   margin: 0;
   min-width: 320px;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
-  background: var(--background);
+  background: var(--page-background);
   color: var(--text);
 }
 
@@ -108,7 +128,7 @@ button {
   padding: 24px;
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.58)),
-    url("assets/hero-runner-bw.png") center / cover no-repeat;
+    url("assets/hero-runner.png") center / cover no-repeat;
 }
 
 .login-screen[hidden],
@@ -4536,20 +4556,20 @@ html[data-theme="dark"] main,
 html[data-theme="light"] body,
 html[data-theme="light"] .shell,
 html[data-theme="light"] main {
-  background: var(--background) !important;
+  background: var(--page-background) !important;
   color: var(--foreground) !important;
 }
 
 .login-screen {
   background:
     linear-gradient(90deg, rgba(9, 9, 11, 0.92), rgba(9, 9, 11, 0.62)),
-    url("assets/hero-runner-bw.png") center / cover no-repeat !important;
+    url("assets/hero-runner.png") center / cover no-repeat !important;
 }
 
 html[data-theme="light"] .login-screen {
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.56)),
-    url("assets/hero-runner-bw.png") center / cover no-repeat !important;
+    url("assets/hero-runner.png") center / cover no-repeat !important;
 }
 
 .login-screen,
@@ -4557,7 +4577,7 @@ html[data-theme="light"] .login-screen {
 .brand img,
 .login-card img,
 .hero-logo {
-  filter: grayscale(1) contrast(1.08) !important;
+  filter: none !important;
 }
 
 .rail,
@@ -4687,4 +4707,453 @@ nav a.is-active * {
 .goal-projection-chart path,
 .sparkline path {
   stroke-width: 1.1 !important;
+}
+
+/* shadcn typography and chart contrast pass */
+:root,
+html[data-theme="dark"] {
+  --chart-1: #ff4b0b;
+  --chart-2: #f1efe9;
+  --chart-3: #a1a1aa;
+  --chart-grid: rgba(255, 255, 255, 0.1);
+  --chart-text: rgba(250, 250, 250, 0.68);
+  --chart-fill: rgba(255, 75, 11, 0.12);
+}
+
+html[data-theme="light"] {
+  --chart-1: #d63a00;
+  --chart-2: #3f3f46;
+  --chart-3: #a1a1aa;
+  --chart-grid: rgba(9, 9, 11, 0.16);
+  --chart-text: rgba(9, 9, 11, 0.72);
+  --chart-fill: rgba(255, 75, 11, 0.1);
+}
+
+.page-header h2,
+.hero h1,
+.modal-panel .section-title h3,
+.detail h2,
+.detail h3,
+.settings-header h3 {
+  font-size: clamp(2rem, 4vw, 3rem) !important;
+  line-height: 1.08 !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.section-title h3,
+.calendar-top h3,
+.chart-heading h3,
+.profile-edit-panel .section-title h3,
+.home-ai-agent .section-title h3,
+.focus-projection-head h3,
+.roadmap-head h3 {
+  font-size: clamp(1.125rem, 1.7vw, 1.5rem) !important;
+  line-height: 1.2 !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.kicker,
+.section-title span,
+.chart-stats span,
+.metric-label,
+.app-version,
+label span,
+.calendar-top > span {
+  font-size: 0.72rem !important;
+  line-height: 1.1 !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase;
+}
+
+.primary-action,
+.secondary-action,
+.system-control-button,
+.segmented button,
+.calendar-view-switch button,
+.theme-toggle,
+nav a {
+  font-size: 0.875rem !important;
+  line-height: 1rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+.dashboard-trend-svg path,
+.performance-chart path,
+.test-evolution path,
+.goal-route path,
+.roadmap-chart path,
+.vo2-panel-head path,
+.sparkline path {
+  stroke-width: 1.05 !important;
+  vector-effect: non-scaling-stroke;
+}
+
+.volume-line,
+.dashboard-trend-svg .dash-volume-line,
+.roadmap-chart .roadmap-current,
+.goal-route .goal-route-optimistic,
+.goal-route .goal-route-target {
+  stroke: var(--chart-1) !important;
+  stroke-opacity: 0.94 !important;
+}
+
+.tss-line,
+.dashboard-trend-svg .dash-tss-line,
+.roadmap-chart .roadmap-required,
+.goal-route .goal-route-pessimistic {
+  stroke: var(--chart-2) !important;
+  stroke-opacity: 0.86 !important;
+}
+
+.chart-grid line,
+.dashboard-trend-svg line,
+.test-evolution line,
+.goal-route line,
+.roadmap-chart line {
+  stroke: var(--chart-grid) !important;
+}
+
+.performance-chart text,
+.dashboard-trend-svg text,
+.test-evolution svg text,
+.goal-route text,
+.roadmap-chart text,
+.chart-labels text {
+  fill: var(--chart-text) !important;
+}
+
+.volume-area,
+.chart-fill,
+.dashboard-volume-fill {
+  fill: var(--chart-fill) !important;
+}
+
+.dashboard-trend-svg circle,
+.performance-chart circle,
+.test-evolution circle,
+.goal-route circle,
+.roadmap-chart circle,
+.vo2-panel-head circle {
+  fill: var(--chart-1) !important;
+  stroke: var(--background) !important;
+  stroke-width: 1.2 !important;
+}
+
+.dashboard-goal-card svg circle:first-child {
+  stroke: var(--chart-grid) !important;
+}
+
+.dashboard-goal-card svg circle:last-child {
+  stroke: var(--chart-1) !important;
+}
+
+.dashboard-goal-card svg text {
+  fill: var(--foreground) !important;
+}
+
+.metric-card,
+.chart-stats div,
+.roadmap-metric,
+.goal-route-stat,
+.vo2-source-card,
+.type-card,
+.timeline-item,
+.admin-user-row {
+  background:
+    linear-gradient(180deg, rgba(255, 75, 11, 0.035), transparent 64%),
+    var(--card) !important;
+}
+
+.metric-card strong,
+.chart-stats strong,
+.roadmap-metric strong,
+.vo2-source-card strong,
+.type-card strong {
+  color: var(--primary) !important;
+}
+
+.hero-motivation,
+.home-ai-agent,
+.dashboard-hero-panel,
+.performance-chart-panel {
+  background:
+    radial-gradient(circle at 78% 12%, rgba(255, 75, 11, 0.12), transparent 28%),
+    var(--card) !important;
+}
+
+.volume-line,
+.dashboard-trend-svg .dash-volume-line,
+.goal-route .goal-route-optimistic {
+  filter: drop-shadow(0 0 8px rgba(255, 75, 11, 0.18));
+}
+
+.activity-card,
+.calendar-month .activity,
+.calendar-period .activity {
+  background:
+    linear-gradient(90deg, rgba(255, 75, 11, 0.14), transparent 58%),
+    var(--card) !important;
+  border-color: rgba(255, 75, 11, 0.28) !important;
+}
+
+.activity-card.is-planned,
+.calendar-month .activity.is-planned,
+.calendar-period .activity.is-planned {
+  background:
+    linear-gradient(90deg, rgba(255, 75, 11, 0.045), transparent 58%),
+    var(--muted-surface) !important;
+  border-color: var(--border) !important;
+}
+
+.distribution-fill,
+.progress-fill,
+.type-bar-fill,
+.objective-progress {
+  background: var(--primary) !important;
+}
+
+.danger-action {
+  background: transparent !important;
+  color: var(--orange-300) !important;
+  border-color: rgba(255, 75, 11, 0.5) !important;
+}
+
+.danger-action .action-icon {
+  stroke: var(--orange-300) !important;
+}
+
+@media (max-width: 900px) {
+  .page-header h2,
+  .hero h1,
+  .modal-panel .section-title h3,
+  .detail h2,
+  .detail h3,
+  .settings-header h3 {
+    font-size: clamp(1.875rem, 8vw, 2.5rem) !important;
+  }
+
+  .section-title h3,
+  .calendar-top h3,
+  .chart-heading h3,
+  .profile-edit-panel .section-title h3,
+  .home-ai-agent .section-title h3,
+  .focus-projection-head h3,
+  .roadmap-head h3 {
+    font-size: 1.125rem !important;
+  }
+
+  .primary-action,
+  .secondary-action,
+  .system-control-button,
+  .segmented button,
+  .calendar-view-switch button,
+  .theme-toggle,
+  nav a {
+    font-size: 0.8125rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    gap: 14px !important;
+  }
+
+  .page-header h2,
+  .hero h1,
+  .modal-panel .section-title h3,
+  .detail h2,
+  .detail h3,
+  .settings-header h3 {
+    font-size: clamp(1.75rem, 10vw, 2.25rem) !important;
+    line-height: 1.12 !important;
+  }
+
+  .calendar-view-switch,
+  .segmented {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .system-control-button {
+    min-height: 40px !important;
+    white-space: nowrap;
+  }
+
+.performance-chart svg,
+.dashboard-trend-svg,
+.test-evolution svg {
+    min-height: 180px !important;
+  }
+}
+
+/* 11RUN futuristic flat icon system */
+.primary-action,
+.secondary-action,
+.danger-action,
+.icon-button,
+.system-control-button,
+.segmented button,
+.calendar-view-switch button {
+  border-radius: 999px !important;
+  min-height: 40px;
+  padding-inline: 18px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.primary-action,
+.system-control-button.is-active,
+.segmented button.is-active,
+.calendar-view-switch button.is-active {
+  background: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border-color: var(--primary) !important;
+}
+
+.secondary-action,
+.icon-button,
+.system-control-button,
+.segmented button,
+.calendar-view-switch button {
+  background: rgba(255, 75, 11, 0.02) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--line-strong) !important;
+}
+
+html[data-theme="light"] .secondary-action,
+html[data-theme="light"] .icon-button,
+html[data-theme="light"] .system-control-button,
+html[data-theme="light"] .segmented button,
+html[data-theme="light"] .calendar-view-switch button {
+  background: rgba(255, 75, 11, 0.035) !important;
+}
+
+.primary-action:hover,
+.secondary-action:hover,
+.danger-action:hover,
+.icon-button:hover,
+.system-control-button:hover,
+.segmented button:hover,
+.calendar-view-switch button:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary) !important;
+}
+
+.action-icon,
+.control-icon,
+.nav-icon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: 0 0 auto;
+}
+
+.primary-action .action-icon,
+.system-control-button.is-active .control-icon,
+.segmented button.is-active .control-icon,
+.calendar-view-switch button.is-active .control-icon {
+  stroke: currentColor !important;
+}
+
+nav a .nav-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 75, 11, 0.22);
+  background: rgba(255, 75, 11, 0.04);
+  display: grid;
+  place-items: center;
+}
+
+nav a.is-active .nav-icon {
+  border-color: currentColor;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.panel,
+.metric-card,
+.calendar-month .day,
+.calendar-period .day,
+.period-week-card,
+.profile-edit-panel,
+.profile-history-panel,
+.modal-panel,
+.detail,
+.home-ai-agent {
+  position: relative;
+}
+
+.panel::after,
+.metric-card::after,
+.modal-panel::after,
+.detail::after,
+.home-ai-agent::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, rgba(255, 75, 11, 0.24), transparent 22%, transparent 78%, rgba(255, 75, 11, 0.12)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 34%);
+  opacity: 0.28;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  padding: 1px;
+}
+
+.section-title span::before,
+.kicker::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+  margin-right: 8px;
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px rgba(255, 75, 11, 0.08);
+  vertical-align: 1px;
+}
+
+.chart-legend i,
+.status-dot,
+.activity::before {
+  background: var(--primary) !important;
+}
+
+@media (max-width: 640px) {
+  .primary-action,
+  .secondary-action,
+  .danger-action,
+  .icon-button,
+  .system-control-button,
+  .segmented button,
+  .calendar-view-switch button {
+    min-height: 42px;
+    padding-inline: 14px !important;
+  }
+
+  .action-icon,
+  .control-icon {
+    width: 16px;
+    height: 16px;
+  }
 }
