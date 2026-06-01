@@ -894,7 +894,11 @@ async function listDirectory(tenantId, user = null) {
 async function createTeam(tenantId, input, user) {
   const name = String(input.name || "").trim();
   if (!name) throw httpError("Informe o nome da equipe.", 400);
+  const extraProfileData = parseJsonObject(input.profileData);
   const profileData = {
+    ...extraProfileData,
+    profileType: "team",
+    profileTypeLabel: "Equipe",
     email: String(input.email || "").trim().toLowerCase(),
     whatsapp: String(input.whatsapp || "").trim(),
     location: String(input.location || "").trim(),

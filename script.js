@@ -21,7 +21,7 @@ const state = {
   historyTimelineOutput: null,
   editingAthleteId: "",
   editingAdminUserId: "",
-  adminMode: "athlete",
+  adminMode: "athlete_master",
   expandedAdminUserId: "",
   syncing: false,
   collapsedPanels: (() => {
@@ -255,6 +255,89 @@ const focusDistanceLabels = {
   21000: "21 km",
   42000: "42 km"
 };
+
+const profileTypeDefinitions = {
+  athlete_master: { label: "Atleta Master", role: "athlete" },
+  athlete_future: { label: "Atleta do Futuro", role: "athlete" },
+  athlete_scholarship: { label: "Atleta Bolsista", role: "athlete" },
+  coach: { label: "Treinador", role: "coach" },
+  team: { label: "Equipe", role: "manager" },
+  sponsor_investor: { label: "Patrocinador / Investidor", role: "manager" },
+  admin: { label: "Super Admin", role: "admin" }
+};
+
+const profileOptionSets = {
+  profileStatus: ["Perfil ativo", "Perfil pendente", "Perfil bloqueado", "Perfil inativo"],
+  validationStatus: ["Cadastro não iniciado", "Cadastro incompleto", "Cadastro completo", "Em análise", "Validado", "Reprovado", "Bloqueado", "Arquivado"],
+  documentValidation: ["Não enviado", "Enviado parcialmente", "Completo", "Em análise", "Aprovado", "Reprovado", "Pendente de correção", "Expirado"],
+  institutionType: ["Confederação nacional", "Federação estadual", "Federação regional", "Associação internacional", "Liga universitária", "Liga escolar", "Universidade", "Escola", "Clube", "Equipe", "Projeto esportivo", "Comitê olímpico", "Organização esportiva", "Outra instituição"],
+  identificationType: ["Código da confederação", "Registro federativo", "Número de licença", "ID World Athletics", "ID universitário", "ID escolar", "ID de clube", "ID de liga", "Número de inscrição esportiva", "Número de passaporte esportivo", "Outro"],
+  identificationStatus: ["Não informado", "Informado", "Em validação", "Validado", "Divergente", "Expirado", "Não encontrado", "Reprovado"],
+  teamType: ["Clube", "Assessoria esportiva", "Projeto social", "Escola", "Universidade", "Equipe master", "Equipe de base", "Centro de treinamento", "Equipe profissional", "Grupo de corrida", "Outro"],
+  sponsorType: ["Empresa", "Pessoa física", "Instituto", "Fundação", "Universidade", "Clube", "Marca esportiva", "Investidor pessoa física", "Investidor institucional", "Agência", "Governo", "Organização social", "Outro"],
+  trainingSpecialty: ["Velocidade", "Meio-fundo", "Fundo", "Cross country", "Corrida de rua", "Trail running", "Marcha atlética", "Saltos", "Lançamentos", "Provas combinadas", "Atletismo escolar", "Atletismo universitário", "Alto rendimento", "Atletas master", "Atletas iniciantes", "Outro"],
+  focusEvents: ["800", "1500", "3000", "5000", "10000", "10km", "15k", "21k", "42k"],
+  opportunityTypes: ["Bolsa universitária nos EUA", "Bolsa universitária no Japão", "Bolsa universitária no Brasil", "Bolsa universitária na Europa", "Bolsa em clube", "Bolsa em projeto esportivo", "Intercâmbio esportivo", "Patrocínio", "Apoio financeiro", "Apoio com material esportivo", "Apoio com viagem", "Apoio com alimentação", "Apoio com moradia"],
+  supportTypes: ["Financeiro", "Produto", "Serviço", "Bolsa", "Viagem", "Equipamento", "Alimentação", "Saúde", "Moradia", "Educação", "Transporte", "Eventos", "Uniformes", "Conteúdo", "Outro"],
+  commercialStatus: ["Lead", "Em contato", "Reunião agendada", "Em negociação", "Proposta enviada", "Contrato enviado", "Aprovado", "Ativo", "Pausado", "Perdido", "Inativo"],
+  applicationStatus: ["Prospect", "Em análise", "Documentação pendente", "Documentação aprovada", "Perfil aprovado", "Em contato com instituição", "Entrevista agendada", "Proposta recebida", "Aprovado", "Reprovado", "Encaminhado", "Bolsista ativo", "Bolsista inativo"],
+  gender: ["Feminino", "Masculino", "Não binário", "Prefiro não informar", "Outro"]
+};
+
+const commonProfileFields = [
+  { section: "Identificação básica", fields: [
+    ["internalSystemId", "ID interno do sistema"], ["profileTypeLabel", "Tipo de perfil"], ["publicName", "Nome público no app"], ["profilePhotoUrl", "Foto de perfil"], ["coverImageUrl", "Imagem de capa"], ["birthDate", "Data de nascimento", "date"], ["gender", "Gênero", "select", "gender"], ["nationality", "Nacionalidade"], ["country", "País"], ["stateProvince", "Estado / província"], ["city", "Cidade"], ["address", "Endereço"], ["postalCode", "CEP / código postal"], ["languages", "Idiomas"], ["phone", "Telefone"], ["instagram", "Instagram"], ["linkedIn", "LinkedIn"], ["website", "Site"], ["shortBio", "Bio curta"], ["fullDescription", "Descrição completa", "textarea"]
+  ] },
+  { section: "Documentos e validação", fields: [
+    ["documentType", "Tipo de documento"], ["documentNumber", "Número do documento"], ["cpf", "CPF, se Brasil"], ["rg", "RG, se Brasil"], ["passport", "Passaporte"], ["foreignDocument", "Documento estrangeiro"], ["documentIssuerCountry", "País emissor do documento"], ["documentUploadUrl", "Upload de documento"], ["documentValidationStatus", "Status de validação do documento", "select", "documentValidation"], ["profileStatus", "Status do usuário", "select", "profileStatus"], ["validationStatus", "Status de validação", "select", "validationStatus"]
+  ] },
+  { section: "Consentimentos e segurança", fields: [
+    ["acceptedTerms", "Aceite dos termos de uso", "checkbox"], ["acceptedPrivacyPolicy", "Aceite da política de privacidade", "checkbox"], ["lgpdGdprConsent", "Consentimento LGPD / GDPR", "checkbox"], ["dataUseAuthorization", "Autorização para uso de dados", "checkbox"], ["imageUseAuthorization", "Autorização para uso de imagem", "checkbox"], ["twoFactorEnabled", "Autenticação em dois fatores", "checkbox"]
+  ] }
+];
+
+const sportsIdentificationFields = {
+  section: "Identificação Esportiva Oficial",
+  fields: [
+    ["identificacoes_esportivas.0.pais_registro_esportivo", "País de registro esportivo"], ["identificacoes_esportivas.0.instituicao_reguladora", "Instituição reguladora"], ["identificacoes_esportivas.0.nome_completo_instituicao", "Nome completo da instituição"], ["identificacoes_esportivas.0.sigla_instituicao", "Sigla da instituição"], ["identificacoes_esportivas.0.tipo_instituicao", "Tipo de instituição", "select", "institutionType"], ["identificacoes_esportivas.0.codigo_instituicao", "Código da instituição"], ["identificacoes_esportivas.0.numero_identificacao_atleta", "Número de identificação do atleta"], ["identificacoes_esportivas.0.tipo_identificacao", "Tipo de identificação", "select", "identificationType"], ["identificacoes_esportivas.0.pais_instituicao", "País da instituição"], ["identificacoes_esportivas.0.estado_instituicao", "Estado / província da instituição"], ["identificacoes_esportivas.0.cidade_instituicao", "Cidade da instituição"], ["identificacoes_esportivas.0.link_perfil_oficial", "Link público do perfil oficial"], ["identificacoes_esportivas.0.link_resultado_oficial", "Link de resultado oficial"], ["identificacoes_esportivas.0.documento_comprobatorio", "Documento comprobatório"], ["identificacoes_esportivas.0.data_emissao", "Data de emissão do registro", "date"], ["identificacoes_esportivas.0.data_validade", "Data de validade do registro", "date"], ["identificacoes_esportivas.0.status_validacao", "Status da identificação", "select", "identificationStatus"], ["identificacoes_esportivas.0.observacoes", "Observações sobre a identificação", "textarea"]
+  ]
+};
+
+const profileSpecificBlocks = {
+  athlete_master: [
+    sportsIdentificationFields,
+    { section: "Dados esportivos Master", fields: [["masterCategory", "Categoria master"], ["ageGroup", "Faixa etária"], ["mainModality", "Modalidade principal"], ["secondaryModalities", "Modalidades secundárias"], ["mainEvents", "Provas principais", "select", "focusEvents"], ["clubOrTeam", "Clube ou equipe"], ["trainingCity", "Cidade onde treina"], ["trainingPlaces", "Locais de treino"], ["weeklyTrainingFrequency", "Frequência semanal de treino"], ["practiceTime", "Tempo de prática"], ["sportsHistory", "Histórico esportivo", "textarea"], ["mainGoal", "Objetivo principal"], ["targetRaces", "Próximas provas-alvo"], ["competitiveCalendar", "Calendário competitivo"], ["participatesRankings", "Participa de rankings", "checkbox"], ["wantsChallenges", "Deseja participar de desafios", "checkbox"], ["wantsAiAnalysis", "Deseja receber análise de performance por IA", "checkbox"]] },
+    { section: "Performance e saúde", fields: [["best800", "Melhor marca nos 800 m"], ["best1500", "Melhor marca nos 1500 m"], ["best3000", "Melhor marca nos 3000 m"], ["best5000", "Melhor marca nos 5000 m"], ["best10000", "Melhor marca nos 10000 m"], ["best5kRoad", "Melhor marca nos 5 km rua"], ["best10kRoad", "Melhor marca nos 10 km rua"], ["best21k", "Melhor marca na meia maratona"], ["best42k", "Melhor marca na maratona"], ["personalRecords", "Recordes pessoais", "textarea"], ["recentResults", "Resultados recentes", "textarea"], ["referencePace", "Pace de referência"], ["maxHeartRate", "Frequência cardíaca máxima"], ["restingHeartRate", "Frequência cardíaca de repouso"], ["emergencyContact", "Contato de emergência"], ["emergencyPhone", "Telefone de emergência"], ["bloodType", "Tipo sanguíneo"], ["medicalRestrictions", "Restrições médicas", "textarea"], ["recentInjuries", "Lesões recentes", "textarea"], ["injuryHistory", "Histórico de lesões", "textarea"], ["medicalFitnessDeclaration", "Declaração de aptidão física", "checkbox"]] }
+  ],
+  athlete_future: [
+    sportsIdentificationFields,
+    { section: "Atleta do Futuro", fields: [["school", "Escola"], ["schoolGrade", "Série escolar"], ["schoolShift", "Turno escolar"], ["projectOrTeam", "Equipe ou projeto"], ["responsibleCoach", "Treinador responsável"], ["mainModality", "Modalidade principal"], ["mainEvents", "Provas principais", "select", "focusEvents"], ["practiceTime", "Tempo de prática"], ["weeklyTrainingFrequency", "Frequência semanal de treino"], ["trainingPlaces", "Locais de treino"], ["legalGuardianName", "Nome do responsável legal"], ["guardianRelationship", "Grau de parentesco"], ["guardianDocument", "CPF ou documento do responsável"], ["guardianEmail", "E-mail do responsável"], ["guardianWhatsApp", "WhatsApp do responsável"], ["participationAuthorization", "Autorização de participação", "checkbox"], ["travelAuthorization", "Autorização para viagens", "checkbox"], ["minorLgpdTerm", "Termo LGPD para menor", "checkbox"]] },
+    { section: "Desenvolvimento e proteção", fields: [["competitionResults", "Resultados em competições", "textarea"], ["officialResultLinks", "Links de resultados oficiais", "textarea"], ["physicalTests", "Testes físicos", "textarea"], ["annualEvolution", "Evolução anual"], ["schoolAttendance", "Frequência escolar"], ["trainingAttendance", "Frequência nos treinos"], ["identifiedPotential", "Potencial identificado"], ["coachObservations", "Observações do treinador", "textarea"], ["behaviorDiscipline", "Disciplina"], ["behaviorCommitment", "Comprometimento"], ["behaviorResilience", "Resiliência"], ["familySupport", "Apoio familiar"], ["publicPhoto", "Exibir foto publicamente", "checkbox"], ["publicResults", "Exibir resultados", "checkbox"], ["externalContactAllowed", "Permitir contato externo", "checkbox"], ["sensitiveDataHidden", "Ocultar dados sensíveis", "checkbox"]] }
+  ],
+  athlete_scholarship: [
+    sportsIdentificationFields,
+    { section: "Bolsa e oportunidades", fields: [["passport", "Passaporte"], ["hasVisa", "Possui visto", "checkbox"], ["visaType", "Tipo de visto"], ["interestCountries", "Países de interesse"], ["mainModality", "Modalidade principal"], ["mainEvents", "Provas principais", "select", "focusEvents"], ["secondaryEvents", "Provas secundárias"], ["officialBestMarks", "Melhores marcas oficiais", "textarea"], ["officialResultLinks", "Links de resultados oficiais", "textarea"], ["stateRanking", "Ranking estadual"], ["nationalRanking", "Ranking nacional"], ["internationalRanking", "Ranking internacional"], ["competitionHistory", "Histórico competitivo", "textarea"], ["raceVideos", "Vídeos de provas"], ["currentCoach", "Treinador atual"], ["currentTeam", "Equipe atual"], ["desiredOpportunityType", "Tipo de oportunidade desejada", "select", "opportunityTypes"]] },
+    { section: "Dados acadêmicos e elegibilidade", fields: [["currentEducation", "Escolaridade atual"], ["currentSchool", "Escola atual"], ["currentUniversity", "Universidade atual"], ["expectedGraduationYear", "Ano de conclusão previsto"], ["schoolTranscript", "Histórico escolar"], ["gradeAverage", "Média escolar"], ["englishLevel", "Nível de inglês"], ["japaneseLevel", "Nível de japonês"], ["spanishLevel", "Nível de espanhol"], ["toefl", "TOEFL"], ["ielts", "IELTS"], ["sat", "SAT"], ["act", "ACT"], ["jlpt", "JLPT"], ["desiredStudyAreas", "Áreas de estudo desejadas"], ["relocationAvailability", "Disponibilidade para mudança", "checkbox"], ["fullScholarshipNeed", "Necessidade de bolsa integral", "checkbox"], ["partialScholarshipNeed", "Necessidade de bolsa parcial", "checkbox"], ["documentationStatus", "Status da documentação", "select", "documentValidation"], ["applicationStatus", "Status da candidatura", "select", "applicationStatus"], ["eligibilityScore", "Score de elegibilidade"]] }
+  ],
+  coach: [
+    { section: "Dados profissionais", fields: [["professionalRegistration", "CREF ou registro profissional"], ["educationInstitution", "Instituição de formação"], ["academicEducation", "Formação acadêmica"], ["specializations", "Especializações"], ["certifications", "Certificações", "textarea"], ["certificateUploadUrl", "Upload de certificados"], ["professionalValidationStatus", "Status de validação profissional", "select", "validationStatus"], ["experienceYears", "Tempo de experiência"], ["shortResume", "Currículo resumido", "textarea"], ["fullResume", "Currículo completo", "textarea"]] },
+    { section: "Atuação técnica", fields: [["servedModalities", "Modalidades atendidas"], ["servedEvents", "Provas atendidas", "select", "focusEvents"], ["servedCategories", "Categorias atendidas"], ["servedAgeGroups", "Faixas etárias atendidas"], ["mainSpecialty", "Especialidade principal", "select", "trainingSpecialty"], ["secondarySpecialties", "Especialidades secundárias"], ["performanceLevel", "Nível de atuação"], ["trainingMethodology", "Metodologia de treino", "textarea"], ["eliteExperience", "Experiência com alto rendimento", "checkbox"], ["masterExperience", "Experiência com atletas master", "checkbox"], ["youthExperience", "Experiência com atletas de base", "checkbox"], ["scholarshipExperience", "Experiência com atletas bolsistas", "checkbox"], ["internationalExperience", "Experiência internacional", "checkbox"], ["formedAthletes", "Atletas formados"], ["relevantResults", "Resultados relevantes", "textarea"]] }
+  ],
+  team: [
+    { section: "Dados da equipe", fields: [["teamId", "ID da equipe"], ["teamName", "Nome da equipe"], ["tradeName", "Nome fantasia"], ["legalName", "Razao social"], ["companyDocument", "CNPJ ou documento equivalente"], ["teamType", "Tipo de equipe", "select", "teamType"], ["logoUrl", "Logo"], ["coverImageUrl", "Imagem de capa"], ["country", "Pais"], ["state", "Estado"], ["city", "Cidade"], ["address", "Endereco"], ["postalCode", "CEP"], ["mainTrainingLocation", "Local principal de treino"], ["secondaryTrainingLocations", "Locais secundarios de treino", "textarea"], ["foundedYear", "Ano de fundacao"], ["officialEmail", "E-mail oficial"], ["teamDescription", "Descricao da equipe", "textarea"], ["teamMission", "Missao da equipe", "textarea"], ["teamStatus", "Status da equipe", "select", "profileStatus"]] },
+    { section: "Responsaveis", fields: [["primaryResponsibleName", "Nome do responsavel principal"], ["primaryResponsibleRole", "Cargo do responsavel"], ["primaryResponsibleEmail", "E-mail do responsavel"], ["primaryResponsibleWhatsApp", "WhatsApp do responsavel"], ["primaryResponsibleDocument", "Documento do responsavel"], ["mainCoachLinked", "Treinador principal vinculado"], ["teamAdministrators", "Administradores da equipe"], ["financialResponsible", "Responsavel financeiro"], ["technicalResponsible", "Responsavel tecnico"], ["minorAthleteResponsible", "Responsavel por atletas menores de idade"]] },
+    { section: "Estrutura esportiva", fields: [["servedModalities", "Modalidades atendidas"], ["servedEvents", "Provas atendidas", "select", "focusEvents"], ["servedCategories", "Categorias atendidas"], ["servedAgeGroups", "Faixas etarias atendidas"], ["athleteLevel", "Nivel dos atletas"], ["athleteCount", "Quantidade de atletas"], ["coachCount", "Quantidade de treinadores"], ["trainingDays", "Dias de treino"], ["trainingHours", "Horarios de treino"], ["hasTrack", "Possui pista de atletismo", "checkbox"], ["hasGym", "Possui academia", "checkbox"], ["hasPhysiotherapy", "Possui fisioterapia", "checkbox"], ["hasNutrition", "Possui nutricao", "checkbox"], ["hasSportsPsychology", "Possui psicologia esportiva", "checkbox"], ["hasDoctor", "Possui medico", "checkbox"], ["hasMultidisciplinaryTeam", "Possui equipe multidisciplinar", "checkbox"], ["officialCompetitions", "Participa de competicoes oficiais", "checkbox"], ["mainCompetitions", "Competicoes principais", "textarea"], ["relevantResults", "Resultados relevantes", "textarea"], ["highlightAthletes", "Atletas de destaque", "textarea"]] },
+    { section: "Permissoes da equipe", fields: [["teamCanRegisterAthletes", "Pode cadastrar atletas", "checkbox"], ["teamCanInviteAthletes", "Pode convidar atletas", "checkbox"], ["teamCanInviteCoaches", "Pode convidar treinadores", "checkbox"], ["teamCanEditTeam", "Pode editar dados da equipe", "checkbox"], ["teamCanEditLinkedAthletes", "Pode editar atletas vinculados", "checkbox"], ["teamCanViewAthleteTechnicalData", "Pode visualizar dados tecnicos dos atletas", "checkbox"], ["teamCanViewPhysicalTests", "Pode visualizar testes fisicos", "checkbox"], ["teamCanViewCompetitiveHistory", "Pode visualizar historico competitivo", "checkbox"], ["teamCanGenerateReports", "Pode gerar relatorios", "checkbox"], ["teamCanRecommendScholarships", "Pode indicar atletas para bolsas", "checkbox"], ["teamCanPublishTryouts", "Pode publicar seletivas", "checkbox"], ["teamCanPublishEvents", "Pode publicar eventos", "checkbox"], ["teamCanReceiveSponsorContacts", "Pode receber contatos de patrocinadores", "checkbox"], ["teamCanAdmin", "Pode administrar equipe", "checkbox"], ["teamCanRemoveMembers", "Pode remover membros", "checkbox"]] }
+  ],
+  sponsor_investor: [
+    { section: "Dados institucionais", fields: [["sponsorType", "Tipo de cadastro", "select", "sponsorType"], ["companyOrInvestorName", "Nome da empresa ou investidor"], ["tradeName", "Nome fantasia"], ["legalName", "Razão social"], ["companyDocument", "CNPJ ou CPF"], ["foreignDocument", "Documento estrangeiro"], ["segment", "Segmento"], ["logoUrl", "Logo"], ["institutionalDescription", "Descrição institucional", "textarea"], ["responsibleName", "Nome do responsável"], ["responsibleRole", "Cargo"], ["responsibleEmail", "E-mail"], ["responsibleWhatsApp", "WhatsApp"], ["department", "Departamento"], ["bestContactTime", "Melhor horário de contato"], ["internalCommercialOwner", "Responsável comercial interno 11run"]] },
+    { section: "Interesse e investimento", fields: [["sponsorAthletes", "Interesse em patrocinar atletas", "checkbox"], ["sponsorTeams", "Interesse em patrocinar equipes", "checkbox"], ["supportFutureAthletes", "Interesse em apoiar atletas do futuro", "checkbox"], ["supportMasterAthletes", "Interesse em apoiar atletas master", "checkbox"], ["supportScholarshipAthletes", "Interesse em apoiar atletas bolsistas", "checkbox"], ["supportSocialProjects", "Interesse em projetos sociais", "checkbox"], ["interestESG", "Interesse em ESG", "checkbox"], ["monthlyEstimatedValue", "Valor mensal estimado"], ["annualEstimatedValue", "Valor anual estimado"], ["supportType", "Tipo de apoio", "select", "supportTypes"], ["investmentTerm", "Prazo de investimento"], ["interestRegion", "Região de interesse"], ["brandObjective", "Objetivo da marca", "textarea"], ["desiredCounterparts", "Contrapartidas desejadas", "textarea"], ["commercialStatus", "Status comercial", "select", "commercialStatus"], ["lastContact", "Último contato", "date"], ["nextFollowUp", "Próximo follow-up", "date"], ["commercialNotes", "Observações", "textarea"]] }
+  ]
+};
+
+const smartAnalysisFields = { section: "Inteligência 11RUN", fields: [["potentialScore", "Score de potencial esportivo"], ["evolutionScore", "Score de evolução"], ["disciplineScore", "Score de disciplina"], ["attendanceScore", "Score de assiduidade"], ["scholarshipEligibilityScore", "Score de elegibilidade para bolsa"], ["sponsorVisibilityScore", "Score de visibilidade para patrocinador"], ["dropoutRiskScore", "Score de risco de evasão"], ["competitiveMaturityScore", "Score de maturidade competitiva"], ["academicScore", "Score acadêmico"], ["documentScore", "Score documental"], ["teamCompatibilityScore", "Score de compatibilidade com equipe"], ["coachCompatibilityScore", "Score de compatibilidade com treinador"], ["universityCompatibilityScore", "Score de compatibilidade com universidade"], ["sponsorCompatibilityScore", "Score de compatibilidade com patrocinador"], ["smartStatus", "Status inteligentes"], ["generatedReports", "Relatórios gerados", "textarea"]] };
+
+const permissionLayers = { section: "Permissões e camadas de acesso", fields: [["permPublicProfile", "Nível 1 - Perfil público", "checkbox"], ["permVerifiedProfile", "Nível 2 - Perfil verificado", "checkbox"], ["permTechnicalProfile", "Nível 3 - Perfil técnico", "checkbox"], ["permInstitutionalProfile", "Nível 4 - Perfil institucional", "checkbox"], ["permAdminProfile", "Nível 5 - Administração 11RUN", "checkbox"], ["canEditOwnProfile", "Pode editar o próprio perfil", "checkbox"], ["canViewPublicAthletes", "Pode visualizar perfil público de atletas", "checkbox"], ["canViewTechnicalData", "Pode visualizar dados técnicos", "checkbox"], ["canViewSensitiveData", "Pode visualizar dados sensíveis", "checkbox"], ["canSendDocuments", "Pode enviar documentos", "checkbox"], ["canPublishContent", "Pode publicar conteúdos", "checkbox"], ["canCreateTeam", "Pode criar equipe", "checkbox"], ["canJoinTeam", "Pode entrar em equipe", "checkbox"], ["canInviteMembers", "Pode convidar membros", "checkbox"], ["canViewReports", "Pode visualizar relatórios", "checkbox"], ["canGenerateReports", "Pode gerar relatórios", "checkbox"], ["canAccessOpportunities", "Pode acessar área de oportunidades", "checkbox"], ["canAccessScholarships", "Pode acessar área de bolsas", "checkbox"], ["canAccessSponsors", "Pode acessar área de patrocinadores", "checkbox"], ["canAccessDashboard", "Pode acessar dashboard", "checkbox"], ["canAdminUsers", "Pode administrar usuários", "checkbox"], ["canApproveRegistrations", "Pode aprovar cadastros", "checkbox"], ["canBlockRegistrations", "Pode bloquear cadastros", "checkbox"], ["canValidateDocuments", "Pode validar documentos", "checkbox"]] };
 
 const trainingTypeOptions = [
   "Treino",
@@ -532,6 +615,88 @@ function escapeHtml(value) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+function getNestedValue(object, path) {
+  return String(path || "").split(".").reduce((value, part) => (value == null ?undefined : value[part]), object);
+}
+
+function setNestedValue(object, path, value) {
+  const parts = String(path || "").split(".").filter(Boolean);
+  let target = object;
+  parts.forEach((part, index) => {
+    const last = index === parts.length - 1;
+    const nextPart = parts[index + 1];
+    if (last) {
+      target[part] = value;
+      return;
+    }
+    if (target[part] == null) target[part] = /^\d+$/.test(nextPart) ?[] : {};
+    target = target[part];
+  });
+}
+
+function profileFieldName(path) {
+  return `profileData.${path}`;
+}
+
+function profileFieldTemplate(field, profileData = {}) {
+  const [path, label, type = "text", optionSet] = field;
+  const value = getNestedValue(profileData, path);
+  const name = profileFieldName(path);
+  const common = `name="${escapeHtml(name)}" data-profile-field="${escapeHtml(path)}"`;
+  if (type === "checkbox") {
+    return `<label class="credential-field profile-check-field"><input ${common} type="checkbox" ${value ?"checked" : ""} /><span>${escapeHtml(label)}</span></label>`;
+  }
+  if (type === "textarea") {
+    return `<label class="credential-field wide-field"><span>${escapeHtml(label)}</span><textarea ${common} rows="3">${escapeHtml(value || "")}</textarea></label>`;
+  }
+  if (type === "select") {
+    const options = profileOptionSets[optionSet] || [];
+    return `<label class="credential-field"><span>${escapeHtml(label)}</span><select ${common}><option value="">Selecionar</option>${options.map((option) => `<option value="${escapeHtml(option)}" ${String(value || "") === option ?"selected" : ""}>${escapeHtml(option)}</option>`).join("")}</select></label>`;
+  }
+  return `<label class="credential-field"><span>${escapeHtml(label)}</span><input ${common} type="${escapeHtml(type)}" value="${escapeHtml(value || "")}" /></label>`;
+}
+
+function profileBlockTemplate(block, profileData = {}) {
+  return `
+    <section class="profile-dynamic-block">
+      <div class="section-title">
+        <span>Cadastro 11RUN</span>
+        <h3>${escapeHtml(block.section)}</h3>
+      </div>
+      <div class="profile-dynamic-grid">${block.fields.map((field) => profileFieldTemplate(field, profileData)).join("")}</div>
+    </section>
+  `;
+}
+
+function blocksForProfileType(profileType) {
+  return [
+    ...commonProfileFields,
+    ...(profileSpecificBlocks[profileType] || []),
+    smartAnalysisFields,
+    permissionLayers
+  ];
+}
+
+function renderDynamicProfileFields(target, profileType, profileData = {}) {
+  if (!target) return;
+  const resolvedType = profileTypeDefinitions[profileType] ?profileType : "athlete_master";
+  const baseData = {
+    profileType: resolvedType,
+    profileTypeLabel: profileTypeDefinitions[resolvedType]?.label || resolvedType,
+    ...profileData
+  };
+  target.innerHTML = blocksForProfileType(resolvedType).map((block) => profileBlockTemplate(block, baseData)).join("");
+}
+
+function readDynamicProfileFields(scope, base = {}) {
+  const data = { ...(base || {}) };
+  scope.querySelectorAll("[data-profile-field]").forEach((field) => {
+    const value = field.type === "checkbox" ?field.checked : field.value;
+    setNestedValue(data, field.dataset.profileField, value);
+  });
+  return data;
 }
 
 function dateKey(date) {
@@ -3603,7 +3768,9 @@ function renderAthletes() {
   });
   const rows = [...state.athletes, ...teamRows];
   const filtered = rows.filter((athlete) => {
-    const haystack = [athlete.name, athlete.email, athlete.teamName, athlete.coachName, athlete.whatsapp, athlete.roleLabel]
+    const profile = athlete.profileData || {};
+    const profileLabel = profile.profileTypeLabel || profileTypeDefinitions[profile.profileType]?.label || athlete.roleLabel;
+    const haystack = [athlete.name, athlete.email, athlete.teamName, athlete.coachName, athlete.whatsapp, athlete.roleLabel, profileLabel]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
@@ -3624,6 +3791,7 @@ function renderAthletes() {
   list.innerHTML = filtered.map((athlete) => {
     const isExpanded = String(athlete.id) === String(state.expandedAdminUserId);
     const profile = athlete.profileData || {};
+    const profileLabel = profile.profileTypeLabel || profileTypeDefinitions[profile.profileType]?.label || athlete.roleLabel || "Atleta";
     const coachDetails = athlete.role === "coach" ?`
           <p><strong>Formação:</strong> ${escapeHtml(profile.education || "--")}</p>
           <p><strong>Especialidades:</strong> ${escapeHtml(profile.skills || "--")}</p>
@@ -3644,7 +3812,7 @@ function renderAthletes() {
       <button class="athlete-row-main" type="button" data-toggle-admin-user="${escapeHtml(athlete.id)}" aria-expanded="${isExpanded ? "true" : "false"}">
         <strong>${escapeHtml(athlete.name)}</strong>
         <span>${escapeHtml(athlete.email)}</span>
-        <span>${escapeHtml(athlete.roleLabel || "Atleta")}</span>
+        <span>${escapeHtml(profileLabel)}</span>
         <span>${escapeHtml(athlete.teamName || "Sem equipe")}</span>
         <span>${athlete.role === "athlete" ?escapeHtml(athlete.coachName || "Sem treinador") : "--"}</span>
         <span>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</span>
@@ -3655,7 +3823,7 @@ function renderAthletes() {
       </div>`}
       ${isExpanded ?`
         <div class="athlete-row-details">
-          <p><strong>Perfil:</strong> ${escapeHtml(athlete.roleLabel || athlete.role || "Atleta")}</p>
+          <p><strong>Perfil:</strong> ${escapeHtml(profileLabel)}</p>
           <p><strong>Dados:</strong> ${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
           <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "Não tenho")}</p>
           ${athlete.role === "athlete" ?`<p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "Não tenho")}</p>` : ""}
@@ -3727,6 +3895,7 @@ function resetAthleteForm(message = "") {
   renderHistoryTimelineEditor([]);
   renderTests3000Editor([]);
   render3000ActivityPicker();
+  renderDynamicProfileFields(document.querySelector("#athleteProfileFields"), "athlete_master", {});
   state.editingAthleteId = "";
   const submit = document.querySelector("#athleteSubmitButton");
   const cancel = document.querySelector("#cancelAthleteEdit");
@@ -4087,11 +4256,22 @@ function readTests3000Form(form) {
 
 function readAthleteForm(form) {
   const body = Object.fromEntries(new FormData(form).entries());
+  const currentAthlete = state.editingAthleteId
+    ?state.athletes.find((item) => String(item.id) === String(state.editingAthleteId))
+    : getCurrentUserAthlete();
+  const existingProfile = currentAthlete?.profileData || {};
+  const existingProfileType = existingProfile.profileType || "athlete_master";
+  const dynamicProfileData = readDynamicProfileFields(form, {
+    ...existingProfile,
+    profileType: existingProfileType,
+    profileTypeLabel: profileTypeDefinitions[existingProfileType]?.label || "Atleta Master"
+  });
   const coachSelect = form.elements.coachEmail;
   const coachOption = coachSelect?.selectedOptions?.[0];
   if (coachOption && coachSelect.value) body.coachName = coachOption.textContent.split(" - ")[0];
   if (state.currentUser?.role === "athlete") {
     body.profileData = {
+      ...dynamicProfileData,
       relationshipRequest: {
         teamName: body.teamName || "",
         coachName: body.coachName || "",
@@ -4102,6 +4282,8 @@ function readAthleteForm(form) {
     delete body.teamName;
     delete body.coachName;
     delete body.coachEmail;
+  } else {
+    body.profileData = dynamicProfileData;
   }
   body.historyTimeline = readHistoryTimelineForm(form);
   body.tests3000 = readTests3000Form(form);
@@ -4130,6 +4312,9 @@ function editAthlete(athleteId, options = {}) {
   if (form.elements.bestTime) form.elements.bestTime.value = athlete.bestTime || "";
   if (form.elements.role) form.elements.role.value = athlete.role || "athlete";
   if (form.elements.historyNotes) form.elements.historyNotes.value = athlete.historyNotes || "";
+  const profile = athlete.profileData || {};
+  const profileType = profile.profileType || "athlete_master";
+  renderDynamicProfileFields(document.querySelector("#athleteProfileFields"), profileType, profile);
   renderHistoryTimelineEditor(athlete.historyTimeline || []);
   render3000ActivityPicker();
   const tests = Array.isArray(athlete.tests3000) ?athlete.tests3000 : [];
@@ -4295,35 +4480,43 @@ async function refreshDirectory() {
 }
 
 function renderAdminMode() {
+  const profileDef = profileTypeDefinitions[state.adminMode] || profileTypeDefinitions.athlete_master;
   const isTeam = state.adminMode === "team";
   const isCoach = state.adminMode === "coach";
   const isAdminMode = state.adminMode === "admin";
+  const isAthleteProfile = ["athlete_master", "athlete_future", "athlete_scholarship"].includes(state.adminMode);
+  const isSponsor = state.adminMode === "sponsor_investor";
   document.querySelectorAll("[data-admin-mode]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.adminMode === state.adminMode);
   });
   const title = document.querySelector("#adminFormTitle");
   if (title) {
     const action = state.editingAdminUserId ?"Editar" : "Adicionar";
-    title.textContent = state.adminMode === "admin" ?`${action} super admin` : state.adminMode === "coach" ?`${action} treinador` : state.adminMode === "team" ?`${action} equipe` : `${action} atleta`;
+    title.textContent = `${action} ${profileDef.label.toLowerCase()}`;
   }
   const userForm = document.querySelector("#adminUserForm");
   const teamForm = document.querySelector("#teamForm");
   if (userForm) {
     userForm.hidden = isTeam;
-    if (userForm.elements.role) userForm.elements.role.value = isAdminMode ?"admin" : state.adminMode === "coach" ?"coach" : "athlete";
+    if (userForm.elements.role) userForm.elements.role.value = profileDef.role || (isAdminMode ?"admin" : isCoach ?"coach" : "athlete");
+    if (!isTeam) renderDynamicProfileFields(userForm.querySelector("#adminProfileFields"), state.adminMode, {});
   }
   document.querySelectorAll(".admin-athlete-field").forEach((field) => {
-    field.hidden = isCoach || isTeam || isAdminMode;
+    field.hidden = !isAthleteProfile;
   });
   document.querySelectorAll(".admin-team-link-field").forEach((field) => {
-    field.hidden = isTeam || isAdminMode;
+    field.hidden = isTeam || isAdminMode || isSponsor;
   });
   document.querySelectorAll(".admin-coach-field").forEach((field) => {
     field.hidden = !isCoach;
   });
-  if (teamForm) teamForm.hidden = !isTeam;
+  if (teamForm) {
+    teamForm.hidden = !isTeam;
+    if (isTeam) renderDynamicProfileFields(teamForm.querySelector("#teamProfileFields"), "team", {});
+  }
   const submit = userForm?.querySelector('button[type="submit"]');
   if (submit) submit.textContent = state.editingAdminUserId ?"Atualizar cadastro" : "Salvar cadastro";
+  decorateActionIcons();
 }
 
 function editAdminUser(athleteId) {
@@ -4331,10 +4524,16 @@ function editAdminUser(athleteId) {
   const form = document.querySelector("#adminUserForm");
   if (!athlete || !form) return;
   state.editingAdminUserId = athlete.id;
-  state.adminMode = athlete.role === "admin" ?"admin" : athlete.role === "coach" ?"coach" : "athlete";
-  renderAdminMode();
   const profile = athlete.profileData || {};
-  if (form.elements.role) form.elements.role.value = athlete.role === "admin" ?"admin" : athlete.role === "coach" ?"coach" : "athlete";
+  state.adminMode = profileTypeDefinitions[profile.profileType]
+    ?profile.profileType
+    : athlete.role === "admin"
+      ?"admin"
+      : athlete.role === "coach"
+        ?"coach"
+        : "athlete_master";
+  renderAdminMode();
+  if (form.elements.role) form.elements.role.value = profileTypeDefinitions[state.adminMode]?.role || athlete.role || "athlete";
   form.elements.name.value = athlete.name || "";
   form.elements.email.value = athlete.email || "";
   form.elements.password.value = "";
@@ -4346,6 +4545,7 @@ function editAdminUser(athleteId) {
   if (form.elements.skills) form.elements.skills.value = profile.skills || "";
   if (form.elements.experience) form.elements.experience.value = profile.experience || "";
   if (form.elements.certifications) form.elements.certifications.value = profile.certifications || "";
+  renderDynamicProfileFields(form.querySelector("#adminProfileFields"), state.adminMode, profile);
   setAdminMessage(`Editando ${athlete.name}.`);
   form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -4358,23 +4558,32 @@ async function saveAdminUser(event) {
   const coachSelect = form.elements.coachEmail;
   const coachOption = coachSelect?.selectedOptions?.[0];
   if (coachOption && coachSelect.value) body.coachName = coachOption.textContent.split(" - ")[0];
+  const profileDef = profileTypeDefinitions[state.adminMode] || profileTypeDefinitions.athlete_master;
+  const dynamicProfileData = readDynamicProfileFields(form, {
+    profileType: state.adminMode,
+    profileTypeLabel: profileDef.label,
+    operationalRole: profileDef.role,
+    permissionsUpdatedAt: new Date().toISOString()
+  });
+  body.role = profileDef.role;
+  body.profileData = dynamicProfileData;
   if (state.adminMode === "admin") {
     body.role = "admin";
     body.teamName = "";
     body.coachEmail = "";
     body.focusDistanceM = "";
-    body.profileData = {};
   }
   if (state.adminMode === "coach") {
     body.role = "coach";
     body.coachEmail = "";
     body.focusDistanceM = "";
-    body.profileData = {
-      education: body.education || "",
-      skills: body.skills || "",
-      experience: body.experience || "",
-      certifications: body.certifications || ""
-    };
+    body.profileData = { ...dynamicProfileData, education: body.education || dynamicProfileData.education || "", skills: body.skills || dynamicProfileData.skills || "", experience: body.experience || dynamicProfileData.experience || "", certifications: body.certifications || dynamicProfileData.certifications || "" };
+  }
+  if (state.adminMode === "sponsor_investor") {
+    body.role = "manager";
+    body.teamName = "";
+    body.coachEmail = "";
+    body.focusDistanceM = "";
   }
   try {
     const editingId = state.editingAdminUserId;
@@ -4454,6 +4663,12 @@ async function saveTeam(event) {
   if (!canManageAthletes()) return;
   const form = event.currentTarget;
   const body = Object.fromEntries(new FormData(form).entries());
+  body.profileData = readDynamicProfileFields(form, {
+    profileType: "team",
+    profileTypeLabel: profileTypeDefinitions.team.label,
+    operationalRole: profileTypeDefinitions.team.role,
+    permissionsUpdatedAt: new Date().toISOString()
+  });
   try {
     setAdminMessage("Salvando equipe...");
     const payload = await api("/api/teams", {

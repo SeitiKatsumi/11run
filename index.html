@@ -334,6 +334,7 @@
                   </select>
                 </label>
                 </div>
+                <div id="athleteProfileFields" class="dynamic-profile-fields"></div>
               </section>
 
               <section class="profile-edit-panel profile-history-panel">
@@ -466,9 +467,12 @@
                 <h3 id="adminFormTitle">Adicionar atleta</h3>
               </div>
               <div class="segmented admin-mode-switch" role="tablist" aria-label="Tipo de cadastro">
-                <button class="is-active" type="button" data-admin-mode="athlete">Adicionar atleta</button>
+                <button class="is-active" type="button" data-admin-mode="athlete_master">Atleta master</button>
+                <button type="button" data-admin-mode="athlete_future">Atleta do futuro</button>
+                <button type="button" data-admin-mode="athlete_scholarship">Atleta bolsista</button>
                 <button type="button" data-admin-mode="coach">Adicionar treinador</button>
                 <button type="button" data-admin-mode="team">Adicionar equipe</button>
+                <button type="button" data-admin-mode="sponsor_investor">Patrocinador / investidor</button>
                 <button class="admin-only" type="button" data-admin-mode="admin" hidden>Adicionar super admin</button>
               </div>
 
@@ -534,6 +538,7 @@
                     <input name="certifications" placeholder="CREF, World Athletics, cursos relevantes" />
                   </label>
                 </div>
+                <div id="adminProfileFields" class="dynamic-profile-fields"></div>
                 <button class="primary-action compact" type="submit">Salvar cadastro</button>
               </form>
 
@@ -568,6 +573,7 @@
                     <textarea name="institutionalNotes" rows="3" placeholder="Histórico, estrutura, modalidades, objetivos e observações operacionais."></textarea>
                   </label>
                 </div>
+                <div id="teamProfileFields" class="dynamic-profile-fields"></div>
                 <button class="primary-action compact" type="submit">Salvar equipe</button>
               </form>
               <p id="adminMessage" class="form-message" aria-live="polite"></p>
