@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -13,17 +13,26 @@
     <section class="login-screen" id="loginScreen" hidden>
       <form class="login-card" id="loginForm">
         <img src="assets/logo-orange-white.png" alt="11RUN" />
-        <p class="kicker">Acesso</p>
-        <h1>Entrar no painel</h1>
+        <p class="kicker" data-i18n="login.kicker">Access</p>
+        <h1 data-i18n="login.title">Sign in to your dashboard</h1>
+        <label class="credential-field">
+          <span data-i18n="profile.language">Language</span>
+          <select id="loginLanguageSelect" data-language-select>
+            <option value="en">English</option>
+            <option value="pt-BR">Português</option>
+            <option value="ja">日本語</option>
+            <option value="es">Español</option>
+          </select>
+        </label>
         <label class="credential-field">
           <span>E-mail</span>
           <input name="email" type="email" autocomplete="email" required />
         </label>
         <label class="credential-field">
-          <span>Senha</span>
+          <span data-i18n="login.password">Password</span>
           <input name="password" type="password" autocomplete="current-password" required />
         </label>
-        <button class="primary-action" type="submit">Entrar</button>
+        <button class="primary-action" type="submit" data-i18n="login.submit">Sign in</button>
         <p id="loginMessage" class="login-message"></p>
       </form>
     </section>

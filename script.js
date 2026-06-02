@@ -5,7 +5,7 @@ const state = {
   activities: [],
   goals: [],
   theme: localStorage.getItem("uiTheme") || "dark",
-  language: localStorage.getItem("appLanguage") || "pt-BR",
+  language: localStorage.getItem("appLanguage") || "en",
   integrations: {},
   directory: { teams: [], coaches: [] },
   athletes: [],
@@ -165,6 +165,244 @@ const translations = {
     "profile.collapse": "Funga paneli",
     "profile.close": "Funga"
   }
+};
+
+const supportedLanguageOptions = {
+  en: "English",
+  "pt-BR": "Português",
+  ja: "日本語",
+  es: "Español"
+};
+
+const officialTranslations = {
+  en: {
+    "app.title": "11RUN | AI-powered athletic training",
+    "login.kicker": "Access",
+    "login.title": "Sign in to your dashboard",
+    "login.password": "Password",
+    "login.submit": "Sign in",
+    "nav.home": "HOME",
+    "nav.dashboard": "MY DASHBOARD",
+    "nav.training": "TRAINING",
+    "nav.goals": "GOALS",
+    "nav.preferences": "PREFERENCES",
+    "nav.settings": "SETTINGS",
+    "profile.language": "Language",
+    "profile.expand": "Expand panel",
+    "profile.collapse": "Close panel",
+    "profile.close": "Close",
+    "theme.light": "Light mode",
+    "theme.dark": "Dark mode",
+    "home.kicker": "Athlete profile",
+    "home.title": "The world's smartest AI-powered training manager.",
+    "home.loading": "Loading current cycle reading.",
+    "home.ai.kicker": "11RUN AI",
+    "home.ai.title": "Search the system",
+    "home.ai.placeholder": "Ask about athlete, training, team, race or history",
+    "home.ai.submit": "Send",
+    "dashboard.kicker": "My dashboard",
+    "dashboard.title": "Performance",
+    "training.kicker": "Training",
+    "training.title": "Activities",
+    "goals.kicker": "Goals",
+    "goals.title": "Races and predictive routes",
+    "settings.kicker": "Settings",
+    "settings.title": "Administrative management",
+    "preferences.kicker": "Preferences",
+    "preferences.title": "Preferences",
+    "common.recalculate": "Recalculate",
+    "common.save": "Save",
+    "common.edit": "Edit",
+    "common.delete": "Delete",
+    "common.addWorkout": "Add workout",
+    "common.updateActivities": "Update activities",
+    "common.closePanel": "Close panel",
+    "common.expandPanel": "Expand panel",
+    "common.search": "Search",
+    "common.all": "All"
+  },
+  "pt-BR": {
+    "app.title": "11RUN | Treinamento atlético com IA",
+    "login.kicker": "Acesso",
+    "login.title": "Entrar no painel",
+    "login.password": "Senha",
+    "login.submit": "Entrar",
+    "nav.home": "HOME",
+    "nav.dashboard": "MEU DASHBOARD",
+    "nav.training": "TREINAMENTOS",
+    "nav.goals": "OBJETIVOS",
+    "nav.preferences": "PREFERÊNCIAS",
+    "nav.settings": "CONFIGURAÇÕES",
+    "profile.language": "Idioma",
+    "profile.expand": "Expandir painel",
+    "profile.collapse": "Fechar painel",
+    "profile.close": "Fechar",
+    "theme.light": "Modo claro",
+    "theme.dark": "Modo escuro",
+    "home.kicker": "Perfil do atleta",
+    "home.title": "The world's smartest AI-powered training manager.",
+    "home.loading": "Carregando leitura do ciclo atual.",
+    "home.ai.kicker": "IA 11RUN",
+    "home.ai.title": "Buscar no sistema",
+    "home.ai.placeholder": "Pergunte sobre atleta, treino, equipe, prova ou histórico",
+    "home.ai.submit": "Enviar",
+    "dashboard.kicker": "Meu dashboard",
+    "dashboard.title": "Performance",
+    "training.kicker": "Treinamentos",
+    "training.title": "Atividades",
+    "goals.kicker": "Objetivos",
+    "goals.title": "Provas e rotas preditivas",
+    "settings.kicker": "Configurações",
+    "settings.title": "Gestão administrativa",
+    "preferences.kicker": "Preferências",
+    "preferences.title": "Preferências",
+    "common.recalculate": "Recalcular",
+    "common.save": "Salvar",
+    "common.edit": "Editar",
+    "common.delete": "Excluir",
+    "common.addWorkout": "Adicionar treino",
+    "common.updateActivities": "Atualizar atividades",
+    "common.closePanel": "Fechar painel",
+    "common.expandPanel": "Expandir painel",
+    "common.search": "Buscar",
+    "common.all": "Todos"
+  },
+  ja: {
+    "app.title": "11RUN | AI搭載アスレチックトレーニング",
+    "login.kicker": "アクセス",
+    "login.title": "ダッシュボードにサインイン",
+    "login.password": "パスワード",
+    "login.submit": "サインイン",
+    "nav.home": "ホーム",
+    "nav.dashboard": "マイダッシュボード",
+    "nav.training": "トレーニング",
+    "nav.goals": "目標",
+    "nav.preferences": "プロフィール",
+    "nav.settings": "設定",
+    "profile.language": "言語",
+    "profile.expand": "パネルを展開",
+    "profile.collapse": "パネルを閉じる",
+    "profile.close": "閉じる",
+    "theme.light": "ライトモード",
+    "theme.dark": "ダークモード",
+    "home.kicker": "アスリートプロフィール",
+    "home.title": "世界で最もスマートなAI搭載トレーニングマネージャー。",
+    "home.loading": "現在のサイクルを読み込んでいます。",
+    "home.ai.kicker": "11RUN AI",
+    "home.ai.title": "システムを検索",
+    "home.ai.placeholder": "アスリート、練習、チーム、大会、履歴について質問",
+    "home.ai.submit": "送信",
+    "dashboard.kicker": "マイダッシュボード",
+    "dashboard.title": "パフォーマンス",
+    "training.kicker": "トレーニング",
+    "training.title": "アクティビティ",
+    "goals.kicker": "目標",
+    "goals.title": "レースと予測ルート",
+    "settings.kicker": "設定",
+    "settings.title": "管理",
+    "preferences.kicker": "プロフィール",
+    "preferences.title": "プロフィール",
+    "common.recalculate": "再計算",
+    "common.save": "保存",
+    "common.edit": "編集",
+    "common.delete": "削除",
+    "common.addWorkout": "ワークアウト追加",
+    "common.updateActivities": "更新",
+    "common.closePanel": "パネルを閉じる",
+    "common.expandPanel": "パネルを展開",
+    "common.search": "検索",
+    "common.all": "すべて"
+  },
+  es: {
+    "app.title": "11RUN | Entrenamiento atlético con IA",
+    "login.kicker": "Acceso",
+    "login.title": "Entrar al panel",
+    "login.password": "Contraseña",
+    "login.submit": "Entrar",
+    "nav.home": "INICIO",
+    "nav.dashboard": "MI DASHBOARD",
+    "nav.training": "ENTRENAMIENTOS",
+    "nav.goals": "OBJETIVOS",
+    "nav.preferences": "PREFERENCIAS",
+    "nav.settings": "CONFIGURACIÓN",
+    "profile.language": "Idioma",
+    "profile.expand": "Expandir panel",
+    "profile.collapse": "Cerrar panel",
+    "profile.close": "Cerrar",
+    "theme.light": "Modo claro",
+    "theme.dark": "Modo oscuro",
+    "home.kicker": "Perfil del atleta",
+    "home.title": "El gestor de entrenamiento con IA más inteligente del mundo.",
+    "home.loading": "Cargando lectura del ciclo actual.",
+    "home.ai.kicker": "IA 11RUN",
+    "home.ai.title": "Buscar en el sistema",
+    "home.ai.placeholder": "Pregunta sobre atleta, entrenamiento, equipo, prueba o historial",
+    "home.ai.submit": "Enviar",
+    "dashboard.kicker": "Mi dashboard",
+    "dashboard.title": "Performance",
+    "training.kicker": "Entrenamientos",
+    "training.title": "Actividades",
+    "goals.kicker": "Objetivos",
+    "goals.title": "Pruebas y rutas predictivas",
+    "settings.kicker": "Configuración",
+    "settings.title": "Gestión administrativa",
+    "preferences.kicker": "Preferencias",
+    "preferences.title": "Preferencias",
+    "common.recalculate": "Recalcular",
+    "common.save": "Guardar",
+    "common.edit": "Editar",
+    "common.delete": "Eliminar",
+    "common.addWorkout": "Añadir entrenamiento",
+    "common.updateActivities": "Actualizar actividades",
+    "common.closePanel": "Cerrar panel",
+    "common.expandPanel": "Expandir panel",
+    "common.search": "Buscar",
+    "common.all": "Todos"
+  }
+};
+
+const staticTextI18n = {
+  "Perfil ativo": { en: "Active profile", "pt-BR": "Perfil ativo", ja: "有効なプロフィール", es: "Perfil activo" },
+  "Atleta não cadastrado": { en: "Athlete not registered", "pt-BR": "Atleta não cadastrado", ja: "未登録のアスリート", es: "Atleta no registrado" },
+  "Perfil do atleta": { en: "Athlete profile", "pt-BR": "Perfil do atleta", ja: "アスリートプロフィール", es: "Perfil del atleta" },
+  "The world's smartest AI-powered training manager.": { en: "The world's smartest AI-powered training manager.", "pt-BR": "The world's smartest AI-powered training manager.", ja: "世界で最もスマートなAI搭載トレーニングマネージャー。", es: "El gestor de entrenamiento con IA más inteligente del mundo." },
+  "Carregando leitura do ciclo atual.": { en: "Loading current cycle reading.", "pt-BR": "Carregando leitura do ciclo atual.", ja: "現在のサイクルを読み込んでいます。", es: "Cargando lectura del ciclo actual." },
+  "Buscar no sistema": { en: "Search the system", "pt-BR": "Buscar no sistema", ja: "システムを検索", es: "Buscar en el sistema" },
+  "Meu dashboard": { en: "My dashboard", "pt-BR": "Meu dashboard", ja: "マイダッシュボード", es: "Mi dashboard" },
+  "Performance": { en: "Performance", "pt-BR": "Performance", ja: "パフォーマンス", es: "Performance" },
+  "Resumo": { en: "Summary", "pt-BR": "Resumo", ja: "概要", es: "Resumen" },
+  "Centro de performance": { en: "Performance center", "pt-BR": "Centro de performance", ja: "パフォーマンスセンター", es: "Centro de performance" },
+  "Testes": { en: "Tests", "pt-BR": "Testes", ja: "テスト", es: "Pruebas" },
+  "Teste de 3000m e parâmetros": { en: "3000m test and parameters", "pt-BR": "Teste de 3000m e parâmetros", ja: "3000mテストと指標", es: "Test de 3000m y parámetros" },
+  "Treinos": { en: "Training", "pt-BR": "Treinos", ja: "トレーニング", es: "Entrenamientos" },
+  "Distribuição por tipo": { en: "Distribution by type", "pt-BR": "Distribuição por tipo", ja: "タイプ別分布", es: "Distribución por tipo" },
+  "Objetivos": { en: "Goals", "pt-BR": "Objetivos", ja: "目標", es: "Objetivos" },
+  "Probabilidade de resultado": { en: "Result probability", "pt-BR": "Probabilidade de resultado", ja: "達成確率", es: "Probabilidad de resultado" },
+  "Estimativa fisiológica": { en: "Physiological estimate", "pt-BR": "Estimativa fisiológica", ja: "生理学的推定", es: "Estimación fisiológica" },
+  "Treinamentos": { en: "Training", "pt-BR": "Treinamentos", ja: "トレーニング", es: "Entrenamientos" },
+  "Atividades": { en: "Activities", "pt-BR": "Atividades", ja: "アクティビティ", es: "Actividades" },
+  "Volume e carga ao longo do tempo": { en: "Volume and load over time", "pt-BR": "Volume e carga ao longo do tempo", ja: "時間経過による量と負荷", es: "Volumen y carga a lo largo del tiempo" },
+  "Bloco de performance": { en: "Performance block", "pt-BR": "Bloco de performance", ja: "パフォーマンスブロック", es: "Bloque de performance" },
+  "Provas e rotas preditivas": { en: "Races and predictive routes", "pt-BR": "Provas e rotas preditivas", ja: "レースと予測ルート", es: "Pruebas y rutas predictivas" },
+  "Gestão administrativa": { en: "Administrative management", "pt-BR": "Gestão administrativa", ja: "管理", es: "Gestión administrativa" },
+  "Cadastros": { en: "Registrations", "pt-BR": "Cadastros", ja: "登録", es: "Registros" },
+  "Adicionar treino": { en: "Add workout", "pt-BR": "Adicionar treino", ja: "ワークアウト追加", es: "Añadir entrenamiento" },
+  "Atualizar atividades": { en: "Update activities", "pt-BR": "Atualizar atividades", ja: "アクティビティ更新", es: "Actualizar actividades" },
+  "Recalcular": { en: "Recalculate", "pt-BR": "Recalcular", ja: "再計算", es: "Recalcular" },
+  "Salvar cadastro": { en: "Save registration", "pt-BR": "Salvar cadastro", ja: "登録を保存", es: "Guardar registro" },
+  "Salvar equipe": { en: "Save team", "pt-BR": "Salvar equipe", ja: "チームを保存", es: "Guardar equipo" },
+  "Salvar meu perfil": { en: "Save my profile", "pt-BR": "Salvar meu perfil", ja: "プロフィールを保存", es: "Guardar mi perfil" },
+  "Editar": { en: "Edit", "pt-BR": "Editar", ja: "編集", es: "Editar" },
+  "Excluir": { en: "Delete", "pt-BR": "Excluir", ja: "削除", es: "Eliminar" },
+  "Remover": { en: "Remove", "pt-BR": "Remover", ja: "削除", es: "Eliminar" },
+  "Todos": { en: "All", "pt-BR": "Todos", ja: "すべて", es: "Todos" }
+};
+
+const placeholderI18n = {
+  "Pergunte sobre atleta, treino, equipe, prova ou histórico": { en: "Ask about athlete, training, team, race or history", "pt-BR": "Pergunte sobre atleta, treino, equipe, prova ou histórico", ja: "アスリート、練習、チーム、大会、履歴について質問", es: "Pregunta sobre atleta, entrenamiento, equipo, prueba o historial" },
+  "Nome, e-mail, equipe ou treinador": { en: "Name, e-mail, team or coach", "pt-BR": "Nome, e-mail, equipe ou treinador", ja: "名前、メール、チーム、コーチ", es: "Nombre, e-mail, equipo o entrenador" },
+  "Filtrar equipe": { en: "Filter team", "pt-BR": "Filtrar equipe", ja: "チームで絞り込み", es: "Filtrar equipo" },
+  "Filtrar treinador": { en: "Filter coach", "pt-BR": "Filtrar treinador", ja: "コーチで絞り込み", es: "Filtrar entrenador" }
 };
 
 const providerDefinitions = {
@@ -474,7 +712,11 @@ function applyPanelCollapse(panel, key, label) {
 }
 
 function t(key) {
-  return translations[state.language]?.[key] || translations["pt-BR"][key] || key;
+  return officialTranslations[state.language]?.[key]
+    || officialTranslations.en?.[key]
+    || translations[state.language]?.[key]
+    || translations.en?.[key]
+    || key;
 }
 
 function applyTheme() {
@@ -484,18 +726,56 @@ function applyTheme() {
   document.documentElement.classList.toggle("dark", theme === "dark");
   localStorage.setItem("uiTheme", theme);
   document.querySelectorAll("[data-theme-label]").forEach((node) => {
-    node.textContent = theme === "dark" ? "Modo claro" : "Modo escuro";
+    node.textContent = theme === "dark" ? t("theme.light") : t("theme.dark");
   });
   document.querySelectorAll("[data-toggle-theme]").forEach((button) => {
     button.setAttribute("aria-pressed", theme === "light" ? "true" : "false");
   });
 }
 
+function normalizeI18nText(value = "") {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function translateStaticText(value, dictionary = staticTextI18n) {
+  const normalized = normalizeI18nText(value);
+  if (!normalized) return value;
+  const direct = dictionary[normalized]?.[state.language];
+  if (direct) return direct;
+  const entry = Object.values(dictionary).find((options) => Object.values(options).some((candidate) => normalizeI18nText(candidate) === normalized));
+  return entry?.[state.language] || value;
+}
+
+function applyStaticTranslations() {
+  document.querySelectorAll(".kicker, .hero-content h1, .hero-motivation, .section-title > span, .section-title h3, .page-header h2, .page-header .kicker, .primary-action, .secondary-action, .danger-action, .iconized-action > span, .panel-toggle-text .kicker, .athlete-chip > span").forEach((node) => {
+    if (node.dataset.i18n) return;
+    if (node.children.length) return;
+    const source = node.dataset.i18nSource || normalizeI18nText(node.textContent);
+    if (!source) return;
+    node.dataset.i18nSource = source;
+    node.textContent = translateStaticText(source);
+  });
+  document.querySelectorAll("input[placeholder], textarea[placeholder]").forEach((node) => {
+    const source = node.dataset.i18nPlaceholderSource || normalizeI18nText(node.getAttribute("placeholder"));
+    if (!source) return;
+    node.dataset.i18nPlaceholderSource = source;
+    node.setAttribute("placeholder", translateStaticText(source, placeholderI18n));
+  });
+}
+
 function applyI18n() {
+  if (!supportedLanguageOptions[state.language]) state.language = "en";
   document.documentElement.lang = state.language;
+  document.title = t("app.title");
   document.querySelectorAll("[data-i18n]").forEach((node) => {
     node.textContent = t(node.dataset.i18n);
   });
+  document.querySelectorAll("[data-language-select]").forEach((select) => {
+    select.innerHTML = Object.entries(supportedLanguageOptions)
+      .map(([value, label]) => `<option value="${escapeHtml(value)}" ${value === state.language ?"selected" : ""}>${escapeHtml(label)}</option>`)
+      .join("");
+  });
+  applyStaticTranslations();
   applyTheme();
 }
 
@@ -602,11 +882,13 @@ function showLogin(message = "") {
   document.querySelector("#loginScreen").hidden = false;
   document.querySelector("#appShell").hidden = true;
   document.querySelector("#loginMessage").textContent = message;
+  applyI18n();
 }
 
 function showApp() {
   document.querySelector("#loginScreen").hidden = true;
   document.querySelector("#appShell").hidden = false;
+  applyI18n();
 }
 
 function escapeHtml(value) {
@@ -735,6 +1017,7 @@ function setView(view) {
   if (view === "home") renderHomeMotivation();
   location.hash = view === "training" ?"treinamentos" : view === "goals" ?"objetivos" : view === "athlete" ?"preferencias" : view === "settings" ?"configuracoes" : view === "dashboard" ?"dashboard" : "home";
   closeMobileMenu();
+  applyI18n();
 }
 
 function viewFromHash(hash) {
@@ -1646,7 +1929,7 @@ function renderDashboard() {
 }
 
 function profileLanguageOptions() {
-  return Object.entries(languageOptions)
+  return Object.entries(supportedLanguageOptions)
     .map(([value, label]) => `<option value="${escapeHtml(value)}" ${value === state.language ?"selected" : ""}>${escapeHtml(label)}</option>`)
     .join("");
 }
@@ -1668,7 +1951,7 @@ function openProfileDialog() {
       </div>
       <label class="credential-field">
         <span>${escapeHtml(t("profile.language"))}</span>
-        <select id="languageSelect">${profileLanguageOptions()}</select>
+        <select id="languageSelect" data-language-select>${profileLanguageOptions()}</select>
       </label>
       <div class="modal-expanded-content">
         <p>E-mail: ${escapeHtml(athlete?.email || state.currentUser?.email || "--")}</p>
@@ -5295,8 +5578,8 @@ document.addEventListener("click", async (event) => {
 });
 
 document.addEventListener("change", (event) => {
-  if (event.target?.id === "languageSelect") {
-    state.language = event.target.value || "pt-BR";
+  if (event.target?.matches("[data-language-select], #languageSelect")) {
+    state.language = supportedLanguageOptions[event.target.value] ?event.target.value : "en";
     localStorage.setItem("appLanguage", state.language);
     applyI18n();
     const expandButton = document.querySelector("[data-expand-profile]");
