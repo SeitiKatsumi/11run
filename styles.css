@@ -4710,6 +4710,7 @@ nav a.is-active * {
 .close-button,
 .menu-toggle,
 .theme-toggle,
+.logout-action,
 .calendar-view-switch,
 .segmented,
 .system-control-button {
@@ -4743,27 +4744,44 @@ nav a.is-active * {
   letter-spacing: 0 !important;
 }
 
-.theme-toggle {
+.theme-toggle,
+.logout-action {
   width: calc(100% - 32px);
-  margin: auto 16px 12px;
+  margin: 0 16px 12px;
   display: inline-flex;
   justify-content: flex-start;
   gap: 10px;
 }
 
-.theme-toggle .nav-icon {
+.theme-toggle {
+  margin-top: auto;
+}
+
+.logout-action {
+  color: var(--muted);
+}
+
+.logout-action:hover {
+  color: var(--heading);
+  border-color: color-mix(in srgb, var(--tone-primary) 54%, var(--line));
+}
+
+.theme-toggle .nav-icon,
+.logout-action .nav-icon {
   width: 18px;
   height: 18px;
 }
 
-.shell.rail-collapsed .theme-toggle {
+.shell.rail-collapsed .theme-toggle,
+.shell.rail-collapsed .logout-action {
   width: 44px;
   height: 44px;
   padding: 0;
   justify-content: center;
 }
 
-.shell.rail-collapsed .theme-toggle .nav-label {
+.shell.rail-collapsed .theme-toggle .nav-label,
+.shell.rail-collapsed .logout-action .nav-label {
   display: none;
 }
 
@@ -4840,6 +4858,7 @@ label span,
 .segmented button,
 .calendar-view-switch button,
 .theme-toggle,
+.logout-action,
 nav a {
   font-size: 0.875rem !important;
   line-height: 1rem !important;
@@ -5041,6 +5060,7 @@ html[data-theme="light"] .performance-chart .volume-line {
   .segmented button,
   .calendar-view-switch button,
   .theme-toggle,
+  .logout-action,
   nav a {
     font-size: 0.8125rem !important;
   }

@@ -187,6 +187,7 @@ const officialTranslations = {
     "nav.goals": "GOALS",
     "nav.preferences": "PREFERENCES",
     "nav.settings": "SETTINGS",
+    "nav.logout": "SIGN OUT",
     "profile.language": "Language",
     "profile.expand": "Expand panel",
     "profile.collapse": "Close panel",
@@ -233,6 +234,7 @@ const officialTranslations = {
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERÊNCIAS",
     "nav.settings": "CONFIGURAÇÕES",
+    "nav.logout": "SAIR",
     "profile.language": "Idioma",
     "profile.expand": "Expandir painel",
     "profile.collapse": "Fechar painel",
@@ -279,6 +281,7 @@ const officialTranslations = {
     "nav.goals": "目標",
     "nav.preferences": "プロフィール",
     "nav.settings": "設定",
+    "nav.logout": "ログアウト",
     "profile.language": "言語",
     "profile.expand": "パネルを展開",
     "profile.collapse": "パネルを閉じる",
@@ -325,6 +328,7 @@ const officialTranslations = {
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERENCIAS",
     "nav.settings": "CONFIGURACIÓN",
+    "nav.logout": "SALIR",
     "profile.language": "Idioma",
     "profile.expand": "Expandir panel",
     "profile.collapse": "Cerrar panel",
@@ -889,6 +893,24 @@ function showApp() {
   document.querySelector("#loginScreen").hidden = true;
   document.querySelector("#appShell").hidden = false;
   applyI18n();
+}
+
+async function logoutUser() {
+  try {
+    await api("/api/logout", { method: "POST", body: JSON.stringify({}) });
+  } catch {
+    // Mesmo se a sessão já tiver expirado, a interface deve voltar para a entrada.
+  }
+  state.currentUser = null;
+  state.athletes = [];
+  state.activities = [];
+  state.goals = [];
+  state.integrations = {};
+  state.directory = { teams: [], coaches: [] };
+  state.selectedAthleteId = "";
+  localStorage.removeItem("selectedAthleteId");
+  closeMobileMenu();
+  showLogin("");
 }
 
 function escapeHtml(value) {
@@ -5234,6 +5256,7 @@ applyTheme();
 if (shell && localStorage.getItem("railCollapsed") === "1") setRailCollapsed(true);
 if (menuToggle) menuToggle.addEventListener("click", toggleMenu);
 if (railBackdrop) railBackdrop.addEventListener("click", () => setMenuOpen(false));
+document.querySelector("[data-logout]")?.addEventListener("click", logoutUser);
 window.addEventListener("resize", () => {
   if (!isMobileLayout()) setMenuOpen(false);
 });
