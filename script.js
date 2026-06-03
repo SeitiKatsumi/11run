@@ -5256,7 +5256,9 @@ applyTheme();
 if (shell && localStorage.getItem("railCollapsed") === "1") setRailCollapsed(true);
 if (menuToggle) menuToggle.addEventListener("click", toggleMenu);
 if (railBackdrop) railBackdrop.addEventListener("click", () => setMenuOpen(false));
-document.querySelector("[data-logout]")?.addEventListener("click", logoutUser);
+document.querySelectorAll("[data-logout]").forEach((button) => {
+  button.addEventListener("click", logoutUser);
+});
 window.addEventListener("resize", () => {
   if (!isMobileLayout()) setMenuOpen(false);
 });

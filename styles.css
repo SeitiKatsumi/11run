@@ -377,6 +377,25 @@ nav a.is-active {
   font-weight: 650;
 }
 
+.profile-logout-button {
+  width: 100%;
+  min-height: 34px;
+  margin-top: 12px;
+  color: var(--tone-primary);
+  border: 1px solid color-mix(in srgb, var(--tone-primary) 58%, var(--line));
+  border-radius: var(--radius);
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.profile-logout-button:hover {
+  color: var(--primary-foreground);
+  background: var(--tone-primary);
+}
+
 .athlete-select {
   width: 100%;
   min-height: 36px;
