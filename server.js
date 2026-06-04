@@ -363,6 +363,46 @@ function readRequestBody(req) {
   });
 }
 
+const TRANSLATE_TARGETS = new Set(["en", "pt", "ja", "es"]);
+const translationCache = new Map();
+
+function normalizeTranslateTarget(language = "") {
+  const target = String(language || "").trim().toLowerCase();
+  if (target === "pt-br" || target === "pt_pt" || target === "pt-pt") return "pt";
+  if (target === "jp") return "ja";
+  return TRANSLATE_TARGETS.has(target) ?target : "en";
+}
+
+function flattenGoogleTranslation(payload) {
+  if (!Array.isArray(payload?.[0])) return "";
+  return payload[0]
+    .map((part) => Array.isArray(part) ?part[0] : "")
+    .filter(Boolean)
+    .join("");
+}
+
+async function translateWithGoogle(text, targetLanguage) {
+  const source = String(text || "").replace(/\s+/g, " ").trim();
+  if (!source) return "";
+  const target = normalizeTranslateTarget(targetLanguage);
+  const cacheKey = `${target}:${source}`;
+  if (translationCache.has(cacheKey)) return translationCache.get(cacheKey);
+  const endpoint = new URL("https://translate.googleapis.com/translate_a/single");
+  endpoint.searchParams.set("client", "gtx");
+  endpoint.searchParams.set("sl", "auto");
+  endpoint.searchParams.set("tl", target);
+  endpoint.searchParams.set("dt", "t");
+  endpoint.searchParams.set("q", source.slice(0, 260));
+  const response = await fetch(endpoint, {
+    headers: { "User-Agent": "11RUN/1.0" }
+  });
+  if (!response.ok) throw new Error(`Google Translate HTTP ${response.status}`);
+  const translated = flattenGoogleTranslation(await response.json()) || source;
+  translationCache.set(cacheKey, translated);
+  if (translationCache.size > 2000) translationCache.delete(translationCache.keys().next().value);
+  return translated;
+}
+
 async function query(text, params = []) {
   if (!pool) throw new Error("DATABASE_URL não configurado.");
   return pool.query(text, params);
@@ -3211,6 +3251,25 @@ async function handleApi(req, res, url) {
 
     if (req.method === "GET" && url.pathname === "/api/version") {
       sendJson(res, 200, { version: APP_VERSION, publicBaseUrl: PUBLIC_BASE_URL });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/translate") {
+      const body = await readRequestBody(req);
+      const targetLanguage = normalizeTranslateTarget(body.targetLanguage || body.target || "en");
+      const texts = Array.isArray(body.texts) ?body.texts : [];
+      const limitedTexts = texts
+        .map((text) => String(text || "").replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .slice(0, 80);
+      const translations = await Promise.all(limitedTexts.map(async (text) => {
+        try {
+          return await translateWithGoogle(text, targetLanguage);
+        } catch {
+          return text;
+        }
+      }));
+      sendJson(res, 200, { targetLanguage, translations });
       return;
     }
 
