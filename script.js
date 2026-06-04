@@ -67,7 +67,9 @@ const translations = {
     "profile.language": "Idioma",
     "profile.expand": "Expandir painel",
     "profile.collapse": "Fechar painel",
-    "profile.close": "Fechar"
+    "profile.close": "Fechar",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "Lançamento oficial no dia 01/07/2026"
   },
   "pt-PT": {
     "nav.home": "INÍCIO",
@@ -79,7 +81,9 @@ const translations = {
     "profile.language": "Idioma",
     "profile.expand": "Expandir painel",
     "profile.collapse": "Fechar painel",
-    "profile.close": "Fechar"
+    "profile.close": "Fechar",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "Lançamento oficial no dia 01/07/2026"
   },
   en: {
     "nav.home": "HOME",
@@ -91,7 +95,9 @@ const translations = {
     "profile.language": "Language",
     "profile.expand": "Expand panel",
     "profile.collapse": "Close panel",
-    "profile.close": "Close"
+    "profile.close": "Close",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "Official launch on 01/07/2026"
   },
   es: {
     "nav.home": "INICIO",
@@ -103,7 +109,9 @@ const translations = {
     "profile.language": "Idioma",
     "profile.expand": "Expandir panel",
     "profile.collapse": "Cerrar panel",
-    "profile.close": "Cerrar"
+    "profile.close": "Cerrar",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "Lanzamiento oficial el 01/07/2026"
   },
   fr: {
     "nav.home": "ACCUEIL",
@@ -115,7 +123,9 @@ const translations = {
     "profile.language": "Langue",
     "profile.expand": "Développer le panneau",
     "profile.collapse": "Fermer le panneau",
-    "profile.close": "Fermer"
+    "profile.close": "Fermer",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "Lancement officiel le 01/07/2026"
   },
   de: {
     "nav.home": "START",
@@ -127,7 +137,9 @@ const translations = {
     "profile.language": "Sprache",
     "profile.expand": "Panel erweitern",
     "profile.collapse": "Panel schließen",
-    "profile.close": "Schließen"
+    "profile.close": "Schließen",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "Offizieller Start am 01.07.2026"
   },
   ja: {
     "nav.home": "ホーム",
@@ -139,7 +151,9 @@ const translations = {
     "profile.language": "言語",
     "profile.expand": "パネルを展開",
     "profile.collapse": "パネルを閉じる",
-    "profile.close": "閉じる"
+    "profile.close": "閉じる",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "正式リリース: 2026年7月1日"
   },
   zh: {
     "nav.home": "首页",
@@ -151,7 +165,9 @@ const translations = {
     "profile.language": "语言",
     "profile.expand": "展开面板",
     "profile.collapse": "关闭面板",
-    "profile.close": "关闭"
+    "profile.close": "关闭",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "正式发布：2026年7月1日"
   },
   sw: {
     "nav.home": "NYUMBANI",
@@ -163,7 +179,9 @@ const translations = {
     "profile.language": "Lugha",
     "profile.expand": "Panua paneli",
     "profile.collapse": "Funga paneli",
-    "profile.close": "Funga"
+    "profile.close": "Funga",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "Uzinduzi rasmi tarehe 01/07/2026"
   }
 };
 
@@ -179,6 +197,8 @@ const officialTranslations = {
     "app.title": "11RUN | AI-powered athletic training",
     "login.kicker": "Access",
     "login.title": "Sign in to your dashboard",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "Official launch on 01/07/2026",
     "login.password": "Password",
     "login.submit": "Sign in",
     "nav.home": "HOME",
@@ -226,6 +246,8 @@ const officialTranslations = {
     "app.title": "11RUN | Treinamento atlético com IA",
     "login.kicker": "Acesso",
     "login.title": "Entrar no painel",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "Lançamento oficial no dia 01/07/2026",
     "login.password": "Senha",
     "login.submit": "Entrar",
     "nav.home": "HOME",
@@ -273,6 +295,8 @@ const officialTranslations = {
     "app.title": "11RUN | AI搭載アスレチックトレーニング",
     "login.kicker": "アクセス",
     "login.title": "ダッシュボードにサインイン",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "正式リリース: 2026年7月1日",
     "login.password": "パスワード",
     "login.submit": "サインイン",
     "nav.home": "ホーム",
@@ -320,6 +344,8 @@ const officialTranslations = {
     "app.title": "11RUN | Entrenamiento atlético con IA",
     "login.kicker": "Acceso",
     "login.title": "Entrar al panel",
+    "login.slogan": "The world's smartest AI-powered training manager",
+    "login.launch": "Lanzamiento oficial el 01/07/2026",
     "login.password": "Contraseña",
     "login.submit": "Entrar",
     "nav.home": "INICIO",
