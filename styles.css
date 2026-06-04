@@ -5162,11 +5162,38 @@ html[data-theme="light"] .performance-chart .volume-line {
   overflow-x: auto;
 }
 
+.tests-lab-panel .section-title {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.test-help-button {
+  width: 38px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  font-weight: 800 !important;
+}
+
 .test-entry-form {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   align-items: end;
+}
+
+.test-entry-form .test-action-row {
+  display: flex;
+  gap: 10px;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+}
+
+.test-entry-form .test-action-row .primary-action,
+.test-entry-form .test-action-row .secondary-action {
+  min-width: min(240px, 100%);
 }
 
 .test-projection-output,
@@ -5264,6 +5291,22 @@ html[data-theme="light"] .performance-chart .volume-line {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--card);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.test-history-card:hover,
+.test-history-card:focus-visible {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.test-history-main {
+  min-width: 0;
 }
 
 .test-history-card.is-reference {
@@ -5298,11 +5341,39 @@ html[data-theme="light"] .performance-chart .volume-line {
   gap: 18px;
 }
 
+.test-help-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.test-help-grid article {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 75, 11, 0.06), transparent 72%),
+    var(--card);
+}
+
+.test-help-grid h3 {
+  margin: 0 0 8px;
+  color: var(--foreground);
+}
+
+.test-help-grid p {
+  margin: 0;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+
 @media (max-width: 900px) {
   .test-entry-form,
   .test-summary-grid,
   .calculator-result-grid,
-  .calculator-grid {
+  .calculator-grid,
+  .test-help-grid {
     grid-template-columns: 1fr;
   }
 

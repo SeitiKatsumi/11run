@@ -26,6 +26,7 @@
     }
   })(),
   referenceTestId: localStorage.getItem("referenceTestId") || "",
+  currentTestDraft: null,
   historyTimelineDraft: [],
   historyTimelineFilter: "all",
   historyTimelineOutput: null,
@@ -197,9 +198,9 @@ const translations = {
 
 const supportedLanguageOptions = {
   en: "English",
-  "pt-BR": "PortuguÃªs",
-  ja: "æ—¥æœ¬èªž",
-  es: "EspaÃ±ol"
+  "pt-BR": "Portugu\u00eas",
+  ja: "\u65e5\u672c\u8a9e",
+  es: "Espa\u00f1ol"
 };
 
 const officialTranslations = {
@@ -214,6 +215,8 @@ const officialTranslations = {
     "nav.home": "HOME",
     "nav.dashboard": "MY DASHBOARD",
     "nav.training": "TRAINING",
+    "nav.tests": "TESTS",
+    "nav.calculators": "CALCULATORS",
     "nav.goals": "GOALS",
     "nav.preferences": "PREFERENCES",
     "nav.settings": "SETTINGS",
@@ -263,6 +266,8 @@ const officialTranslations = {
     "nav.home": "HOME",
     "nav.dashboard": "MEU DASHBOARD",
     "nav.training": "TREINAMENTOS",
+    "nav.tests": "TESTES",
+    "nav.calculators": "CALCULADORAS",
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERÃŠNCIAS",
     "nav.settings": "CONFIGURAÃ‡Ã•ES",
@@ -312,6 +317,8 @@ const officialTranslations = {
     "nav.home": "ãƒ›ãƒ¼ãƒ ",
     "nav.dashboard": "ãƒžã‚¤ãƒ€ãƒƒã‚·ãƒ¥ãƒœãƒ¼ãƒ‰",
     "nav.training": "ãƒˆãƒ¬ãƒ¼ãƒ‹ãƒ³ã‚°",
+    "nav.tests": "\u30c6\u30b9\u30c8",
+    "nav.calculators": "\u8a08\u7b97\u6a5f",
     "nav.goals": "ç›®æ¨™",
     "nav.preferences": "ãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«",
     "nav.settings": "è¨­å®š",
@@ -361,6 +368,8 @@ const officialTranslations = {
     "nav.home": "INICIO",
     "nav.dashboard": "MI DASHBOARD",
     "nav.training": "ENTRENAMIENTOS",
+    "nav.tests": "PRUEBAS",
+    "nav.calculators": "CALCULADORAS",
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERENCIAS",
     "nav.settings": "CONFIGURACIÃ“N",
@@ -836,6 +845,14 @@ function autoTranslateCacheKey(language, source) {
 function collectAutoTranslateTargets() {
   const textNodes = [];
   document.querySelectorAll([
+    ".page-header h2",
+    ".page-header .kicker",
+    ".section-title > span",
+    ".section-title h3",
+    ".primary-action > span",
+    ".secondary-action > span",
+    ".danger-action > span",
+    ".nav-label",
     ".credential-field > span",
     ".profile-dynamic-block .section-title span",
     ".profile-dynamic-block .section-title h3",
@@ -848,6 +865,15 @@ function collectAutoTranslateTargets() {
     ".metric-card p",
     ".activity-card span",
     ".activity-card p",
+    ".activity-card strong",
+    ".test-history-card span",
+    ".test-history-card strong",
+    ".test-history-card p",
+    ".test-result-card span",
+    ".test-summary-grid span",
+    ".calculator-result-grid span",
+    ".zone-table strong",
+    ".zone-table span",
     ".activity-meta",
     ".empty-state",
     ".form-message",
@@ -1291,6 +1317,61 @@ function riegelTime(testSeconds, testMeters, targetMeters, exponent = 1.06) {
   return testSeconds * Math.pow(targetMeters / testMeters, exponent);
 }
 
+const enduranceProfiles = {
+  balanced: {
+    label: "Equilibrado",
+    description: "perfil neutro entre velocidade e resistência",
+    exponentShift: 0,
+    speedBias: 1,
+    enduranceBias: 1
+  },
+  middle: {
+    label: "Meio fundista",
+    description: "mais velocidade entre 800m e 3000m, menor extrapolação para longas",
+    exponentShift: 0.018,
+    speedBias: 0.965,
+    enduranceBias: 1.045
+  },
+  distance: {
+    label: "Fundista",
+    description: "melhor sustentação de 5km a 21km",
+    exponentShift: -0.006,
+    speedBias: 1.012,
+    enduranceBias: 0.988
+  },
+  ultra: {
+    label: "Ultra fundista",
+    description: "maior economia em 21km e 42km, menor velocidade curta",
+    exponentShift: -0.014,
+    speedBias: 1.028,
+    enduranceBias: 0.972
+  }
+};
+
+function projectionConfidence(testMeters, targetMeters, profileKey = "balanced") {
+  const ratio = Math.max(testMeters, targetMeters) / Math.max(1, Math.min(testMeters, targetMeters));
+  let confidence = 96 - Math.log2(ratio) * 18;
+  if (profileKey === "middle" && targetMeters <= 3000) confidence += 8;
+  if (profileKey === "middle" && targetMeters >= 10000) confidence -= 14;
+  if (profileKey === "distance" && targetMeters >= 5000 && targetMeters <= 21097.5) confidence += 8;
+  if (profileKey === "ultra" && targetMeters >= 21097.5) confidence += 9;
+  if (testMeters === targetMeters) confidence = 99;
+  return Math.max(35, Math.min(99, Math.round(confidence)));
+}
+
+function profileAdjustedTime(testSeconds, testMeters, targetMeters, profileKey = "balanced") {
+  const profile = enduranceProfiles[profileKey] || enduranceProfiles.balanced;
+  const ratio = targetMeters / testMeters;
+  const farProjection = Math.abs(Math.log2(Math.max(ratio, 1 / ratio)));
+  const exponent = 1.06 + profile.exponentShift * Math.min(farProjection, 3);
+  let seconds = riegelTime(testSeconds, testMeters, targetMeters, exponent);
+  if (targetMeters < testMeters) seconds *= profile.speedBias;
+  if (targetMeters > testMeters) seconds *= profile.enduranceBias;
+  if (profileKey === "middle" && targetMeters > 5000) seconds *= 1 + Math.min(0.1, Math.log2(targetMeters / 5000) * 0.025);
+  if (profileKey === "ultra" && targetMeters < 3000) seconds *= 1.015;
+  return seconds;
+}
+
 function estimateVdot(testSeconds, testMeters) {
   const minutes = testSeconds / 60;
   const velocityMMin = testMeters / minutes;
@@ -1309,9 +1390,12 @@ function buildTestProjection(test) {
   if (!testMeters || !testSeconds) return null;
   const paceSecondsKm = testSeconds / (testMeters / 1000);
   const vdot = estimateVdot(testSeconds, testMeters);
+  const profileKey = test.athleteProfile || "balanced";
+  const profile = enduranceProfiles[profileKey] || enduranceProfiles.balanced;
   const projections = projectionDistances.map((item) => ({
     ...item,
-    seconds: riegelTime(testSeconds, testMeters, item.meters)
+    seconds: profileAdjustedTime(testSeconds, testMeters, item.meters, profileKey),
+    confidence: projectionConfidence(testMeters, item.meters, profileKey)
   }));
   const zones = zoneDefinitions.map((zone) => {
     const faster = paceSecondsKm / zone.range[1];
@@ -1323,6 +1407,7 @@ function buildTestProjection(test) {
     speedKmh: 3600 / paceSecondsKm,
     vo2: vdot.vo2,
     vdot: vdot.vdot,
+    profile,
     projections,
     zones
   };
@@ -1346,17 +1431,17 @@ function renderTestProjection(test) {
     return;
   }
   output.innerHTML = `
-    <div class="test-summary-grid">
-      <div><span>Ritmo do teste</span><strong>${formatPace(projection.paceSecondsKm)}</strong><small>${projection.speedKmh.toFixed(1)} km/h</small></div>
-      <div><span>VO2 estimado</span><strong>${projection.vdot.toFixed(1)}</strong><small>VDOT / ml/kg/min aproximado</small></div>
-      <div><span>Protocolo</span><strong>Riegel + Daniels</strong><small>projeção tangível por distância</small></div>
-    </div>
+      <div class="test-summary-grid">
+        <div><span>Ritmo do teste</span><strong>${formatPace(projection.paceSecondsKm)}</strong><small>${projection.speedKmh.toFixed(1)} km/h</small></div>
+        <div><span>VO2 estimado</span><strong>${projection.vdot.toFixed(1)}</strong><small>VDOT / ml/kg/min aproximado</small></div>
+        <div><span>Perfil aplicado</span><strong>${escapeHtml(projection.profile.label)}</strong><small>${escapeHtml(projection.profile.description)}</small></div>
+      </div>
     <div class="test-result-grid">
       ${projection.projections.map((item) => `
         <div class="test-result-card">
           <span>${item.label}</span>
           <strong>${formatDuration(item.seconds)}</strong>
-          <small>${formatPace(item.seconds / (item.meters / 1000))}</small>
+          <small>${formatPace(item.seconds / (item.meters / 1000))} · ${item.confidence}% confiança</small>
         </div>
       `).join("")}
     </div>
@@ -1386,11 +1471,11 @@ function renderTestHistory() {
     const label = test.type === "vo2" ? "VO2 real" : `Teste de ${test.distanceMeters}m`;
     const value = test.type === "vo2" ? `${Number(test.vo2Value || 0).toFixed(1)} ml/kg/min` : formatDuration(test.seconds);
     return `
-      <article class="test-history-card ${isReference ?"is-reference" : ""}">
-        <div>
+      <article class="test-history-card ${isReference ?"is-reference" : ""}" data-view-test-result="${escapeHtml(test.id)}" tabindex="0" role="button">
+        <div class="test-history-main">
           <span>${escapeHtml(label)}${isReference ? " - referência" : ""}</span>
           <strong>${escapeHtml(value)}</strong>
-          <p>${escapeHtml(test.date || "--")} ${test.notes ?`- ${test.notes}` : ""}</p>
+          <p>${escapeHtml(test.date || "--")} ${test.athleteProfile ?`- ${enduranceProfiles[test.athleteProfile]?.label || "Equilibrado"}` : ""} ${test.notes ?`- ${test.notes}` : ""}</p>
         </div>
         <button class="secondary-action compact" type="button" data-use-reference-test="${escapeHtml(test.id)}">Utilizar esse teste como referência</button>
       </article>
@@ -1423,6 +1508,15 @@ function savePerformanceTests() {
 function savePerformanceTest(event) {
   event.preventDefault();
   const form = event.currentTarget;
+  const test = buildPerformanceTestFromForm(form);
+  if (!test) return;
+  state.currentTestDraft = test;
+  renderTestProjection(test);
+  const saveButton = document.querySelector("[data-save-calculated-test]");
+  if (saveButton) saveButton.hidden = false;
+}
+
+function buildPerformanceTestFromForm(form) {
   const mode = state.testMode;
   const test = {
     id: `test-${Date.now()}`,
@@ -1430,16 +1524,24 @@ function savePerformanceTest(event) {
     distanceMeters: mode === "vo2" ? 0 : Number(mode),
     seconds: mode === "vo2" ? 0 : parseDurationToSeconds(form.elements.testTime.value),
     vo2Value: mode === "vo2" ? Number(form.elements.vo2Value.value || 0) : 0,
+    athleteProfile: form.elements.athleteProfile?.value || "balanced",
     weightKg: Number(form.elements.weightKg.value || 0),
     date: form.elements.testDate.value || dateKey(new Date()),
     notes: form.elements.notes.value.trim()
   };
-  if (test.type === "field" && (!test.seconds || !test.distanceMeters)) return;
-  if (test.type === "vo2" && !test.vo2Value) return;
+  if (test.type === "field" && (!test.seconds || !test.distanceMeters)) return null;
+  if (test.type === "vo2" && !test.vo2Value) return null;
+  return test;
+}
+
+function saveCalculatedTest() {
+  const test = state.currentTestDraft;
+  if (!test) return;
   state.performanceTests.unshift(test);
   state.referenceTestId = test.id;
   savePerformanceTests();
-  form.reset();
+  document.querySelector("#performanceTestForm")?.reset();
+  state.currentTestDraft = null;
   renderTestsView();
   renderDashboard();
 }
@@ -1449,6 +1551,16 @@ function useReferenceTest(id) {
   savePerformanceTests();
   renderTestsView();
   renderDashboard();
+}
+
+function viewSavedTestResult(id) {
+  const test = state.performanceTests.find((item) => String(item.id) === String(id));
+  if (!test) return;
+  state.currentTestDraft = null;
+  renderTestProjection(test);
+  const saveButton = document.querySelector("[data-save-calculated-test]");
+  if (saveButton) saveButton.hidden = true;
+  document.querySelector("#testProjectionOutput")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderCalculatorOutput(targetId, html) {
@@ -5726,6 +5838,11 @@ window.addEventListener("resize", () => {
   if (!isMobileLayout()) setMenuOpen(false);
 });
 
+window.addEventListener("hashchange", () => {
+  const nextView = viewFromHash(location.hash.replace("#", "").split("?")[0]);
+  if (nextView !== state.view) setView(nextView);
+});
+
 document.querySelectorAll("[data-view-link]").forEach((link) => {
   link.addEventListener("click", (event) => {
     event.preventDefault();
@@ -5740,6 +5857,9 @@ document.querySelectorAll("[data-view-button]").forEach((button) => {
 document.querySelectorAll("[data-test-mode]").forEach((button) => {
   button.addEventListener("click", () => {
     state.testMode = button.dataset.testMode;
+    state.currentTestDraft = null;
+    const saveButton = document.querySelector("[data-save-calculated-test]");
+    if (saveButton) saveButton.hidden = true;
     renderTestsView();
   });
 });
@@ -5870,9 +5990,24 @@ document.addEventListener("click", async (event) => {
     openBulkActivityEditor();
     return;
   }
+  if (event.target.closest("[data-open-test-help]")) {
+    document.querySelector("#testProfileHelpDialog")?.showModal();
+    return;
+  }
+  if (event.target.closest("[data-save-calculated-test]")) {
+    saveCalculatedTest();
+    return;
+  }
   const referenceTestButton = event.target.closest("[data-use-reference-test]");
   if (referenceTestButton) {
+    event.preventDefault();
+    event.stopPropagation();
     useReferenceTest(referenceTestButton.dataset.useReferenceTest);
+    return;
+  }
+  const savedTestCard = event.target.closest("[data-view-test-result]");
+  if (savedTestCard) {
+    viewSavedTestResult(savedTestCard.dataset.viewTestResult);
     return;
   }
   const workoutModeButton = event.target.closest("[data-workout-mode]");
@@ -6104,6 +6239,14 @@ document.addEventListener("change", (event) => {
     state.historyTimelineFilter = event.target.value || "all";
     renderHistoryTimelineEditor();
   }
+});
+
+document.addEventListener("keydown", (event) => {
+  const savedTestCard = event.target.closest?.("[data-view-test-result]");
+  if (!savedTestCard) return;
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  viewSavedTestResult(savedTestCard.dataset.viewTestResult);
 });
 
 document.addEventListener("submit", async (event) => {
