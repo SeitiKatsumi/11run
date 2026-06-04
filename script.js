@@ -870,7 +870,14 @@ function collectAutoTranslateTargets() {
     ".test-history-card strong",
     ".test-history-card p",
     ".test-result-card span",
+    ".test-result-card small",
     ".test-summary-grid span",
+    ".test-summary-grid small",
+    ".primary-action",
+    ".secondary-action",
+    ".danger-action",
+    ".segmented button",
+    "[data-test-mode]",
     ".calculator-result-grid span",
     ".zone-table strong",
     ".zone-table span",
@@ -901,7 +908,7 @@ async function runAutoTranslate() {
   const target = autoTranslateTargets[language];
   const runId = ++autoTranslateRun;
   const targets = collectAutoTranslateTargets();
-  if (!target || language === "pt-BR") {
+  if (!target) {
     targets.forEach(({ node, source, attribute }) => {
       if (attribute === "placeholder") node.setAttribute("placeholder", source);
       else node.textContent = source;
@@ -954,6 +961,7 @@ function applyI18n() {
       .join("");
   });
   applyStaticTranslations();
+  applyTestsI18n();
   applyTheme();
   scheduleAutoTranslate();
 }
@@ -1266,14 +1274,62 @@ const projectionDistances = [
 ];
 
 const zoneDefinitions = [
-  { label: "Regenerativo", range: [0.6, 0.7], note: "recuperação, circulação e baixo estresse" },
-  { label: "Leve / base", range: [0.7, 0.78], note: "construção aeróbia sustentável" },
-  { label: "Longo controlado", range: [0.76, 0.84], note: "resistência específica e economia" },
-  { label: "Ritmo / tempo", range: [0.84, 0.9], note: "controle aeróbio forte" },
-  { label: "Limiar", range: [0.88, 0.94], note: "blocos progressivos e sustentados" },
-  { label: "VO2 / intervalado", range: [0.95, 1.02], note: "séries curtas e médias" },
-  { label: "Repetição / velocidade", range: [1.05, 1.12], note: "técnica, potência e neuromuscular" }
+  {
+    code: "Z1",
+    label: { en: "Recovery", "pt-BR": "Regenerativo", ja: "回復", es: "Regenerativo" },
+    range: [0.6, 0.7],
+    note: { en: "recovery, circulation and low stress", "pt-BR": "recuperação, circulação e baixo estresse", ja: "回復、循環、低ストレス", es: "recuperación, circulación y bajo estrés" }
+  },
+  {
+    code: "Z2",
+    label: { en: "Easy / base", "pt-BR": "Leve / base", ja: "イージー / ベース", es: "Suave / base" },
+    range: [0.7, 0.78],
+    note: { en: "sustainable aerobic base", "pt-BR": "construção aeróbia sustentável", ja: "持続可能な有酸素ベース", es: "construcción aeróbica sostenible" }
+  },
+  {
+    code: "Z3",
+    label: { en: "Steady long", "pt-BR": "Longo controlado", ja: "安定ロング", es: "Largo controlado" },
+    range: [0.76, 0.84],
+    note: { en: "specific endurance and economy", "pt-BR": "resistência específica e economia", ja: "専門的持久力と効率", es: "resistencia específica y economía" }
+  },
+  {
+    code: "Z4",
+    label: { en: "Tempo", "pt-BR": "Ritmo / tempo", ja: "テンポ", es: "Ritmo / tempo" },
+    range: [0.84, 0.9],
+    note: { en: "strong aerobic control", "pt-BR": "controle aeróbio forte", ja: "強い有酸素コントロール", es: "control aeróbico fuerte" }
+  },
+  {
+    code: "Z5",
+    label: { en: "Threshold", "pt-BR": "Limiar", ja: "閾値", es: "Umbral" },
+    range: [0.88, 0.94],
+    note: { en: "progressive and sustained blocks", "pt-BR": "blocos progressivos e sustentados", ja: "漸進的で持続的なブロック", es: "bloques progresivos y sostenidos" }
+  },
+  {
+    code: "Z6",
+    label: { en: "VO2 / intervals", "pt-BR": "VO2 / intervalado", ja: "VO2 / インターバル", es: "VO2 / intervalado" },
+    range: [0.95, 1.02],
+    note: { en: "short and medium repetitions", "pt-BR": "séries curtas e médias", ja: "短中距離の反復", es: "series cortas y medias" }
+  },
+  {
+    code: "Z7",
+    label: { en: "Speed / repetition", "pt-BR": "Repetição / velocidade", ja: "スピード / 反復", es: "Repetición / velocidad" },
+    range: [1.05, 1.12],
+    note: { en: "technique, power and neuromuscular work", "pt-BR": "técnica, potência e neuromuscular", ja: "技術、パワー、神経筋刺激", es: "técnica, potencia y trabajo neuromuscular" }
+  }
 ];
+
+function localizedValue(value) {
+  if (!value || typeof value !== "object") return String(value || "");
+  return value[state.language] || value.en || value["pt-BR"] || Object.values(value)[0] || "";
+}
+
+function localizedZone(zone) {
+  return {
+    ...zone,
+    label: `${zone.code} · ${localizedValue(zone.label)}`,
+    note: localizedValue(zone.note)
+  };
+}
 
 function parseDistanceToMeters(value) {
   const text = String(value || "").toLowerCase().replace(",", ".").trim();
@@ -1385,6 +1441,214 @@ const enduranceProfiles = {
   }
 };
 
+const enduranceProfileText = {
+  balanced: {
+    label: { en: "Balanced", "pt-BR": "Equilibrado", ja: "バランス型", es: "Equilibrado" },
+    description: {
+      en: "neutral profile between speed and endurance",
+      "pt-BR": "perfil neutro entre velocidade e resistência",
+      ja: "スピードと持久力の中間タイプ",
+      es: "perfil neutro entre velocidad y resistencia"
+    }
+  },
+  middle: {
+    label: { en: "Middle-distance", "pt-BR": "Meio fundista", ja: "中距離型", es: "Mediofondista" },
+    description: {
+      en: "more speed from 800m to 3000m, lower extrapolation to long distances",
+      "pt-BR": "mais velocidade entre 800m e 3000m, menor extrapolação para longas",
+      ja: "800mから3000mのスピードが高く、長距離への外挿は控えめ",
+      es: "más velocidad entre 800m y 3000m, menor extrapolación a distancias largas"
+    }
+  },
+  distance: {
+    label: { en: "Distance runner", "pt-BR": "Fundista", ja: "長距離型", es: "Fondista" },
+    description: {
+      en: "better endurance from 5km to 21km",
+      "pt-BR": "melhor sustentação de 5km a 21km",
+      ja: "5kmから21kmで持久力を発揮しやすい",
+      es: "mejor sostén de 5km a 21km"
+    }
+  },
+  ultra: {
+    label: { en: "Ultra-distance", "pt-BR": "Ultra fundista", ja: "ウルトラ型", es: "Ultrafondista" },
+    description: {
+      en: "greater economy at 21km and 42km, lower short-distance speed",
+      "pt-BR": "maior economia em 21km e 42km, menor velocidade curta",
+      ja: "21kmと42kmで効率が高く、短距離スピードは控えめ",
+      es: "mayor economía en 21km y 42km, menor velocidad corta"
+    }
+  }
+};
+
+const testUiText = {
+  en: {
+    test3000: "3000m test",
+    pageKicker: "Tests",
+    pageTitle: "Protocols and projections",
+    test1000: "1000m test",
+    test5000: "5000m test",
+    vo2Real: "Real VO2 test",
+    protocols: "Protocols",
+    fieldTitle: "Field tests and real VO2",
+    testDate: "Test date",
+    endTime: "End time",
+    resistanceProfile: "Resistance profile",
+    vo2Measured: "Measured VO2",
+    observations: "Observations",
+    notesPlaceholder: "Conditions, climate, terrain, sensation, HR, pain or context",
+    calculate: "Calculate",
+    saveResult: "Save result",
+    history: "History",
+    savedTests: "Saved tests",
+    realVo2: "Real VO2",
+    analysis: "Analysis",
+    highPerformance: "high performance",
+    advanced: "advanced",
+    developing: "developing",
+    directReference: "direct physiological reference",
+    enterProtocol: "Enter time and protocol to generate projections.",
+    testPace: "Test pace",
+    estimatedVo2: "Estimated VO2",
+    appliedProfile: "Applied profile",
+    approximateVdot: "VDOT / approximate ml/kg/min",
+    confidence: "confidence",
+    noSavedTests: "No saved tests yet.",
+    reference: "reference",
+    useReference: "Use this test as reference",
+    testLabel: "Test",
+    profileHelpKicker: "Resistance profiles",
+    profileHelpTitle: "Why does the same test project different results?"
+  },
+  "pt-BR": {
+    test3000: "Teste de 3000m",
+    pageKicker: "Testes",
+    pageTitle: "Protocolos e projeções",
+    test1000: "Teste de 1000m",
+    test5000: "Teste de 5000m",
+    vo2Real: "Teste de VO2 real",
+    protocols: "Protocolos",
+    fieldTitle: "Testes de campo e VO2 real",
+    testDate: "Data do teste",
+    endTime: "Tempo final",
+    resistanceProfile: "Perfil de resistência",
+    vo2Measured: "VO2 medido",
+    observations: "Observações",
+    notesPlaceholder: "Condições, clima, terreno, sensação, FC, dores ou contexto",
+    calculate: "Calcular",
+    saveResult: "Salvar resultado",
+    history: "Histórico",
+    savedTests: "Testes salvos",
+    realVo2: "VO2 real",
+    analysis: "Análise",
+    highPerformance: "alto rendimento",
+    advanced: "avançado",
+    developing: "em evolução",
+    directReference: "referência fisiológica direta",
+    enterProtocol: "Informe tempo e protocolo para gerar projeções.",
+    testPace: "Ritmo do teste",
+    estimatedVo2: "VO2 estimado",
+    appliedProfile: "Perfil aplicado",
+    approximateVdot: "VDOT / ml/kg/min aproximado",
+    confidence: "confiança",
+    noSavedTests: "Nenhum teste salvo ainda.",
+    reference: "referência",
+    useReference: "Utilizar esse teste como referência",
+    testLabel: "Teste",
+    profileHelpKicker: "Perfis de resistência",
+    profileHelpTitle: "Por que o mesmo teste projeta resultados diferentes?"
+  },
+  ja: {
+    test3000: "3000mテスト",
+    pageKicker: "テスト",
+    pageTitle: "プロトコルと予測",
+    test1000: "1000mテスト",
+    test5000: "5000mテスト",
+    vo2Real: "実測VO2テスト",
+    protocols: "プロトコル",
+    fieldTitle: "フィールドテストと実測VO2",
+    testDate: "テスト日",
+    endTime: "最終タイム",
+    resistanceProfile: "持久力プロフィール",
+    vo2Measured: "実測VO2",
+    observations: "メモ",
+    notesPlaceholder: "条件、気候、路面、感覚、心拍、痛み、文脈",
+    calculate: "計算",
+    saveResult: "結果を保存",
+    history: "履歴",
+    savedTests: "保存済みテスト",
+    realVo2: "実測VO2",
+    analysis: "分析",
+    highPerformance: "高パフォーマンス",
+    advanced: "上級",
+    developing: "成長中",
+    directReference: "直接的な生理指標",
+    enterProtocol: "タイムとプロトコルを入力して予測を生成してください。",
+    testPace: "テストペース",
+    estimatedVo2: "推定VO2",
+    appliedProfile: "適用プロフィール",
+    approximateVdot: "VDOT / 推定 ml/kg/min",
+    confidence: "信頼度",
+    noSavedTests: "保存済みテストはまだありません。",
+    reference: "基準",
+    useReference: "このテストを基準にする",
+    testLabel: "テスト",
+    profileHelpKicker: "持久力プロフィール",
+    profileHelpTitle: "同じテストで予測が変わる理由"
+  },
+  es: {
+    test3000: "Test de 3000m",
+    pageKicker: "Pruebas",
+    pageTitle: "Protocolos y proyecciones",
+    test1000: "Test de 1000m",
+    test5000: "Test de 5000m",
+    vo2Real: "Test de VO2 real",
+    protocols: "Protocolos",
+    fieldTitle: "Tests de campo y VO2 real",
+    testDate: "Fecha del test",
+    endTime: "Tiempo final",
+    resistanceProfile: "Perfil de resistencia",
+    vo2Measured: "VO2 medido",
+    observations: "Observaciones",
+    notesPlaceholder: "Condiciones, clima, terreno, sensación, FC, dolor o contexto",
+    calculate: "Calcular",
+    saveResult: "Guardar resultado",
+    history: "Historial",
+    savedTests: "Tests guardados",
+    realVo2: "VO2 real",
+    analysis: "Análisis",
+    highPerformance: "alto rendimiento",
+    advanced: "avanzado",
+    developing: "en evolución",
+    directReference: "referencia fisiológica directa",
+    enterProtocol: "Introduce tiempo y protocolo para generar proyecciones.",
+    testPace: "Ritmo del test",
+    estimatedVo2: "VO2 estimado",
+    appliedProfile: "Perfil aplicado",
+    approximateVdot: "VDOT / ml/kg/min aproximado",
+    confidence: "confianza",
+    noSavedTests: "Aún no hay tests guardados.",
+    reference: "referencia",
+    useReference: "Usar este test como referencia",
+    testLabel: "Test",
+    profileHelpKicker: "Perfiles de resistencia",
+    profileHelpTitle: "¿Por qué el mismo test proyecta resultados diferentes?"
+  }
+};
+
+function testText(key) {
+  return testUiText[state.language]?.[key] || testUiText.en[key] || key;
+}
+
+function localizedEnduranceProfile(profileKey = "balanced") {
+  const base = enduranceProfiles[profileKey] || enduranceProfiles.balanced;
+  const text = enduranceProfileText[profileKey] || enduranceProfileText.balanced;
+  return {
+    ...base,
+    label: localizedValue(text.label),
+    description: localizedValue(text.description)
+  };
+}
+
 function projectionConfidence(testMeters, targetMeters, profileKey = "balanced") {
   const ratio = Math.max(testMeters, targetMeters) / Math.max(1, Math.min(testMeters, targetMeters));
   let confidence = 96 - Math.log2(ratio) * 18;
@@ -1436,7 +1700,7 @@ function buildTestProjection(test) {
   const paceSecondsKm = testSeconds / (testMeters / 1000);
   const vdot = estimateVdot(testSeconds, testMeters);
   const profileKey = test.athleteProfile || "balanced";
-  const profile = enduranceProfiles[profileKey] || enduranceProfiles.balanced;
+  const profile = localizedEnduranceProfile(profileKey);
   const projections = projectionDistances.map((item) => ({
     ...item,
     seconds: profileAdjustedTime(testSeconds, testMeters, item.meters, profileKey),
@@ -1445,7 +1709,7 @@ function buildTestProjection(test) {
   const zones = zoneDefinitions.map((zone) => {
     const faster = paceSecondsKm / zone.range[1];
     const slower = paceSecondsKm / zone.range[0];
-    return { ...zone, pace: `${formatPace(faster)} - ${formatPace(slower)}` };
+    return { ...localizedZone(zone), pace: `${formatPace(faster)} - ${formatPace(slower)}` };
   });
   return {
     paceSecondsKm,
@@ -1463,30 +1727,31 @@ function renderTestProjection(test) {
   if (!output) return;
   const projection = test.type === "vo2" ?null : buildTestProjection(test);
   if (test.type === "vo2") {
+    const vo2Value = Number(test.vo2Value || 0);
     output.innerHTML = `
       <div class="test-summary-grid">
-        <div><span>VO2 real</span><strong>${Number(test.vo2Value || 0).toFixed(1)}</strong><small>ml/kg/min</small></div>
-        <div><span>Análise</span><strong>${Number(test.vo2Value || 0) >= 60 ?"alto rendimento" : Number(test.vo2Value || 0) >= 50 ?"avançado" : "em evolução"}</strong><small>referência fisiológica direta</small></div>
+        <div><span>${escapeHtml(testText("realVo2"))}</span><strong>${vo2Value.toFixed(1)}</strong><small>ml/kg/min</small></div>
+        <div><span>${escapeHtml(testText("analysis"))}</span><strong>${vo2Value >= 60 ?escapeHtml(testText("highPerformance")) : vo2Value >= 50 ?escapeHtml(testText("advanced")) : escapeHtml(testText("developing"))}</strong><small>${escapeHtml(testText("directReference"))}</small></div>
       </div>
     `;
     return;
   }
   if (!projection) {
-    output.innerHTML = `<p class="empty-state">Informe tempo e protocolo para gerar projeções.</p>`;
+    output.innerHTML = `<p class="empty-state">${escapeHtml(testText("enterProtocol"))}</p>`;
     return;
   }
   output.innerHTML = `
       <div class="test-summary-grid">
-        <div><span>Ritmo do teste</span><strong>${formatPace(projection.paceSecondsKm)}</strong><small>${projection.speedKmh.toFixed(1)} km/h</small></div>
-        <div><span>VO2 estimado</span><strong>${projection.vdot.toFixed(1)}</strong><small>VDOT / ml/kg/min aproximado</small></div>
-        <div><span>Perfil aplicado</span><strong>${escapeHtml(projection.profile.label)}</strong><small>${escapeHtml(projection.profile.description)}</small></div>
+        <div><span>${escapeHtml(testText("testPace"))}</span><strong>${formatPace(projection.paceSecondsKm)}</strong><small>${projection.speedKmh.toFixed(1)} km/h</small></div>
+        <div><span>${escapeHtml(testText("estimatedVo2"))}</span><strong>${projection.vdot.toFixed(1)}</strong><small>${escapeHtml(testText("approximateVdot"))}</small></div>
+        <div><span>${escapeHtml(testText("appliedProfile"))}</span><strong>${escapeHtml(projection.profile.label)}</strong><small>${escapeHtml(projection.profile.description)}</small></div>
       </div>
     <div class="test-result-grid">
       ${projection.projections.map((item) => `
         <div class="test-result-card">
           <span>${item.label}</span>
           <strong>${formatDuration(item.seconds)}</strong>
-          <small>${formatPace(item.seconds / (item.meters / 1000))} · ${item.confidence}% confiança</small>
+          <small>${formatPace(item.seconds / (item.meters / 1000))} · ${item.confidence}% ${escapeHtml(testText("confidence"))}</small>
         </div>
       `).join("")}
     </div>
@@ -1508,21 +1773,22 @@ function renderTestHistory() {
   if (!list) return;
   const tests = [...state.performanceTests].sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
   if (!tests.length) {
-    list.innerHTML = `<p class="empty-state">Nenhum teste salvo ainda.</p>`;
+    list.innerHTML = `<p class="empty-state">${escapeHtml(testText("noSavedTests"))}</p>`;
     return;
   }
   list.innerHTML = tests.map((test) => {
     const isReference = String(test.id) === String(state.referenceTestId);
-    const label = test.type === "vo2" ?"VO2 real" : `Teste de ${test.distanceMeters}m`;
+    const label = test.type === "vo2" ?testText("realVo2") : `${testText("testLabel")} ${test.distanceMeters}m`;
     const value = test.type === "vo2" ?`${Number(test.vo2Value || 0).toFixed(1)} ml/kg/min` : formatDuration(test.seconds);
+    const profileLabel = test.athleteProfile ?localizedEnduranceProfile(test.athleteProfile).label : "";
     return `
       <article class="test-history-card ${isReference ?"is-reference" : ""}" data-view-test-result="${escapeHtml(test.id)}" tabindex="0" role="button">
         <div class="test-history-main">
-          <span>${escapeHtml(label)}${isReference ?" - referência" : ""}</span>
+          <span>${escapeHtml(label)}${isReference ?` - ${escapeHtml(testText("reference"))}` : ""}</span>
           <strong>${escapeHtml(value)}</strong>
-          <p>${escapeHtml(test.date || "--")} ${test.athleteProfile ?`- ${enduranceProfiles[test.athleteProfile]?.label || "Equilibrado"}` : ""} ${test.notes ?`- ${test.notes}` : ""}</p>
+          <p>${escapeHtml(test.date || "--")} ${profileLabel ?`- ${escapeHtml(profileLabel)}` : ""} ${test.notes ?`- ${escapeHtml(test.notes)}` : ""}</p>
         </div>
-        <button class="secondary-action compact" type="button" data-use-reference-test="${escapeHtml(test.id)}">Utilizar esse teste como referência</button>
+        <button class="secondary-action compact" type="button" data-use-reference-test="${escapeHtml(test.id)}">${escapeHtml(testText("useReference"))}</button>
       </article>
     `;
   }).join("");
@@ -1530,10 +1796,88 @@ function renderTestHistory() {
   scheduleAutoTranslate();
 }
 
+function applyTestsI18n() {
+  const root = document.querySelector("[data-view='tests']");
+  if (!root) return;
+  const pageKicker = root.querySelector(".page-header .kicker");
+  const pageTitle = root.querySelector(".page-header h2");
+  if (pageKicker) pageKicker.textContent = testText("pageKicker");
+  if (pageTitle) pageTitle.textContent = testText("pageTitle");
+  const modeLabels = {
+    3000: "test3000",
+    1000: "test1000",
+    5000: "test5000",
+    vo2: "vo2Real"
+  };
+  root.querySelectorAll("[data-test-mode]").forEach((button) => {
+    button.textContent = testText(modeLabels[button.dataset.testMode] || "testLabel");
+    button.dataset.noAutoTranslate = "1";
+  });
+  const title = root.querySelector(".tests-lab-panel .section-title h3");
+  const kicker = root.querySelector(".tests-lab-panel .section-title > span");
+  if (title) title.textContent = testText("fieldTitle");
+  if (kicker) kicker.textContent = testText("protocols");
+  [pageKicker, pageTitle, title, kicker].forEach((node) => {
+    if (node) node.dataset.noAutoTranslate = "1";
+  });
+  const historyTitle = root.querySelector("#testHistoryList")?.closest(".panel")?.querySelector(".section-title h3");
+  const historyKicker = root.querySelector("#testHistoryList")?.closest(".panel")?.querySelector(".section-title > span");
+  if (historyTitle) historyTitle.textContent = testText("savedTests");
+  if (historyKicker) historyKicker.textContent = testText("history");
+  [historyTitle, historyKicker].forEach((node) => {
+    if (node) node.dataset.noAutoTranslate = "1";
+  });
+  const form = root.querySelector("#performanceTestForm");
+  if (!form) return;
+  const labelMap = {
+    testDate: "testDate",
+    testTime: "endTime",
+    athleteProfile: "resistanceProfile",
+    vo2Value: "vo2Measured",
+    notes: "observations"
+  };
+  Object.entries(labelMap).forEach(([name, key]) => {
+    const field = form.elements[name]?.closest(".credential-field");
+    const label = field?.querySelector(":scope > span");
+    if (label) {
+      label.textContent = testText(key);
+      label.dataset.noAutoTranslate = "1";
+    }
+  });
+  if (form.elements.notes) {
+    form.elements.notes.placeholder = testText("notesPlaceholder");
+    form.elements.notes.dataset.noAutoTranslate = "1";
+  }
+  if (form.elements.athleteProfile) {
+    Array.from(form.elements.athleteProfile.options).forEach((option) => {
+      option.textContent = localizedEnduranceProfile(option.value).label;
+      option.dataset.noAutoTranslate = "1";
+    });
+  }
+  const calculateButton = form.querySelector(".test-action-row .primary-action");
+  if (calculateButton) {
+    calculateButton.textContent = testText("calculate");
+    calculateButton.dataset.noAutoTranslate = "1";
+  }
+  const saveButton = form.querySelector("[data-save-calculated-test]");
+  if (saveButton) {
+    saveButton.textContent = testText("saveResult");
+    saveButton.dataset.noAutoTranslate = "1";
+  }
+  const helpDialog = document.querySelector("#testProfileHelpDialog");
+  if (helpDialog) {
+    const helpKicker = helpDialog.querySelector(".kicker");
+    const helpTitle = helpDialog.querySelector("h2");
+    if (helpKicker) helpKicker.textContent = testText("profileHelpKicker");
+    if (helpTitle) helpTitle.textContent = testText("profileHelpTitle");
+  }
+}
+
 function renderTestsView() {
   document.querySelectorAll("[data-test-mode]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.testMode === state.testMode);
   });
+  applyTestsI18n();
   const form = document.querySelector("#performanceTestForm");
   if (form) {
     form.querySelectorAll(".field-race-time").forEach((field) => {
@@ -6274,6 +6618,21 @@ document.addEventListener("change", (event) => {
   if (event.target?.matches("[data-language-select], #languageSelect")) {
     state.language = supportedLanguageOptions[event.target.value] ?event.target.value : "en";
     localStorage.setItem("appLanguage", state.language);
+    applyI18n();
+    if (state.view === "home") renderHomeMotivation();
+    if (state.view === "dashboard") renderDashboard();
+    if (state.view === "training") {
+      renderPerformanceChart();
+      renderCalendar();
+      renderTrainingInsights();
+    }
+    if (state.view === "tests") renderTestsView();
+    if (state.view === "goals") renderGoals();
+    if (state.view === "athlete") editCurrentUserProfile();
+    if (state.view === "settings") {
+      renderAdminMode();
+      renderAthletes();
+    }
     applyI18n();
     const expandButton = document.querySelector("[data-expand-profile]");
     const expanded = document.querySelector("#profileModalPanel")?.classList.contains("is-expanded");
