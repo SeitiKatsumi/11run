@@ -1,4 +1,4 @@
-﻿const state = {
+const state = {
   view: "home",
   calendarView: "month",
   cursor: new Date(),
@@ -57,14 +57,14 @@
 const APP_VERSION_FALLBACK = "local-ui";
 const SECRET_MASK = "********";
 const languageOptions = {
-  "pt-BR": "PortuguÃªs do Brasil",
-  "pt-PT": "PortuguÃªs de Portugal",
+  "pt-BR": "Português do Brasil",
+  "pt-PT": "Português de Portugal",
   en: "English",
-  es: "EspaÃ±ol",
-  fr: "FranÃ§ais",
+  es: "Español",
+  fr: "Français",
   de: "Deutsch",
-  ja: "æ—¥æœ¬èªž",
-  zh: "ä¸­æ–‡",
+  ja: "日本語",
+  zh: "中文",
   sw: "Kiswahili"
 };
 const translations = {
@@ -73,28 +73,28 @@ const translations = {
     "nav.dashboard": "MEU DASHBOARD",
     "nav.training": "TREINAMENTOS",
     "nav.goals": "OBJETIVOS",
-    "nav.preferences": "PREFERÃŠNCIAS",
-    "nav.settings": "CONFIGURAÃ‡Ã•ES",
+    "nav.preferences": "PREFERÊNCIAS",
+    "nav.settings": "CONFIGURAÇÕES",
     "profile.language": "Idioma",
     "profile.expand": "Expandir painel",
     "profile.collapse": "Fechar painel",
     "profile.close": "Fechar",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "LanÃ§amento oficial no dia 01/07/2026"
+    "login.launch": "Lançamento oficial no dia 01/07/2026"
   },
   "pt-PT": {
-    "nav.home": "INÃCIO",
+    "nav.home": "INÍCIO",
     "nav.dashboard": "O MEU DASHBOARD",
     "nav.training": "TREINOS",
     "nav.goals": "OBJETIVOS",
-    "nav.preferences": "PREFERÃŠNCIAS",
-    "nav.settings": "CONFIGURAÃ‡Ã•ES",
+    "nav.preferences": "PREFERÊNCIAS",
+    "nav.settings": "CONFIGURAÇÕES",
     "profile.language": "Idioma",
     "profile.expand": "Expandir painel",
     "profile.collapse": "Fechar painel",
     "profile.close": "Fechar",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "LanÃ§amento oficial no dia 01/07/2026"
+    "login.launch": "Lançamento oficial no dia 01/07/2026"
   },
   en: {
     "nav.home": "HOME",
@@ -116,7 +116,7 @@ const translations = {
     "nav.training": "ENTRENAMIENTOS",
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERENCIAS",
-    "nav.settings": "CONFIGURACIÃ“N",
+    "nav.settings": "CONFIGURACIÓN",
     "profile.language": "Idioma",
     "profile.expand": "Expandir panel",
     "profile.collapse": "Cerrar panel",
@@ -127,12 +127,12 @@ const translations = {
   fr: {
     "nav.home": "ACCUEIL",
     "nav.dashboard": "MON DASHBOARD",
-    "nav.training": "ENTRAÃŽNEMENTS",
+    "nav.training": "ENTRAÎNEMENTS",
     "nav.goals": "OBJECTIFS",
-    "nav.preferences": "PRÃ‰FÃ‰RENCES",
-    "nav.settings": "PARAMÃˆTRES",
+    "nav.preferences": "PRÉFÉRENCES",
+    "nav.settings": "PARAMÈTRES",
     "profile.language": "Langue",
-    "profile.expand": "DÃ©velopper le panneau",
+    "profile.expand": "Développer le panneau",
     "profile.collapse": "Fermer le panneau",
     "profile.close": "Fermer",
     "login.slogan": "The world's smartest AI-powered training manager.",
@@ -147,38 +147,38 @@ const translations = {
     "nav.settings": "VERWALTUNG",
     "profile.language": "Sprache",
     "profile.expand": "Panel erweitern",
-    "profile.collapse": "Panel schlieÃŸen",
-    "profile.close": "SchlieÃŸen",
+    "profile.collapse": "Panel schließen",
+    "profile.close": "Schließen",
     "login.slogan": "The world's smartest AI-powered training manager.",
     "login.launch": "Offizieller Start am 01.07.2026"
   },
   ja: {
-    "nav.home": "ãƒ›ãƒ¼ãƒ ",
-    "nav.dashboard": "ãƒžã‚¤ãƒ€ãƒƒã‚·ãƒ¥ãƒœãƒ¼ãƒ‰",
-    "nav.training": "ãƒˆãƒ¬ãƒ¼ãƒ‹ãƒ³ã‚°",
-    "nav.goals": "ç›®æ¨™",
-    "nav.preferences": "è¨­å®š",
-    "nav.settings": "ç®¡ç†è¨­å®š",
-    "profile.language": "è¨€èªž",
-    "profile.expand": "ãƒ‘ãƒãƒ«ã‚’å±•é–‹",
-    "profile.collapse": "ãƒ‘ãƒãƒ«ã‚’é–‰ã˜ã‚‹",
-    "profile.close": "é–‰ã˜ã‚‹",
+    "nav.home": "ホーム",
+    "nav.dashboard": "マイダッシュボード",
+    "nav.training": "トレーニング",
+    "nav.goals": "目標",
+    "nav.preferences": "設定",
+    "nav.settings": "管理設定",
+    "profile.language": "言語",
+    "profile.expand": "パネルを展開",
+    "profile.collapse": "パネルを閉じる",
+    "profile.close": "閉じる",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "æ­£å¼ãƒªãƒªãƒ¼ã‚¹: 2026å¹´7æœˆ1æ—¥"
+    "login.launch": "正式リリース: 2026年7月1日"
   },
   zh: {
-    "nav.home": "é¦–é¡µ",
-    "nav.dashboard": "æˆ‘çš„ä»ªè¡¨ç›˜",
-    "nav.training": "è®­ç»ƒ",
-    "nav.goals": "ç›®æ ‡",
-    "nav.preferences": "åå¥½è®¾ç½®",
-    "nav.settings": "è®¾ç½®",
-    "profile.language": "è¯­è¨€",
-    "profile.expand": "å±•å¼€é¢æ¿",
-    "profile.collapse": "å…³é—­é¢æ¿",
-    "profile.close": "å…³é—­",
+    "nav.home": "首页",
+    "nav.dashboard": "我的仪表盘",
+    "nav.training": "训练",
+    "nav.goals": "目标",
+    "nav.preferences": "偏好设置",
+    "nav.settings": "设置",
+    "profile.language": "语言",
+    "profile.expand": "展开面板",
+    "profile.collapse": "关闭面板",
+    "profile.close": "关闭",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "æ­£å¼å‘å¸ƒï¼š2026å¹´7æœˆ1æ—¥"
+    "login.launch": "正式发布:2026年7月1日"
   },
   sw: {
     "nav.home": "NYUMBANI",
@@ -256,11 +256,11 @@ const officialTranslations = {
     "common.all": "All"
   },
   "pt-BR": {
-    "app.title": "11RUN | Treinamento atlÃ©tico com IA",
+    "app.title": "11RUN | Treinamento atlético com IA",
     "login.kicker": "Acesso",
     "login.title": "Entrar no painel",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "LanÃ§amento oficial no dia 01/07/2026",
+    "login.launch": "Lançamento oficial no dia 01/07/2026",
     "login.password": "Senha",
     "login.submit": "Entrar",
     "nav.home": "HOME",
@@ -269,8 +269,8 @@ const officialTranslations = {
     "nav.tests": "TESTES",
     "nav.calculators": "CALCULADORAS",
     "nav.goals": "OBJETIVOS",
-    "nav.preferences": "PREFERÃŠNCIAS",
-    "nav.settings": "CONFIGURAÃ‡Ã•ES",
+    "nav.preferences": "PREFERÊNCIAS",
+    "nav.settings": "CONFIGURAÇÕES",
     "nav.logout": "SAIR",
     "profile.language": "Idioma",
     "profile.expand": "Expandir painel",
@@ -283,7 +283,7 @@ const officialTranslations = {
     "home.loading": "Carregando leitura do ciclo atual.",
     "home.ai.kicker": "IA 11RUN",
     "home.ai.title": "Buscar no sistema",
-    "home.ai.placeholder": "Pergunte sobre atleta, treino, equipe, prova ou histÃ³rico",
+    "home.ai.placeholder": "Pergunte sobre atleta, treino, equipe, prova ou histórico",
     "home.ai.submit": "Enviar",
     "dashboard.kicker": "Meu dashboard",
     "dashboard.title": "Performance",
@@ -291,10 +291,10 @@ const officialTranslations = {
     "training.title": "Atividades",
     "goals.kicker": "Objetivos",
     "goals.title": "Provas e rotas preditivas",
-    "settings.kicker": "ConfiguraÃ§Ãµes",
-    "settings.title": "GestÃ£o administrativa",
-    "preferences.kicker": "PreferÃªncias",
-    "preferences.title": "PreferÃªncias",
+    "settings.kicker": "Configurações",
+    "settings.title": "Gestão administrativa",
+    "preferences.kicker": "Preferências",
+    "preferences.title": "Preferências",
     "common.recalculate": "Recalcular",
     "common.save": "Salvar",
     "common.edit": "Editar",
@@ -307,63 +307,63 @@ const officialTranslations = {
     "common.all": "Todos"
   },
   ja: {
-    "app.title": "11RUN | AIæ­è¼‰ã‚¢ã‚¹ãƒ¬ãƒãƒƒã‚¯ãƒˆãƒ¬ãƒ¼ãƒ‹ãƒ³ã‚°",
-    "login.kicker": "ã‚¢ã‚¯ã‚»ã‚¹",
-    "login.title": "ãƒ€ãƒƒã‚·ãƒ¥ãƒœãƒ¼ãƒ‰ã«ã‚µã‚¤ãƒ³ã‚¤ãƒ³",
+    "app.title": "11RUN | AI搭載アスレチックトレーニング",
+    "login.kicker": "アクセス",
+    "login.title": "ダッシュボードにサインイン",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "æ­£å¼ãƒªãƒªãƒ¼ã‚¹: 2026å¹´7æœˆ1æ—¥",
-    "login.password": "ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰",
-    "login.submit": "ã‚µã‚¤ãƒ³ã‚¤ãƒ³",
-    "nav.home": "ãƒ›ãƒ¼ãƒ ",
-    "nav.dashboard": "ãƒžã‚¤ãƒ€ãƒƒã‚·ãƒ¥ãƒœãƒ¼ãƒ‰",
-    "nav.training": "ãƒˆãƒ¬ãƒ¼ãƒ‹ãƒ³ã‚°",
+    "login.launch": "正式リリース: 2026年7月1日",
+    "login.password": "パスワード",
+    "login.submit": "サインイン",
+    "nav.home": "ホーム",
+    "nav.dashboard": "マイダッシュボード",
+    "nav.training": "トレーニング",
     "nav.tests": "\u30c6\u30b9\u30c8",
     "nav.calculators": "\u8a08\u7b97\u6a5f",
-    "nav.goals": "ç›®æ¨™",
-    "nav.preferences": "ãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«",
-    "nav.settings": "è¨­å®š",
-    "nav.logout": "ãƒ­ã‚°ã‚¢ã‚¦ãƒˆ",
-    "profile.language": "è¨€èªž",
-    "profile.expand": "ãƒ‘ãƒãƒ«ã‚’å±•é–‹",
-    "profile.collapse": "ãƒ‘ãƒãƒ«ã‚’é–‰ã˜ã‚‹",
-    "profile.close": "é–‰ã˜ã‚‹",
-    "theme.light": "ãƒ©ã‚¤ãƒˆãƒ¢ãƒ¼ãƒ‰",
-    "theme.dark": "ãƒ€ãƒ¼ã‚¯ãƒ¢ãƒ¼ãƒ‰",
-    "home.kicker": "ã‚¢ã‚¹ãƒªãƒ¼ãƒˆãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«",
-    "home.title": "ä¸–ç•Œã§æœ€ã‚‚ã‚¹ãƒžãƒ¼ãƒˆãªAIæ­è¼‰ãƒˆãƒ¬ãƒ¼ãƒ‹ãƒ³ã‚°ãƒžãƒãƒ¼ã‚¸ãƒ£ãƒ¼ã€‚",
-    "home.loading": "ç¾åœ¨ã®ã‚µã‚¤ã‚¯ãƒ«ã‚’èª­ã¿è¾¼ã‚“ã§ã„ã¾ã™ã€‚",
+    "nav.goals": "目標",
+    "nav.preferences": "プロフィール",
+    "nav.settings": "設定",
+    "nav.logout": "ログアウト",
+    "profile.language": "言語",
+    "profile.expand": "パネルを展開",
+    "profile.collapse": "パネルを閉じる",
+    "profile.close": "閉じる",
+    "theme.light": "ライトモード",
+    "theme.dark": "ダークモード",
+    "home.kicker": "アスリートプロフィール",
+    "home.title": "世界で最もスマートなAI搭載トレーニングマネージャー。",
+    "home.loading": "現在のサイクルを読み込んでいます。",
     "home.ai.kicker": "11RUN AI",
-    "home.ai.title": "ã‚·ã‚¹ãƒ†ãƒ ã‚’æ¤œç´¢",
-    "home.ai.placeholder": "ã‚¢ã‚¹ãƒªãƒ¼ãƒˆã€ç·´ç¿’ã€ãƒãƒ¼ãƒ ã€å¤§ä¼šã€å±¥æ­´ã«ã¤ã„ã¦è³ªå•",
-    "home.ai.submit": "é€ä¿¡",
-    "dashboard.kicker": "ãƒžã‚¤ãƒ€ãƒƒã‚·ãƒ¥ãƒœãƒ¼ãƒ‰",
-    "dashboard.title": "ãƒ‘ãƒ•ã‚©ãƒ¼ãƒžãƒ³ã‚¹",
-    "training.kicker": "ãƒˆãƒ¬ãƒ¼ãƒ‹ãƒ³ã‚°",
-    "training.title": "ã‚¢ã‚¯ãƒ†ã‚£ãƒ“ãƒ†ã‚£",
-    "goals.kicker": "ç›®æ¨™",
-    "goals.title": "ãƒ¬ãƒ¼ã‚¹ã¨äºˆæ¸¬ãƒ«ãƒ¼ãƒˆ",
-    "settings.kicker": "è¨­å®š",
-    "settings.title": "ç®¡ç†",
-    "preferences.kicker": "ãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«",
-    "preferences.title": "ãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«",
-    "common.recalculate": "å†è¨ˆç®—",
-    "common.save": "ä¿å­˜",
-    "common.edit": "ç·¨é›†",
-    "common.delete": "å‰Šé™¤",
-    "common.addWorkout": "ãƒ¯ãƒ¼ã‚¯ã‚¢ã‚¦ãƒˆè¿½åŠ ",
+    "home.ai.title": "システムを検索",
+    "home.ai.placeholder": "アスリート、練習、チーム、大会、履歴について質問",
+    "home.ai.submit": "送信",
+    "dashboard.kicker": "マイダッシュボード",
+    "dashboard.title": "パフォーマンス",
+    "training.kicker": "トレーニング",
+    "training.title": "アクティビティ",
+    "goals.kicker": "目標",
+    "goals.title": "レースと予測ルート",
+    "settings.kicker": "設定",
+    "settings.title": "管理",
+    "preferences.kicker": "プロフィール",
+    "preferences.title": "プロフィール",
+    "common.recalculate": "再計算",
+    "common.save": "保存",
+    "common.edit": "編集",
+    "common.delete": "削除",
+    "common.addWorkout": "ワークアウト追加",
     "common.updateActivities": "æ›´æ–°",
-    "common.closePanel": "ãƒ‘ãƒãƒ«ã‚’é–‰ã˜ã‚‹",
-    "common.expandPanel": "ãƒ‘ãƒãƒ«ã‚’å±•é–‹",
-    "common.search": "æ¤œç´¢",
-    "common.all": "ã™ã¹ã¦"
+    "common.closePanel": "パネルを閉じる",
+    "common.expandPanel": "パネルを展開",
+    "common.search": "検索",
+    "common.all": "すべて"
   },
   es: {
-    "app.title": "11RUN | Entrenamiento atlÃ©tico con IA",
+    "app.title": "11RUN | Entrenamiento atlético con IA",
     "login.kicker": "Acceso",
     "login.title": "Entrar al panel",
     "login.slogan": "The world's smartest AI-powered training manager.",
     "login.launch": "Lanzamiento oficial el 01/07/2026",
-    "login.password": "ContraseÃ±a",
+    "login.password": "Contraseña",
     "login.submit": "Entrar",
     "nav.home": "INICIO",
     "nav.dashboard": "MI DASHBOARD",
@@ -372,7 +372,7 @@ const officialTranslations = {
     "nav.calculators": "CALCULADORAS",
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERENCIAS",
-    "nav.settings": "CONFIGURACIÃ“N",
+    "nav.settings": "CONFIGURACIÓN",
     "nav.logout": "SALIR",
     "profile.language": "Idioma",
     "profile.expand": "Expandir panel",
@@ -381,7 +381,7 @@ const officialTranslations = {
     "theme.light": "Modo claro",
     "theme.dark": "Modo oscuro",
     "home.kicker": "Perfil del atleta",
-    "home.title": "El gestor de entrenamiento con IA mÃ¡s inteligente del mundo.",
+    "home.title": "El gestor de entrenamiento con IA más inteligente del mundo.",
     "home.loading": "Cargando lectura del ciclo actual.",
     "home.ai.kicker": "IA 11RUN",
     "home.ai.title": "Buscar en el sistema",
@@ -393,15 +393,15 @@ const officialTranslations = {
     "training.title": "Actividades",
     "goals.kicker": "Objetivos",
     "goals.title": "Pruebas y rutas predictivas",
-    "settings.kicker": "ConfiguraciÃ³n",
-    "settings.title": "GestiÃ³n administrativa",
+    "settings.kicker": "Configuración",
+    "settings.title": "Gestión administrativa",
     "preferences.kicker": "Preferencias",
     "preferences.title": "Preferencias",
     "common.recalculate": "Recalcular",
     "common.save": "Guardar",
     "common.edit": "Editar",
     "common.delete": "Eliminar",
-    "common.addWorkout": "AÃ±adir entrenamiento",
+    "common.addWorkout": "Añadir entrenamiento",
     "common.updateActivities": "Actualizar actividades",
     "common.closePanel": "Cerrar panel",
     "common.expandPanel": "Expandir panel",
@@ -411,47 +411,47 @@ const officialTranslations = {
 };
 
 const staticTextI18n = {
-  "Perfil ativo": { en: "Active profile", "pt-BR": "Perfil ativo", ja: "æœ‰åŠ¹ãªãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«", es: "Perfil activo" },
-  "Atleta nÃ£o cadastrado": { en: "Athlete not registered", "pt-BR": "Atleta nÃ£o cadastrado", ja: "æœªç™»éŒ²ã®ã‚¢ã‚¹ãƒªãƒ¼ãƒˆ", es: "Atleta no registrado" },
-  "Perfil do atleta": { en: "Athlete profile", "pt-BR": "Perfil do atleta", ja: "ã‚¢ã‚¹ãƒªãƒ¼ãƒˆãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«", es: "Perfil del atleta" },
-  "The world's smartest AI-powered training manager.": { en: "The world's smartest AI-powered training manager.", "pt-BR": "The world's smartest AI-powered training manager.", ja: "ä¸–ç•Œã§æœ€ã‚‚ã‚¹ãƒžãƒ¼ãƒˆãªAIæ­è¼‰ãƒˆãƒ¬ãƒ¼ãƒ‹ãƒ³ã‚°ãƒžãƒãƒ¼ã‚¸ãƒ£ãƒ¼ã€‚", es: "El gestor de entrenamiento con IA mÃ¡s inteligente del mundo." },
-  "Carregando leitura do ciclo atual.": { en: "Loading current cycle reading.", "pt-BR": "Carregando leitura do ciclo atual.", ja: "ç¾åœ¨ã®ã‚µã‚¤ã‚¯ãƒ«ã‚’èª­ã¿è¾¼ã‚“ã§ã„ã¾ã™ã€‚", es: "Cargando lectura del ciclo actual." },
-  "Buscar no sistema": { en: "Search the system", "pt-BR": "Buscar no sistema", ja: "ã‚·ã‚¹ãƒ†ãƒ ã‚’æ¤œç´¢", es: "Buscar en el sistema" },
-  "Meu dashboard": { en: "My dashboard", "pt-BR": "Meu dashboard", ja: "ãƒžã‚¤ãƒ€ãƒƒã‚·ãƒ¥ãƒœãƒ¼ãƒ‰", es: "Mi dashboard" },
-  "Performance": { en: "Performance", "pt-BR": "Performance", ja: "ãƒ‘ãƒ•ã‚©ãƒ¼ãƒžãƒ³ã‚¹", es: "Performance" },
-  "Resumo": { en: "Summary", "pt-BR": "Resumo", ja: "æ¦‚è¦", es: "Resumen" },
-  "Centro de performance": { en: "Performance center", "pt-BR": "Centro de performance", ja: "ãƒ‘ãƒ•ã‚©ãƒ¼ãƒžãƒ³ã‚¹ã‚»ãƒ³ã‚¿ãƒ¼", es: "Centro de performance" },
-  "Testes": { en: "Tests", "pt-BR": "Testes", ja: "ãƒ†ã‚¹ãƒˆ", es: "Pruebas" },
-  "Teste de 3000m e parÃ¢metros": { en: "3000m test and parameters", "pt-BR": "Teste de 3000m e parÃ¢metros", ja: "3000mãƒ†ã‚¹ãƒˆã¨æŒ‡æ¨™", es: "Test de 3000m y parÃ¡metros" },
-  "Treinos": { en: "Training", "pt-BR": "Treinos", ja: "ãƒˆãƒ¬ãƒ¼ãƒ‹ãƒ³ã‚°", es: "Entrenamientos" },
-  "DistribuiÃ§Ã£o por tipo": { en: "Distribution by type", "pt-BR": "DistribuiÃ§Ã£o por tipo", ja: "ã‚¿ã‚¤ãƒ—åˆ¥åˆ†å¸ƒ", es: "DistribuciÃ³n por tipo" },
-  "Objetivos": { en: "Goals", "pt-BR": "Objetivos", ja: "ç›®æ¨™", es: "Objetivos" },
-  "Probabilidade de resultado": { en: "Result probability", "pt-BR": "Probabilidade de resultado", ja: "é”æˆç¢ºçŽ‡", es: "Probabilidad de resultado" },
-  "Estimativa fisiolÃ³gica": { en: "Physiological estimate", "pt-BR": "Estimativa fisiolÃ³gica", ja: "ç”Ÿç†å­¦çš„æŽ¨å®š", es: "EstimaciÃ³n fisiolÃ³gica" },
-  "Treinamentos": { en: "Training", "pt-BR": "Treinamentos", ja: "ãƒˆãƒ¬ãƒ¼ãƒ‹ãƒ³ã‚°", es: "Entrenamientos" },
-  "Atividades": { en: "Activities", "pt-BR": "Atividades", ja: "ã‚¢ã‚¯ãƒ†ã‚£ãƒ“ãƒ†ã‚£", es: "Actividades" },
-  "Volume e carga ao longo do tempo": { en: "Volume and load over time", "pt-BR": "Volume e carga ao longo do tempo", ja: "æ™‚é–“çµŒéŽã«ã‚ˆã‚‹é‡ã¨è² è·", es: "Volumen y carga a lo largo del tiempo" },
-  "Bloco de performance": { en: "Performance block", "pt-BR": "Bloco de performance", ja: "ãƒ‘ãƒ•ã‚©ãƒ¼ãƒžãƒ³ã‚¹ãƒ–ãƒ­ãƒƒã‚¯", es: "Bloque de performance" },
-  "Provas e rotas preditivas": { en: "Races and predictive routes", "pt-BR": "Provas e rotas preditivas", ja: "ãƒ¬ãƒ¼ã‚¹ã¨äºˆæ¸¬ãƒ«ãƒ¼ãƒˆ", es: "Pruebas y rutas predictivas" },
-  "GestÃ£o administrativa": { en: "Administrative management", "pt-BR": "GestÃ£o administrativa", ja: "ç®¡ç†", es: "GestiÃ³n administrativa" },
-  "Cadastros": { en: "Registrations", "pt-BR": "Cadastros", ja: "ç™»éŒ²", es: "Registros" },
-  "Adicionar treino": { en: "Add workout", "pt-BR": "Adicionar treino", ja: "ãƒ¯ãƒ¼ã‚¯ã‚¢ã‚¦ãƒˆè¿½åŠ ", es: "AÃ±adir entrenamiento" },
-  "Atualizar atividades": { en: "Update activities", "pt-BR": "Atualizar atividades", ja: "ã‚¢ã‚¯ãƒ†ã‚£ãƒ“ãƒ†ã‚£æ›´æ–°", es: "Actualizar actividades" },
-  "Recalcular": { en: "Recalculate", "pt-BR": "Recalcular", ja: "å†è¨ˆç®—", es: "Recalcular" },
-  "Salvar cadastro": { en: "Save registration", "pt-BR": "Salvar cadastro", ja: "ç™»éŒ²ã‚’ä¿å­˜", es: "Guardar registro" },
-  "Salvar equipe": { en: "Save team", "pt-BR": "Salvar equipe", ja: "ãƒãƒ¼ãƒ ã‚’ä¿å­˜", es: "Guardar equipo" },
-  "Salvar meu perfil": { en: "Save my profile", "pt-BR": "Salvar meu perfil", ja: "ãƒ—ãƒ­ãƒ•ã‚£ãƒ¼ãƒ«ã‚’ä¿å­˜", es: "Guardar mi perfil" },
-  "Editar": { en: "Edit", "pt-BR": "Editar", ja: "ç·¨é›†", es: "Editar" },
-  "Excluir": { en: "Delete", "pt-BR": "Excluir", ja: "å‰Šé™¤", es: "Eliminar" },
-  "Remover": { en: "Remove", "pt-BR": "Remover", ja: "å‰Šé™¤", es: "Eliminar" },
-  "Todos": { en: "All", "pt-BR": "Todos", ja: "ã™ã¹ã¦", es: "Todos" }
+  "Perfil ativo": { en: "Active profile", "pt-BR": "Perfil ativo", ja: "有効なプロフィール", es: "Perfil activo" },
+  "Atleta não cadastrado": { en: "Athlete not registered", "pt-BR": "Atleta não cadastrado", ja: "未登録のアスリート", es: "Atleta no registrado" },
+  "Perfil do atleta": { en: "Athlete profile", "pt-BR": "Perfil do atleta", ja: "アスリートプロフィール", es: "Perfil del atleta" },
+  "The world's smartest AI-powered training manager.": { en: "The world's smartest AI-powered training manager.", "pt-BR": "The world's smartest AI-powered training manager.", ja: "世界で最もスマートなAI搭載トレーニングマネージャー。", es: "El gestor de entrenamiento con IA más inteligente del mundo." },
+  "Carregando leitura do ciclo atual.": { en: "Loading current cycle reading.", "pt-BR": "Carregando leitura do ciclo atual.", ja: "現在のサイクルを読み込んでいます。", es: "Cargando lectura del ciclo actual." },
+  "Buscar no sistema": { en: "Search the system", "pt-BR": "Buscar no sistema", ja: "システムを検索", es: "Buscar en el sistema" },
+  "Meu dashboard": { en: "My dashboard", "pt-BR": "Meu dashboard", ja: "マイダッシュボード", es: "Mi dashboard" },
+  "Performance": { en: "Performance", "pt-BR": "Performance", ja: "パフォーマンス", es: "Performance" },
+  "Resumo": { en: "Summary", "pt-BR": "Resumo", ja: "概要", es: "Resumen" },
+  "Centro de performance": { en: "Performance center", "pt-BR": "Centro de performance", ja: "パフォーマンスセンター", es: "Centro de performance" },
+  "Testes": { en: "Tests", "pt-BR": "Testes", ja: "テスト", es: "Pruebas" },
+  "Teste de 3000m e parâmetros": { en: "3000m test and parameters", "pt-BR": "Teste de 3000m e parâmetros", ja: "3000mテストと指標", es: "Test de 3000m y parámetros" },
+  "Treinos": { en: "Training", "pt-BR": "Treinos", ja: "トレーニング", es: "Entrenamientos" },
+  "Distribuição por tipo": { en: "Distribution by type", "pt-BR": "Distribuição por tipo", ja: "タイプ別分布", es: "Distribución por tipo" },
+  "Objetivos": { en: "Goals", "pt-BR": "Objetivos", ja: "目標", es: "Objetivos" },
+  "Probabilidade de resultado": { en: "Result probability", "pt-BR": "Probabilidade de resultado", ja: "達成確率", es: "Probabilidad de resultado" },
+  "Estimativa fisiológica": { en: "Physiological estimate", "pt-BR": "Estimativa fisiológica", ja: "生理学的推定", es: "Estimación fisiológica" },
+  "Treinamentos": { en: "Training", "pt-BR": "Treinamentos", ja: "トレーニング", es: "Entrenamientos" },
+  "Atividades": { en: "Activities", "pt-BR": "Atividades", ja: "アクティビティ", es: "Actividades" },
+  "Volume e carga ao longo do tempo": { en: "Volume and load over time", "pt-BR": "Volume e carga ao longo do tempo", ja: "時間経過による量と負荷", es: "Volumen y carga a lo largo del tiempo" },
+  "Bloco de performance": { en: "Performance block", "pt-BR": "Bloco de performance", ja: "パフォーマンスブロック", es: "Bloque de performance" },
+  "Provas e rotas preditivas": { en: "Races and predictive routes", "pt-BR": "Provas e rotas preditivas", ja: "レースと予測ルート", es: "Pruebas y rutas predictivas" },
+  "Gestão administrativa": { en: "Administrative management", "pt-BR": "Gestão administrativa", ja: "管理", es: "Gestión administrativa" },
+  "Cadastros": { en: "Registrations", "pt-BR": "Cadastros", ja: "登録", es: "Registros" },
+  "Adicionar treino": { en: "Add workout", "pt-BR": "Adicionar treino", ja: "ワークアウト追加", es: "Añadir entrenamiento" },
+  "Atualizar atividades": { en: "Update activities", "pt-BR": "Atualizar atividades", ja: "アクティビティ更新", es: "Actualizar actividades" },
+  "Recalcular": { en: "Recalculate", "pt-BR": "Recalcular", ja: "再計算", es: "Recalcular" },
+  "Salvar cadastro": { en: "Save registration", "pt-BR": "Salvar cadastro", ja: "登録を保存", es: "Guardar registro" },
+  "Salvar equipe": { en: "Save team", "pt-BR": "Salvar equipe", ja: "チームを保存", es: "Guardar equipo" },
+  "Salvar meu perfil": { en: "Save my profile", "pt-BR": "Salvar meu perfil", ja: "プロフィールを保存", es: "Guardar mi perfil" },
+  "Editar": { en: "Edit", "pt-BR": "Editar", ja: "編集", es: "Editar" },
+  "Excluir": { en: "Delete", "pt-BR": "Excluir", ja: "削除", es: "Eliminar" },
+  "Remover": { en: "Remove", "pt-BR": "Remover", ja: "削除", es: "Eliminar" },
+  "Todos": { en: "All", "pt-BR": "Todos", ja: "すべて", es: "Todos" }
 };
 
 const placeholderI18n = {
-  "Pergunte sobre atleta, treino, equipe, prova ou histÃ³rico": { en: "Ask about athlete, training, team, race or history", "pt-BR": "Pergunte sobre atleta, treino, equipe, prova ou histÃ³rico", ja: "ã‚¢ã‚¹ãƒªãƒ¼ãƒˆã€ç·´ç¿’ã€ãƒãƒ¼ãƒ ã€å¤§ä¼šã€å±¥æ­´ã«ã¤ã„ã¦è³ªå•", es: "Pregunta sobre atleta, entrenamiento, equipo, prueba o historial" },
-  "Nome, e-mail, equipe ou treinador": { en: "Name, e-mail, team or coach", "pt-BR": "Nome, e-mail, equipe ou treinador", ja: "åå‰ã€ãƒ¡ãƒ¼ãƒ«ã€ãƒãƒ¼ãƒ ã€ã‚³ãƒ¼ãƒ", es: "Nombre, e-mail, equipo o entrenador" },
-  "Filtrar equipe": { en: "Filter team", "pt-BR": "Filtrar equipe", ja: "ãƒãƒ¼ãƒ ã§çµžã‚Šè¾¼ã¿", es: "Filtrar equipo" },
-  "Filtrar treinador": { en: "Filter coach", "pt-BR": "Filtrar treinador", ja: "ã‚³ãƒ¼ãƒã§çµžã‚Šè¾¼ã¿", es: "Filtrar entrenador" }
+  "Pergunte sobre atleta, treino, equipe, prova ou histórico": { en: "Ask about athlete, training, team, race or history", "pt-BR": "Pergunte sobre atleta, treino, equipe, prova ou histórico", ja: "アスリート、練習、チーム、大会、履歴について質問", es: "Pregunta sobre atleta, entrenamiento, equipo, prueba o historial" },
+  "Nome, e-mail, equipe ou treinador": { en: "Name, e-mail, team or coach", "pt-BR": "Nome, e-mail, equipe ou treinador", ja: "名前、メール、チーム、コーチ", es: "Nombre, e-mail, equipo o entrenador" },
+  "Filtrar equipe": { en: "Filter team", "pt-BR": "Filtrar equipe", ja: "チームで絞り込み", es: "Filtrar equipo" },
+  "Filtrar treinador": { en: "Filter coach", "pt-BR": "Filtrar treinador", ja: "コーチで絞り込み", es: "Filtrar entrenador" }
 };
 
 const providerDefinitions = {
@@ -471,14 +471,14 @@ const providerDefinitions = {
   garmin: {
     name: "Garmin Connect",
     mark: "G",
-    status: "API oficial exige aprovaÃ§Ã£o",
-    strategy: "O caminho correto Ã© o Garmin Connect Developer Program. Para atividades, solicite Activity API/Activity Export. Sem aprovaÃ§Ã£o, nÃ£o existe API pÃºblica oficial para puxar o Garmin Connect diretamente.",
+    status: "API oficial exige aprovação",
+    strategy: "O caminho correto é o Garmin Connect Developer Program. Para atividades, solicite Activity API/Activity Export. Sem aprovação, não existe API pública oficial para puxar o Garmin Connect diretamente.",
     fields: [
       ["clientId", "Consumer Key / Client ID"],
       ["clientSecret", "Consumer Secret / Client Secret", "password"],
       ["redirectUri", "Redirect URI"],
-      ["permissions", "PermissÃµes solicitadas"],
-      ["webhookUrl", "Webhook de notificaÃ§Ã£o"],
+      ["permissions", "Permissões solicitadas"],
+      ["webhookUrl", "Webhook de notificação"],
       ["environment", "Ambiente"]
     ],
     docs: "https://developer.garmin.com/gc-developer-program/overview/"
@@ -486,14 +486,14 @@ const providerDefinitions = {
   coros: {
     name: "COROS",
     mark: "C",
-    status: "Acesso restrito por aplicaÃ§Ã£o",
-    strategy: "A COROS pede submissÃ£o de aplicaÃ§Ã£o/API. AtÃ© aprovar, a alternativa prÃ¡tica Ã© importar via Strava, TrainingPeaks, Intervals.icu ou arquivo FIT.",
+    status: "Acesso restrito por aplicação",
+    strategy: "A COROS pede submissão de aplicação/API. Até aprovar, a alternativa prática é importar via Strava, TrainingPeaks, Intervals.icu ou arquivo FIT.",
     fields: [
-      ["apiApplicationStatus", "Status da aplicaÃ§Ã£o API"],
+      ["apiApplicationStatus", "Status da aplicação API"],
       ["partnerClientId", "Partner Client ID"],
       ["partnerClientSecret", "Partner Client Secret", "password"],
       ["redirectUri", "Redirect URI"],
-      ["fallbackProvider", "Fallback de sincronizaÃ§Ã£o"],
+      ["fallbackProvider", "Fallback de sincronização"],
       ["fallbackApiKey", "Fallback API Key", "password"]
     ],
     docs: "https://support.coros.com/hc/en-us/articles/17085887816340-Submitting-an-API-Application"
@@ -501,8 +501,8 @@ const providerDefinitions = {
   polar: {
     name: "Polar AccessLink",
     mark: "P",
-    status: "OAuth oficial disponÃ­vel",
-    strategy: "Polar AccessLink usa Client ID/Secret, OAuth e depois registro do usuÃ¡rio para transaÃ§Ãµes de exercÃ­cios. HistÃ³rico anterior ao consentimento pode ser limitado.",
+    status: "OAuth oficial disponível",
+    strategy: "Polar AccessLink usa Client ID/Secret, OAuth e depois registro do usuário para transações de exercícios. Histórico anterior ao consentimento pode ser limitado.",
     fields: [
       ["clientId", "Client ID"],
       ["clientSecret", "Client Secret", "password"],
@@ -531,7 +531,7 @@ const providerDefinitions = {
 
 const weekdayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 const weekdayNamesMonday = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
-const monthNames = ["Janeiro", "Fevereiro", "MarÃ§o", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 const focusDistanceLabels = {
   800: "800 m",
   1500: "1500 m",
@@ -555,60 +555,60 @@ const profileTypeDefinitions = {
 
 const profileOptionSets = {
   profileStatus: ["Perfil ativo", "Perfil pendente", "Perfil bloqueado", "Perfil inativo"],
-  validationStatus: ["Cadastro nÃ£o iniciado", "Cadastro incompleto", "Cadastro completo", "Em anÃ¡lise", "Validado", "Reprovado", "Bloqueado", "Arquivado"],
-  documentValidation: ["NÃ£o enviado", "Enviado parcialmente", "Completo", "Em anÃ¡lise", "Aprovado", "Reprovado", "Pendente de correÃ§Ã£o", "Expirado"],
-  institutionType: ["ConfederaÃ§Ã£o nacional", "FederaÃ§Ã£o estadual", "FederaÃ§Ã£o regional", "AssociaÃ§Ã£o internacional", "Liga universitÃ¡ria", "Liga escolar", "Universidade", "Escola", "Clube", "Equipe", "Projeto esportivo", "ComitÃª olÃ­mpico", "OrganizaÃ§Ã£o esportiva", "Outra instituiÃ§Ã£o"],
-  identificationType: ["CÃ³digo da confederaÃ§Ã£o", "Registro federativo", "NÃºmero de licenÃ§a", "ID World Athletics", "ID universitÃ¡rio", "ID escolar", "ID de clube", "ID de liga", "NÃºmero de inscriÃ§Ã£o esportiva", "NÃºmero de passaporte esportivo", "Outro"],
-  identificationStatus: ["NÃ£o informado", "Informado", "Em validaÃ§Ã£o", "Validado", "Divergente", "Expirado", "NÃ£o encontrado", "Reprovado"],
+  validationStatus: ["Cadastro não iniciado", "Cadastro incompleto", "Cadastro completo", "Em análise", "Validado", "Reprovado", "Bloqueado", "Arquivado"],
+  documentValidation: ["Não enviado", "Enviado parcialmente", "Completo", "Em análise", "Aprovado", "Reprovado", "Pendente de correção", "Expirado"],
+  institutionType: ["Confederação nacional", "Federação estadual", "Federação regional", "Associação internacional", "Liga universitária", "Liga escolar", "Universidade", "Escola", "Clube", "Equipe", "Projeto esportivo", "Comitê olímpico", "Organização esportiva", "Outra instituição"],
+  identificationType: ["Código da confederação", "Registro federativo", "Número de licença", "ID World Athletics", "ID universitário", "ID escolar", "ID de clube", "ID de liga", "Número de inscrição esportiva", "Número de passaporte esportivo", "Outro"],
+  identificationStatus: ["Não informado", "Informado", "Em validação", "Validado", "Divergente", "Expirado", "Não encontrado", "Reprovado"],
   teamType: ["Clube", "Assessoria esportiva", "Projeto social", "Escola", "Universidade", "Equipe master", "Equipe de base", "Centro de treinamento", "Equipe profissional", "Grupo de corrida", "Outro"],
-  sponsorType: ["Empresa", "Pessoa fÃ­sica", "Instituto", "FundaÃ§Ã£o", "Universidade", "Clube", "Marca esportiva", "Investidor pessoa fÃ­sica", "Investidor institucional", "AgÃªncia", "Governo", "OrganizaÃ§Ã£o social", "Outro"],
-  trainingSpecialty: ["Velocidade", "Meio-fundo", "Fundo", "Cross country", "Corrida de rua", "Trail running", "Marcha atlÃ©tica", "Saltos", "LanÃ§amentos", "Provas combinadas", "Atletismo escolar", "Atletismo universitÃ¡rio", "Alto rendimento", "Atletas master", "Atletas iniciantes", "Outro"],
+  sponsorType: ["Empresa", "Pessoa física", "Instituto", "Fundação", "Universidade", "Clube", "Marca esportiva", "Investidor pessoa física", "Investidor institucional", "Agência", "Governo", "Organização social", "Outro"],
+  trainingSpecialty: ["Velocidade", "Meio-fundo", "Fundo", "Cross country", "Corrida de rua", "Trail running", "Marcha atlética", "Saltos", "Lançamentos", "Provas combinadas", "Atletismo escolar", "Atletismo universitário", "Alto rendimento", "Atletas master", "Atletas iniciantes", "Outro"],
   focusEvents: ["800", "1500", "3000", "5000", "10000", "10km", "15k", "21k", "42k"],
-  opportunityTypes: ["Bolsa universitÃ¡ria nos EUA", "Bolsa universitÃ¡ria no JapÃ£o", "Bolsa universitÃ¡ria no Brasil", "Bolsa universitÃ¡ria na Europa", "Bolsa em clube", "Bolsa em projeto esportivo", "IntercÃ¢mbio esportivo", "PatrocÃ­nio", "Apoio financeiro", "Apoio com material esportivo", "Apoio com viagem", "Apoio com alimentaÃ§Ã£o", "Apoio com moradia"],
-  supportTypes: ["Financeiro", "Produto", "ServiÃ§o", "Bolsa", "Viagem", "Equipamento", "AlimentaÃ§Ã£o", "SaÃºde", "Moradia", "EducaÃ§Ã£o", "Transporte", "Eventos", "Uniformes", "ConteÃºdo", "Outro"],
-  commercialStatus: ["Lead", "Em contato", "ReuniÃ£o agendada", "Em negociaÃ§Ã£o", "Proposta enviada", "Contrato enviado", "Aprovado", "Ativo", "Pausado", "Perdido", "Inativo"],
-  applicationStatus: ["Prospect", "Em anÃ¡lise", "DocumentaÃ§Ã£o pendente", "DocumentaÃ§Ã£o aprovada", "Perfil aprovado", "Em contato com instituiÃ§Ã£o", "Entrevista agendada", "Proposta recebida", "Aprovado", "Reprovado", "Encaminhado", "Bolsista ativo", "Bolsista inativo"],
-  gender: ["Feminino", "Masculino", "NÃ£o binÃ¡rio", "Prefiro nÃ£o informar", "Outro"]
+  opportunityTypes: ["Bolsa universitária nos EUA", "Bolsa universitária no Japão", "Bolsa universitária no Brasil", "Bolsa universitária na Europa", "Bolsa em clube", "Bolsa em projeto esportivo", "Intercâmbio esportivo", "Patrocínio", "Apoio financeiro", "Apoio com material esportivo", "Apoio com viagem", "Apoio com alimentação", "Apoio com moradia"],
+  supportTypes: ["Financeiro", "Produto", "Serviço", "Bolsa", "Viagem", "Equipamento", "Alimentação", "Saúde", "Moradia", "Educação", "Transporte", "Eventos", "Uniformes", "Conteúdo", "Outro"],
+  commercialStatus: ["Lead", "Em contato", "Reunião agendada", "Em negociação", "Proposta enviada", "Contrato enviado", "Aprovado", "Ativo", "Pausado", "Perdido", "Inativo"],
+  applicationStatus: ["Prospect", "Em análise", "Documentação pendente", "Documentação aprovada", "Perfil aprovado", "Em contato com instituição", "Entrevista agendada", "Proposta recebida", "Aprovado", "Reprovado", "Encaminhado", "Bolsista ativo", "Bolsista inativo"],
+  gender: ["Feminino", "Masculino", "Não binário", "Prefiro não informar", "Outro"]
 };
 
 const commonProfileFields = [
-  { section: "IdentificaÃ§Ã£o bÃ¡sica", fields: [
-    ["internalSystemId", "ID interno do sistema"], ["profileTypeLabel", "Tipo de perfil"], ["publicName", "Nome pÃºblico no app"], ["profilePhotoUrl", "Foto de perfil"], ["coverImageUrl", "Imagem de capa"], ["birthDate", "Data de nascimento", "date"], ["gender", "GÃªnero", "select", "gender"], ["nationality", "Nacionalidade"], ["country", "PaÃ­s"], ["stateProvince", "Estado / provÃ­ncia"], ["city", "Cidade"], ["address", "EndereÃ§o"], ["postalCode", "CEP / cÃ³digo postal"], ["languages", "Idiomas"], ["phone", "Telefone"], ["instagram", "Instagram"], ["linkedIn", "LinkedIn"], ["website", "Site"], ["shortBio", "Bio curta"], ["fullDescription", "DescriÃ§Ã£o completa", "textarea"]
+  { section: "Identificação básica", fields: [
+    ["internalSystemId", "ID interno do sistema"], ["profileTypeLabel", "Tipo de perfil"], ["publicName", "Nome público no app"], ["profilePhotoUrl", "Foto de perfil"], ["coverImageUrl", "Imagem de capa"], ["birthDate", "Data de nascimento", "date"], ["gender", "Gênero", "select", "gender"], ["nationality", "Nacionalidade"], ["country", "País"], ["stateProvince", "Estado / província"], ["city", "Cidade"], ["address", "Endereço"], ["postalCode", "CEP / código postal"], ["languages", "Idiomas"], ["phone", "Telefone"], ["instagram", "Instagram"], ["linkedIn", "LinkedIn"], ["website", "Site"], ["shortBio", "Bio curta"], ["fullDescription", "Descrição completa", "textarea"]
   ] },
-  { section: "Documentos e validaÃ§Ã£o", fields: [
-    ["documentType", "Tipo de documento"], ["documentNumber", "NÃºmero do documento"], ["cpf", "CPF, se Brasil"], ["rg", "RG, se Brasil"], ["passport", "Passaporte"], ["foreignDocument", "Documento estrangeiro"], ["documentIssuerCountry", "PaÃ­s emissor do documento"], ["documentUploadUrl", "Upload de documento"], ["documentValidationStatus", "Status de validaÃ§Ã£o do documento", "select", "documentValidation"], ["profileStatus", "Status do usuÃ¡rio", "select", "profileStatus"], ["validationStatus", "Status de validaÃ§Ã£o", "select", "validationStatus"]
+  { section: "Documentos e validação", fields: [
+    ["documentType", "Tipo de documento"], ["documentNumber", "Número do documento"], ["cpf", "CPF, se Brasil"], ["rg", "RG, se Brasil"], ["passport", "Passaporte"], ["foreignDocument", "Documento estrangeiro"], ["documentIssuerCountry", "País emissor do documento"], ["documentUploadUrl", "Upload de documento"], ["documentValidationStatus", "Status de validação do documento", "select", "documentValidation"], ["profileStatus", "Status do usuário", "select", "profileStatus"], ["validationStatus", "Status de validação", "select", "validationStatus"]
   ] },
-  { section: "Consentimentos e seguranÃ§a", fields: [
-    ["acceptedTerms", "Aceite dos termos de uso", "checkbox"], ["acceptedPrivacyPolicy", "Aceite da polÃ­tica de privacidade", "checkbox"], ["lgpdGdprConsent", "Consentimento LGPD / GDPR", "checkbox"], ["dataUseAuthorization", "AutorizaÃ§Ã£o para uso de dados", "checkbox"], ["imageUseAuthorization", "AutorizaÃ§Ã£o para uso de imagem", "checkbox"], ["twoFactorEnabled", "AutenticaÃ§Ã£o em dois fatores", "checkbox"]
+  { section: "Consentimentos e segurança", fields: [
+    ["acceptedTerms", "Aceite dos termos de uso", "checkbox"], ["acceptedPrivacyPolicy", "Aceite da política de privacidade", "checkbox"], ["lgpdGdprConsent", "Consentimento LGPD / GDPR", "checkbox"], ["dataUseAuthorization", "Autorização para uso de dados", "checkbox"], ["imageUseAuthorization", "Autorização para uso de imagem", "checkbox"], ["twoFactorEnabled", "Autenticação em dois fatores", "checkbox"]
   ] }
 ];
 
 const sportsIdentificationFields = {
-  section: "IdentificaÃ§Ã£o Esportiva Oficial",
+  section: "Identificação Esportiva Oficial",
   fields: [
-    ["identificacoes_esportivas.0.pais_registro_esportivo", "PaÃ­s de registro esportivo"], ["identificacoes_esportivas.0.instituicao_reguladora", "InstituiÃ§Ã£o reguladora"], ["identificacoes_esportivas.0.nome_completo_instituicao", "Nome completo da instituiÃ§Ã£o"], ["identificacoes_esportivas.0.sigla_instituicao", "Sigla da instituiÃ§Ã£o"], ["identificacoes_esportivas.0.tipo_instituicao", "Tipo de instituiÃ§Ã£o", "select", "institutionType"], ["identificacoes_esportivas.0.codigo_instituicao", "CÃ³digo da instituiÃ§Ã£o"], ["identificacoes_esportivas.0.numero_identificacao_atleta", "NÃºmero de identificaÃ§Ã£o do atleta"], ["identificacoes_esportivas.0.tipo_identificacao", "Tipo de identificaÃ§Ã£o", "select", "identificationType"], ["identificacoes_esportivas.0.pais_instituicao", "PaÃ­s da instituiÃ§Ã£o"], ["identificacoes_esportivas.0.estado_instituicao", "Estado / provÃ­ncia da instituiÃ§Ã£o"], ["identificacoes_esportivas.0.cidade_instituicao", "Cidade da instituiÃ§Ã£o"], ["identificacoes_esportivas.0.link_perfil_oficial", "Link pÃºblico do perfil oficial"], ["identificacoes_esportivas.0.link_resultado_oficial", "Link de resultado oficial"], ["identificacoes_esportivas.0.documento_comprobatorio", "Documento comprobatÃ³rio"], ["identificacoes_esportivas.0.data_emissao", "Data de emissÃ£o do registro", "date"], ["identificacoes_esportivas.0.data_validade", "Data de validade do registro", "date"], ["identificacoes_esportivas.0.status_validacao", "Status da identificaÃ§Ã£o", "select", "identificationStatus"], ["identificacoes_esportivas.0.observacoes", "ObservaÃ§Ãµes sobre a identificaÃ§Ã£o", "textarea"]
+    ["identificacoes_esportivas.0.pais_registro_esportivo", "País de registro esportivo"], ["identificacoes_esportivas.0.instituicao_reguladora", "Instituição reguladora"], ["identificacoes_esportivas.0.nome_completo_instituicao", "Nome completo da instituição"], ["identificacoes_esportivas.0.sigla_instituicao", "Sigla da instituição"], ["identificacoes_esportivas.0.tipo_instituicao", "Tipo de instituição", "select", "institutionType"], ["identificacoes_esportivas.0.codigo_instituicao", "Código da instituição"], ["identificacoes_esportivas.0.numero_identificacao_atleta", "Número de identificação do atleta"], ["identificacoes_esportivas.0.tipo_identificacao", "Tipo de identificação", "select", "identificationType"], ["identificacoes_esportivas.0.pais_instituicao", "País da instituição"], ["identificacoes_esportivas.0.estado_instituicao", "Estado / província da instituição"], ["identificacoes_esportivas.0.cidade_instituicao", "Cidade da instituição"], ["identificacoes_esportivas.0.link_perfil_oficial", "Link público do perfil oficial"], ["identificacoes_esportivas.0.link_resultado_oficial", "Link de resultado oficial"], ["identificacoes_esportivas.0.documento_comprobatorio", "Documento comprobatório"], ["identificacoes_esportivas.0.data_emissao", "Data de emissão do registro", "date"], ["identificacoes_esportivas.0.data_validade", "Data de validade do registro", "date"], ["identificacoes_esportivas.0.status_validacao", "Status da identificação", "select", "identificationStatus"], ["identificacoes_esportivas.0.observacoes", "Observações sobre a identificação", "textarea"]
   ]
 };
 
 const profileSpecificBlocks = {
   athlete_master: [
     sportsIdentificationFields,
-    { section: "Dados esportivos Master", fields: [["masterCategory", "Categoria master"], ["ageGroup", "Faixa etÃ¡ria"], ["mainModality", "Modalidade principal"], ["secondaryModalities", "Modalidades secundÃ¡rias"], ["mainEvents", "Provas principais", "select", "focusEvents"], ["clubOrTeam", "Clube ou equipe"], ["trainingCity", "Cidade onde treina"], ["trainingPlaces", "Locais de treino"], ["weeklyTrainingFrequency", "FrequÃªncia semanal de treino"], ["practiceTime", "Tempo de prÃ¡tica"], ["sportsHistory", "HistÃ³rico esportivo", "textarea"], ["mainGoal", "Objetivo principal"], ["targetRaces", "PrÃ³ximas provas-alvo"], ["competitiveCalendar", "CalendÃ¡rio competitivo"], ["participatesRankings", "Participa de rankings", "checkbox"], ["wantsChallenges", "Deseja participar de desafios", "checkbox"], ["wantsAiAnalysis", "Deseja receber anÃ¡lise de performance por IA", "checkbox"]] },
-    { section: "Performance e saÃºde", fields: [["best800", "Melhor marca nos 800 m"], ["best1500", "Melhor marca nos 1500 m"], ["best3000", "Melhor marca nos 3000 m"], ["best5000", "Melhor marca nos 5000 m"], ["best10000", "Melhor marca nos 10000 m"], ["best5kRoad", "Melhor marca nos 5 km rua"], ["best10kRoad", "Melhor marca nos 10 km rua"], ["best21k", "Melhor marca na meia maratona"], ["best42k", "Melhor marca na maratona"], ["personalRecords", "Recordes pessoais", "textarea"], ["recentResults", "Resultados recentes", "textarea"], ["referencePace", "Pace de referÃªncia"], ["maxHeartRate", "FrequÃªncia cardÃ­aca mÃ¡xima"], ["restingHeartRate", "FrequÃªncia cardÃ­aca de repouso"], ["emergencyContact", "Contato de emergÃªncia"], ["emergencyPhone", "Telefone de emergÃªncia"], ["bloodType", "Tipo sanguÃ­neo"], ["medicalRestrictions", "RestriÃ§Ãµes mÃ©dicas", "textarea"], ["recentInjuries", "LesÃµes recentes", "textarea"], ["injuryHistory", "HistÃ³rico de lesÃµes", "textarea"], ["medicalFitnessDeclaration", "DeclaraÃ§Ã£o de aptidÃ£o fÃ­sica", "checkbox"]] }
+    { section: "Dados esportivos Master", fields: [["masterCategory", "Categoria master"], ["ageGroup", "Faixa etária"], ["mainModality", "Modalidade principal"], ["secondaryModalities", "Modalidades secundárias"], ["mainEvents", "Provas principais", "select", "focusEvents"], ["clubOrTeam", "Clube ou equipe"], ["trainingCity", "Cidade onde treina"], ["trainingPlaces", "Locais de treino"], ["weeklyTrainingFrequency", "Frequência semanal de treino"], ["practiceTime", "Tempo de prática"], ["sportsHistory", "Histórico esportivo", "textarea"], ["mainGoal", "Objetivo principal"], ["targetRaces", "Próximas provas-alvo"], ["competitiveCalendar", "Calendário competitivo"], ["participatesRankings", "Participa de rankings", "checkbox"], ["wantsChallenges", "Deseja participar de desafios", "checkbox"], ["wantsAiAnalysis", "Deseja receber análise de performance por IA", "checkbox"]] },
+    { section: "Performance e saúde", fields: [["best800", "Melhor marca nos 800 m"], ["best1500", "Melhor marca nos 1500 m"], ["best3000", "Melhor marca nos 3000 m"], ["best5000", "Melhor marca nos 5000 m"], ["best10000", "Melhor marca nos 10000 m"], ["best5kRoad", "Melhor marca nos 5 km rua"], ["best10kRoad", "Melhor marca nos 10 km rua"], ["best21k", "Melhor marca na meia maratona"], ["best42k", "Melhor marca na maratona"], ["personalRecords", "Recordes pessoais", "textarea"], ["recentResults", "Resultados recentes", "textarea"], ["referencePace", "Pace de referência"], ["maxHeartRate", "Frequência cardíaca máxima"], ["restingHeartRate", "Frequência cardíaca de repouso"], ["emergencyContact", "Contato de emergência"], ["emergencyPhone", "Telefone de emergência"], ["bloodType", "Tipo sanguíneo"], ["medicalRestrictions", "Restrições médicas", "textarea"], ["recentInjuries", "Lesões recentes", "textarea"], ["injuryHistory", "Histórico de lesões", "textarea"], ["medicalFitnessDeclaration", "Declaração de aptidão física", "checkbox"]] }
   ],
   athlete_future: [
     sportsIdentificationFields,
-    { section: "Atleta do Futuro", fields: [["school", "Escola"], ["schoolGrade", "SÃ©rie escolar"], ["schoolShift", "Turno escolar"], ["projectOrTeam", "Equipe ou projeto"], ["responsibleCoach", "Treinador responsÃ¡vel"], ["mainModality", "Modalidade principal"], ["mainEvents", "Provas principais", "select", "focusEvents"], ["practiceTime", "Tempo de prÃ¡tica"], ["weeklyTrainingFrequency", "FrequÃªncia semanal de treino"], ["trainingPlaces", "Locais de treino"], ["legalGuardianName", "Nome do responsÃ¡vel legal"], ["guardianRelationship", "Grau de parentesco"], ["guardianDocument", "CPF ou documento do responsÃ¡vel"], ["guardianEmail", "E-mail do responsÃ¡vel"], ["guardianWhatsApp", "WhatsApp do responsÃ¡vel"], ["participationAuthorization", "AutorizaÃ§Ã£o de participaÃ§Ã£o", "checkbox"], ["travelAuthorization", "AutorizaÃ§Ã£o para viagens", "checkbox"], ["minorLgpdTerm", "Termo LGPD para menor", "checkbox"]] },
-    { section: "Desenvolvimento e proteÃ§Ã£o", fields: [["competitionResults", "Resultados em competiÃ§Ãµes", "textarea"], ["officialResultLinks", "Links de resultados oficiais", "textarea"], ["physicalTests", "Testes fÃ­sicos", "textarea"], ["annualEvolution", "EvoluÃ§Ã£o anual"], ["schoolAttendance", "FrequÃªncia escolar"], ["trainingAttendance", "FrequÃªncia nos treinos"], ["identifiedPotential", "Potencial identificado"], ["coachObservations", "ObservaÃ§Ãµes do treinador", "textarea"], ["behaviorDiscipline", "Disciplina"], ["behaviorCommitment", "Comprometimento"], ["behaviorResilience", "ResiliÃªncia"], ["familySupport", "Apoio familiar"], ["publicPhoto", "Exibir foto publicamente", "checkbox"], ["publicResults", "Exibir resultados", "checkbox"], ["externalContactAllowed", "Permitir contato externo", "checkbox"], ["sensitiveDataHidden", "Ocultar dados sensÃ­veis", "checkbox"]] }
+    { section: "Atleta do Futuro", fields: [["school", "Escola"], ["schoolGrade", "Série escolar"], ["schoolShift", "Turno escolar"], ["projectOrTeam", "Equipe ou projeto"], ["responsibleCoach", "Treinador responsável"], ["mainModality", "Modalidade principal"], ["mainEvents", "Provas principais", "select", "focusEvents"], ["practiceTime", "Tempo de prática"], ["weeklyTrainingFrequency", "Frequência semanal de treino"], ["trainingPlaces", "Locais de treino"], ["legalGuardianName", "Nome do responsável legal"], ["guardianRelationship", "Grau de parentesco"], ["guardianDocument", "CPF ou documento do responsável"], ["guardianEmail", "E-mail do responsável"], ["guardianWhatsApp", "WhatsApp do responsável"], ["participationAuthorization", "Autorização de participação", "checkbox"], ["travelAuthorization", "Autorização para viagens", "checkbox"], ["minorLgpdTerm", "Termo LGPD para menor", "checkbox"]] },
+    { section: "Desenvolvimento e proteção", fields: [["competitionResults", "Resultados em competições", "textarea"], ["officialResultLinks", "Links de resultados oficiais", "textarea"], ["physicalTests", "Testes físicos", "textarea"], ["annualEvolution", "Evolução anual"], ["schoolAttendance", "Frequência escolar"], ["trainingAttendance", "Frequência nos treinos"], ["identifiedPotential", "Potencial identificado"], ["coachObservations", "Observações do treinador", "textarea"], ["behaviorDiscipline", "Disciplina"], ["behaviorCommitment", "Comprometimento"], ["behaviorResilience", "Resiliência"], ["familySupport", "Apoio familiar"], ["publicPhoto", "Exibir foto publicamente", "checkbox"], ["publicResults", "Exibir resultados", "checkbox"], ["externalContactAllowed", "Permitir contato externo", "checkbox"], ["sensitiveDataHidden", "Ocultar dados sensíveis", "checkbox"]] }
   ],
   athlete_scholarship: [
     sportsIdentificationFields,
-    { section: "Bolsa e oportunidades", fields: [["passport", "Passaporte"], ["hasVisa", "Possui visto", "checkbox"], ["visaType", "Tipo de visto"], ["interestCountries", "PaÃ­ses de interesse"], ["mainModality", "Modalidade principal"], ["mainEvents", "Provas principais", "select", "focusEvents"], ["secondaryEvents", "Provas secundÃ¡rias"], ["officialBestMarks", "Melhores marcas oficiais", "textarea"], ["officialResultLinks", "Links de resultados oficiais", "textarea"], ["stateRanking", "Ranking estadual"], ["nationalRanking", "Ranking nacional"], ["internationalRanking", "Ranking internacional"], ["competitionHistory", "HistÃ³rico competitivo", "textarea"], ["raceVideos", "VÃ­deos de provas"], ["currentCoach", "Treinador atual"], ["currentTeam", "Equipe atual"], ["desiredOpportunityType", "Tipo de oportunidade desejada", "select", "opportunityTypes"]] },
-    { section: "Dados acadÃªmicos e elegibilidade", fields: [["currentEducation", "Escolaridade atual"], ["currentSchool", "Escola atual"], ["currentUniversity", "Universidade atual"], ["expectedGraduationYear", "Ano de conclusÃ£o previsto"], ["schoolTranscript", "HistÃ³rico escolar"], ["gradeAverage", "MÃ©dia escolar"], ["englishLevel", "NÃ­vel de inglÃªs"], ["japaneseLevel", "NÃ­vel de japonÃªs"], ["spanishLevel", "NÃ­vel de espanhol"], ["toefl", "TOEFL"], ["ielts", "IELTS"], ["sat", "SAT"], ["act", "ACT"], ["jlpt", "JLPT"], ["desiredStudyAreas", "Ãreas de estudo desejadas"], ["relocationAvailability", "Disponibilidade para mudanÃ§a", "checkbox"], ["fullScholarshipNeed", "Necessidade de bolsa integral", "checkbox"], ["partialScholarshipNeed", "Necessidade de bolsa parcial", "checkbox"], ["documentationStatus", "Status da documentaÃ§Ã£o", "select", "documentValidation"], ["applicationStatus", "Status da candidatura", "select", "applicationStatus"], ["eligibilityScore", "Score de elegibilidade"]] }
+    { section: "Bolsa e oportunidades", fields: [["passport", "Passaporte"], ["hasVisa", "Possui visto", "checkbox"], ["visaType", "Tipo de visto"], ["interestCountries", "Países de interesse"], ["mainModality", "Modalidade principal"], ["mainEvents", "Provas principais", "select", "focusEvents"], ["secondaryEvents", "Provas secundárias"], ["officialBestMarks", "Melhores marcas oficiais", "textarea"], ["officialResultLinks", "Links de resultados oficiais", "textarea"], ["stateRanking", "Ranking estadual"], ["nationalRanking", "Ranking nacional"], ["internationalRanking", "Ranking internacional"], ["competitionHistory", "Histórico competitivo", "textarea"], ["raceVideos", "Vídeos de provas"], ["currentCoach", "Treinador atual"], ["currentTeam", "Equipe atual"], ["desiredOpportunityType", "Tipo de oportunidade desejada", "select", "opportunityTypes"]] },
+    { section: "Dados acadêmicos e elegibilidade", fields: [["currentEducation", "Escolaridade atual"], ["currentSchool", "Escola atual"], ["currentUniversity", "Universidade atual"], ["expectedGraduationYear", "Ano de conclusão previsto"], ["schoolTranscript", "Histórico escolar"], ["gradeAverage", "Média escolar"], ["englishLevel", "Nível de inglês"], ["japaneseLevel", "Nível de japonês"], ["spanishLevel", "Nível de espanhol"], ["toefl", "TOEFL"], ["ielts", "IELTS"], ["sat", "SAT"], ["act", "ACT"], ["jlpt", "JLPT"], ["desiredStudyAreas", "Áreas de estudo desejadas"], ["relocationAvailability", "Disponibilidade para mudança", "checkbox"], ["fullScholarshipNeed", "Necessidade de bolsa integral", "checkbox"], ["partialScholarshipNeed", "Necessidade de bolsa parcial", "checkbox"], ["documentationStatus", "Status da documentação", "select", "documentValidation"], ["applicationStatus", "Status da candidatura", "select", "applicationStatus"], ["eligibilityScore", "Score de elegibilidade"]] }
   ],
   coach: [
-    { section: "Dados profissionais", fields: [["professionalRegistration", "CREF ou registro profissional"], ["educationInstitution", "InstituiÃ§Ã£o de formaÃ§Ã£o"], ["academicEducation", "FormaÃ§Ã£o acadÃªmica"], ["specializations", "EspecializaÃ§Ãµes"], ["certifications", "CertificaÃ§Ãµes", "textarea"], ["certificateUploadUrl", "Upload de certificados"], ["professionalValidationStatus", "Status de validaÃ§Ã£o profissional", "select", "validationStatus"], ["experienceYears", "Tempo de experiÃªncia"], ["shortResume", "CurrÃ­culo resumido", "textarea"], ["fullResume", "CurrÃ­culo completo", "textarea"]] },
-    { section: "AtuaÃ§Ã£o tÃ©cnica", fields: [["servedModalities", "Modalidades atendidas"], ["servedEvents", "Provas atendidas", "select", "focusEvents"], ["servedCategories", "Categorias atendidas"], ["servedAgeGroups", "Faixas etÃ¡rias atendidas"], ["mainSpecialty", "Especialidade principal", "select", "trainingSpecialty"], ["secondarySpecialties", "Especialidades secundÃ¡rias"], ["performanceLevel", "NÃ­vel de atuaÃ§Ã£o"], ["trainingMethodology", "Metodologia de treino", "textarea"], ["eliteExperience", "ExperiÃªncia com alto rendimento", "checkbox"], ["masterExperience", "ExperiÃªncia com atletas master", "checkbox"], ["youthExperience", "ExperiÃªncia com atletas de base", "checkbox"], ["scholarshipExperience", "ExperiÃªncia com atletas bolsistas", "checkbox"], ["internationalExperience", "ExperiÃªncia internacional", "checkbox"], ["formedAthletes", "Atletas formados"], ["relevantResults", "Resultados relevantes", "textarea"]] }
+    { section: "Dados profissionais", fields: [["professionalRegistration", "CREF ou registro profissional"], ["educationInstitution", "Instituição de formação"], ["academicEducation", "Formação acadêmica"], ["specializations", "Especializações"], ["certifications", "Certificações", "textarea"], ["certificateUploadUrl", "Upload de certificados"], ["professionalValidationStatus", "Status de validação profissional", "select", "validationStatus"], ["experienceYears", "Tempo de experiência"], ["shortResume", "Currículo resumido", "textarea"], ["fullResume", "Currículo completo", "textarea"]] },
+    { section: "Atuação técnica", fields: [["servedModalities", "Modalidades atendidas"], ["servedEvents", "Provas atendidas", "select", "focusEvents"], ["servedCategories", "Categorias atendidas"], ["servedAgeGroups", "Faixas etárias atendidas"], ["mainSpecialty", "Especialidade principal", "select", "trainingSpecialty"], ["secondarySpecialties", "Especialidades secundárias"], ["performanceLevel", "Nível de atuação"], ["trainingMethodology", "Metodologia de treino", "textarea"], ["eliteExperience", "Experiência com alto rendimento", "checkbox"], ["masterExperience", "Experiência com atletas master", "checkbox"], ["youthExperience", "Experiência com atletas de base", "checkbox"], ["scholarshipExperience", "Experiência com atletas bolsistas", "checkbox"], ["internationalExperience", "Experiência internacional", "checkbox"], ["formedAthletes", "Atletas formados"], ["relevantResults", "Resultados relevantes", "textarea"]] }
   ],
   team: [
     { section: "Dados da equipe", fields: [["teamId", "ID da equipe"], ["teamName", "Nome da equipe"], ["tradeName", "Nome fantasia"], ["legalName", "Razao social"], ["companyDocument", "CNPJ ou documento equivalente"], ["teamType", "Tipo de equipe", "select", "teamType"], ["logoUrl", "Logo"], ["coverImageUrl", "Imagem de capa"], ["country", "Pais"], ["state", "Estado"], ["city", "Cidade"], ["address", "Endereco"], ["postalCode", "CEP"], ["mainTrainingLocation", "Local principal de treino"], ["secondaryTrainingLocations", "Locais secundarios de treino", "textarea"], ["foundedYear", "Ano de fundacao"], ["officialEmail", "E-mail oficial"], ["teamDescription", "Descricao da equipe", "textarea"], ["teamMission", "Missao da equipe", "textarea"], ["teamStatus", "Status da equipe", "select", "profileStatus"]] },
@@ -617,23 +617,23 @@ const profileSpecificBlocks = {
     { section: "Permissoes da equipe", fields: [["teamCanRegisterAthletes", "Pode cadastrar atletas", "checkbox"], ["teamCanInviteAthletes", "Pode convidar atletas", "checkbox"], ["teamCanInviteCoaches", "Pode convidar treinadores", "checkbox"], ["teamCanEditTeam", "Pode editar dados da equipe", "checkbox"], ["teamCanEditLinkedAthletes", "Pode editar atletas vinculados", "checkbox"], ["teamCanViewAthleteTechnicalData", "Pode visualizar dados tecnicos dos atletas", "checkbox"], ["teamCanViewPhysicalTests", "Pode visualizar testes fisicos", "checkbox"], ["teamCanViewCompetitiveHistory", "Pode visualizar historico competitivo", "checkbox"], ["teamCanGenerateReports", "Pode gerar relatorios", "checkbox"], ["teamCanRecommendScholarships", "Pode indicar atletas para bolsas", "checkbox"], ["teamCanPublishTryouts", "Pode publicar seletivas", "checkbox"], ["teamCanPublishEvents", "Pode publicar eventos", "checkbox"], ["teamCanReceiveSponsorContacts", "Pode receber contatos de patrocinadores", "checkbox"], ["teamCanAdmin", "Pode administrar equipe", "checkbox"], ["teamCanRemoveMembers", "Pode remover membros", "checkbox"]] }
   ],
   sponsor_investor: [
-    { section: "Dados institucionais", fields: [["sponsorType", "Tipo de cadastro", "select", "sponsorType"], ["companyOrInvestorName", "Nome da empresa ou investidor"], ["tradeName", "Nome fantasia"], ["legalName", "RazÃ£o social"], ["companyDocument", "CNPJ ou CPF"], ["foreignDocument", "Documento estrangeiro"], ["segment", "Segmento"], ["logoUrl", "Logo"], ["institutionalDescription", "DescriÃ§Ã£o institucional", "textarea"], ["responsibleName", "Nome do responsÃ¡vel"], ["responsibleRole", "Cargo"], ["responsibleEmail", "E-mail"], ["responsibleWhatsApp", "WhatsApp"], ["department", "Departamento"], ["bestContactTime", "Melhor horÃ¡rio de contato"], ["internalCommercialOwner", "ResponsÃ¡vel comercial interno 11run"]] },
-    { section: "Interesse e investimento", fields: [["sponsorAthletes", "Interesse em patrocinar atletas", "checkbox"], ["sponsorTeams", "Interesse em patrocinar equipes", "checkbox"], ["supportFutureAthletes", "Interesse em apoiar atletas do futuro", "checkbox"], ["supportMasterAthletes", "Interesse em apoiar atletas master", "checkbox"], ["supportScholarshipAthletes", "Interesse em apoiar atletas bolsistas", "checkbox"], ["supportSocialProjects", "Interesse em projetos sociais", "checkbox"], ["interestESG", "Interesse em ESG", "checkbox"], ["monthlyEstimatedValue", "Valor mensal estimado"], ["annualEstimatedValue", "Valor anual estimado"], ["supportType", "Tipo de apoio", "select", "supportTypes"], ["investmentTerm", "Prazo de investimento"], ["interestRegion", "RegiÃ£o de interesse"], ["brandObjective", "Objetivo da marca", "textarea"], ["desiredCounterparts", "Contrapartidas desejadas", "textarea"], ["commercialStatus", "Status comercial", "select", "commercialStatus"], ["lastContact", "Ãšltimo contato", "date"], ["nextFollowUp", "PrÃ³ximo follow-up", "date"], ["commercialNotes", "ObservaÃ§Ãµes", "textarea"]] }
+    { section: "Dados institucionais", fields: [["sponsorType", "Tipo de cadastro", "select", "sponsorType"], ["companyOrInvestorName", "Nome da empresa ou investidor"], ["tradeName", "Nome fantasia"], ["legalName", "Razão social"], ["companyDocument", "CNPJ ou CPF"], ["foreignDocument", "Documento estrangeiro"], ["segment", "Segmento"], ["logoUrl", "Logo"], ["institutionalDescription", "Descrição institucional", "textarea"], ["responsibleName", "Nome do responsável"], ["responsibleRole", "Cargo"], ["responsibleEmail", "E-mail"], ["responsibleWhatsApp", "WhatsApp"], ["department", "Departamento"], ["bestContactTime", "Melhor horário de contato"], ["internalCommercialOwner", "Responsável comercial interno 11run"]] },
+    { section: "Interesse e investimento", fields: [["sponsorAthletes", "Interesse em patrocinar atletas", "checkbox"], ["sponsorTeams", "Interesse em patrocinar equipes", "checkbox"], ["supportFutureAthletes", "Interesse em apoiar atletas do futuro", "checkbox"], ["supportMasterAthletes", "Interesse em apoiar atletas master", "checkbox"], ["supportScholarshipAthletes", "Interesse em apoiar atletas bolsistas", "checkbox"], ["supportSocialProjects", "Interesse em projetos sociais", "checkbox"], ["interestESG", "Interesse em ESG", "checkbox"], ["monthlyEstimatedValue", "Valor mensal estimado"], ["annualEstimatedValue", "Valor anual estimado"], ["supportType", "Tipo de apoio", "select", "supportTypes"], ["investmentTerm", "Prazo de investimento"], ["interestRegion", "Região de interesse"], ["brandObjective", "Objetivo da marca", "textarea"], ["desiredCounterparts", "Contrapartidas desejadas", "textarea"], ["commercialStatus", "Status comercial", "select", "commercialStatus"], ["lastContact", "Último contato", "date"], ["nextFollowUp", "Próximo follow-up", "date"], ["commercialNotes", "Observações", "textarea"]] }
   ]
 };
 
-const smartAnalysisFields = { section: "InteligÃªncia 11RUN", fields: [["potentialScore", "Score de potencial esportivo"], ["evolutionScore", "Score de evoluÃ§Ã£o"], ["disciplineScore", "Score de disciplina"], ["attendanceScore", "Score de assiduidade"], ["scholarshipEligibilityScore", "Score de elegibilidade para bolsa"], ["sponsorVisibilityScore", "Score de visibilidade para patrocinador"], ["dropoutRiskScore", "Score de risco de evasÃ£o"], ["competitiveMaturityScore", "Score de maturidade competitiva"], ["academicScore", "Score acadÃªmico"], ["documentScore", "Score documental"], ["teamCompatibilityScore", "Score de compatibilidade com equipe"], ["coachCompatibilityScore", "Score de compatibilidade com treinador"], ["universityCompatibilityScore", "Score de compatibilidade com universidade"], ["sponsorCompatibilityScore", "Score de compatibilidade com patrocinador"], ["smartStatus", "Status inteligentes"], ["generatedReports", "RelatÃ³rios gerados", "textarea"]] };
+const smartAnalysisFields = { section: "Inteligência 11RUN", fields: [["potentialScore", "Score de potencial esportivo"], ["evolutionScore", "Score de evolução"], ["disciplineScore", "Score de disciplina"], ["attendanceScore", "Score de assiduidade"], ["scholarshipEligibilityScore", "Score de elegibilidade para bolsa"], ["sponsorVisibilityScore", "Score de visibilidade para patrocinador"], ["dropoutRiskScore", "Score de risco de evasão"], ["competitiveMaturityScore", "Score de maturidade competitiva"], ["academicScore", "Score acadêmico"], ["documentScore", "Score documental"], ["teamCompatibilityScore", "Score de compatibilidade com equipe"], ["coachCompatibilityScore", "Score de compatibilidade com treinador"], ["universityCompatibilityScore", "Score de compatibilidade com universidade"], ["sponsorCompatibilityScore", "Score de compatibilidade com patrocinador"], ["smartStatus", "Status inteligentes"], ["generatedReports", "Relatórios gerados", "textarea"]] };
 
-const permissionLayers = { section: "PermissÃµes e camadas de acesso", fields: [["permPublicProfile", "NÃ­vel 1 - Perfil pÃºblico", "checkbox"], ["permVerifiedProfile", "NÃ­vel 2 - Perfil verificado", "checkbox"], ["permTechnicalProfile", "NÃ­vel 3 - Perfil tÃ©cnico", "checkbox"], ["permInstitutionalProfile", "NÃ­vel 4 - Perfil institucional", "checkbox"], ["permAdminProfile", "NÃ­vel 5 - AdministraÃ§Ã£o 11RUN", "checkbox"], ["canEditOwnProfile", "Pode editar o prÃ³prio perfil", "checkbox"], ["canViewPublicAthletes", "Pode visualizar perfil pÃºblico de atletas", "checkbox"], ["canViewTechnicalData", "Pode visualizar dados tÃ©cnicos", "checkbox"], ["canViewSensitiveData", "Pode visualizar dados sensÃ­veis", "checkbox"], ["canSendDocuments", "Pode enviar documentos", "checkbox"], ["canPublishContent", "Pode publicar conteÃºdos", "checkbox"], ["canCreateTeam", "Pode criar equipe", "checkbox"], ["canJoinTeam", "Pode entrar em equipe", "checkbox"], ["canInviteMembers", "Pode convidar membros", "checkbox"], ["canViewReports", "Pode visualizar relatÃ³rios", "checkbox"], ["canGenerateReports", "Pode gerar relatÃ³rios", "checkbox"], ["canAccessOpportunities", "Pode acessar Ã¡rea de oportunidades", "checkbox"], ["canAccessScholarships", "Pode acessar Ã¡rea de bolsas", "checkbox"], ["canAccessSponsors", "Pode acessar Ã¡rea de patrocinadores", "checkbox"], ["canAccessDashboard", "Pode acessar dashboard", "checkbox"], ["canAdminUsers", "Pode administrar usuÃ¡rios", "checkbox"], ["canApproveRegistrations", "Pode aprovar cadastros", "checkbox"], ["canBlockRegistrations", "Pode bloquear cadastros", "checkbox"], ["canValidateDocuments", "Pode validar documentos", "checkbox"]] };
+const permissionLayers = { section: "Permissões e camadas de acesso", fields: [["permPublicProfile", "Nível 1 - Perfil público", "checkbox"], ["permVerifiedProfile", "Nível 2 - Perfil verificado", "checkbox"], ["permTechnicalProfile", "Nível 3 - Perfil técnico", "checkbox"], ["permInstitutionalProfile", "Nível 4 - Perfil institucional", "checkbox"], ["permAdminProfile", "Nível 5 - Administração 11RUN", "checkbox"], ["canEditOwnProfile", "Pode editar o próprio perfil", "checkbox"], ["canViewPublicAthletes", "Pode visualizar perfil público de atletas", "checkbox"], ["canViewTechnicalData", "Pode visualizar dados técnicos", "checkbox"], ["canViewSensitiveData", "Pode visualizar dados sensíveis", "checkbox"], ["canSendDocuments", "Pode enviar documentos", "checkbox"], ["canPublishContent", "Pode publicar conteúdos", "checkbox"], ["canCreateTeam", "Pode criar equipe", "checkbox"], ["canJoinTeam", "Pode entrar em equipe", "checkbox"], ["canInviteMembers", "Pode convidar membros", "checkbox"], ["canViewReports", "Pode visualizar relatórios", "checkbox"], ["canGenerateReports", "Pode gerar relatórios", "checkbox"], ["canAccessOpportunities", "Pode acessar área de oportunidades", "checkbox"], ["canAccessScholarships", "Pode acessar área de bolsas", "checkbox"], ["canAccessSponsors", "Pode acessar área de patrocinadores", "checkbox"], ["canAccessDashboard", "Pode acessar dashboard", "checkbox"], ["canAdminUsers", "Pode administrar usuários", "checkbox"], ["canApproveRegistrations", "Pode aprovar cadastros", "checkbox"], ["canBlockRegistrations", "Pode bloquear cadastros", "checkbox"], ["canValidateDocuments", "Pode validar documentos", "checkbox"]] };
 
 const trainingTypeOptions = [
   "Treino",
   "Leve / base",
   "Regenerativo",
-  "RecuperaÃ§Ã£o",
+  "Recuperação",
   "Longo",
   "Longo progressivo",
-  "Longo com variaÃ§Ã£o",
+  "Longo com variação",
   "Ritmo / tempo",
   "Limiar",
   "Progressivo",
@@ -643,7 +643,7 @@ const trainingTypeOptions = [
   "VO2 / intervalado",
   "Tiros curtos / strides",
   "Montanha / subida",
-  "TÃ©cnica / educativos",
+  "Técnica / educativos",
   "Fortalecimento",
   "Isometria",
   "Pliometria",
@@ -662,12 +662,12 @@ function trainingTypeOptionsHtml(selected = "Treino") {
 function friendlyAiError(message = "") {
   const text = String(message || "");
   if (/request id|processing your request|help\.openai\.com/i.test(text)) {
-    return "OpenAI temporariamente indisponÃ­vel. O modelo local 11RUN foi aplicado.";
+    return "OpenAI temporariamente indisponível. O modelo local 11RUN foi aplicado.";
   }
-  if (/401|api key|unauthorized|invalid/i.test(text)) return "API key invÃ¡lida ou sem permissÃ£o para chamadas OpenAI.";
+  if (/401|api key|unauthorized|invalid/i.test(text)) return "API key inválida ou sem permissão para chamadas OpenAI.";
   if (/429|rate limit|quota/i.test(text)) return "Limite da OpenAI atingido. Tente novamente em instantes.";
-  if (/model|404|400/i.test(text)) return "Modelo OpenAI indisponÃ­vel para esta chave. Ajuste o modelo nas configuraÃ§Ãµes.";
-  return text || "NÃ£o foi possÃ­vel concluir a anÃ¡lise externa. O modelo local 11RUN foi aplicado.";
+  if (/model|404|400/i.test(text)) return "Modelo OpenAI indisponível para esta chave. Ajuste o modelo nas configurações.";
+  return text || "Não foi possível concluir a análise externa. O modelo local 11RUN foi aplicado.";
 }
 
 const calendar = document.querySelector("#calendar");
@@ -769,16 +769,16 @@ function t(key) {
 }
 
 function applyTheme() {
-  const theme = state.theme === "light" ? "light" : "dark";
+  const theme = state.theme === "light" ?"light" : "dark";
   state.theme = theme;
   document.documentElement.dataset.theme = theme;
   document.documentElement.classList.toggle("dark", theme === "dark");
   localStorage.setItem("uiTheme", theme);
   document.querySelectorAll("[data-theme-label]").forEach((node) => {
-    node.textContent = theme === "dark" ? t("theme.light") : t("theme.dark");
+    node.textContent = theme === "dark" ?t("theme.light") : t("theme.dark");
   });
   document.querySelectorAll("[data-toggle-theme]").forEach((button) => {
-    button.setAttribute("aria-pressed", theme === "light" ? "true" : "false");
+    button.setAttribute("aria-pressed", theme === "light" ?"true" : "false");
   });
 }
 
@@ -1003,7 +1003,7 @@ function inferActionIcon(button) {
   if (dataset.deleteActivity || text.includes("excluir") || text.includes("remover")) return "delete";
   if (dataset.recalculateDashboard || text.includes("recalcular") || text.includes("atualizar")) return "refresh";
   if (dataset.importDemo || text.includes("importar")) return "import";
-  if (dataset.testOpenai || text.includes("ia") || text.includes("anÃ¡lise")) return "ai";
+  if (dataset.testOpenai || text.includes("ia") || text.includes("análise")) return "ai";
   if (text.includes("buscar") || text.includes("search")) return "search";
   return "";
 }
@@ -1035,8 +1035,8 @@ function enhanceSystemControls() {
     const key = button.dataset.calendarView
       || button.dataset.adminMode
       || button.dataset.workoutMode
-      || (button.matches("[data-open-workout-builder]") ? "workout" : "")
-      || (button.matches("[data-open-bulk-activity-editor]") ? "bulk" : "single");
+      || (button.matches("[data-open-workout-builder]") ?"workout" : "")
+      || (button.matches("[data-open-bulk-activity-editor]") ?"bulk" : "single");
     button.dataset.controlEnhanced = "1";
     button.classList.add("system-control-button");
     button.innerHTML = `${controlIconSvg(key)}<span>${escapeHtml(label)}</span>`;
@@ -1074,7 +1074,7 @@ async function logoutUser() {
   try {
     await api("/api/logout", { method: "POST", body: JSON.stringify({}) });
   } catch {
-    // Mesmo se a sessÃ£o jÃ¡ tiver expirado, a interface deve voltar para a entrada.
+    // Mesmo se a sessão já tiver expirado, a interface deve voltar para a entrada.
   }
   state.currentUser = null;
   state.athletes = [];
@@ -1317,6 +1317,43 @@ function riegelTime(testSeconds, testMeters, targetMeters, exponent = 1.06) {
   return testSeconds * Math.pow(targetMeters / testMeters, exponent);
 }
 
+const worldClassFloorSeconds = {
+  1000: 131,
+  1500: 206,
+  3000: 439,
+  5000: 755,
+  10000: 1571,
+  21097.5: 3450,
+  42195: 7209
+};
+
+const longProjectionPaceFloors = {
+  middle: [
+    [5000, 1.12],
+    [10000, 1.32],
+    [21097.5, 1.58],
+    [42195, 1.95]
+  ],
+  balanced: [
+    [5000, 1.09],
+    [10000, 1.23],
+    [21097.5, 1.43],
+    [42195, 1.72]
+  ],
+  distance: [
+    [5000, 1.07],
+    [10000, 1.18],
+    [21097.5, 1.34],
+    [42195, 1.58]
+  ],
+  ultra: [
+    [5000, 1.08],
+    [10000, 1.18],
+    [21097.5, 1.30],
+    [42195, 1.45]
+  ]
+};
+
 const enduranceProfiles = {
   balanced: {
     label: "Equilibrado",
@@ -1369,6 +1406,14 @@ function profileAdjustedTime(testSeconds, testMeters, targetMeters, profileKey =
   if (targetMeters > testMeters) seconds *= profile.enduranceBias;
   if (profileKey === "middle" && targetMeters > 5000) seconds *= 1 + Math.min(0.1, Math.log2(targetMeters / 5000) * 0.025);
   if (profileKey === "ultra" && targetMeters < 3000) seconds *= 1.015;
+  if (targetMeters > testMeters) {
+    const testPace = testSeconds / (testMeters / 1000);
+    const floors = longProjectionPaceFloors[profileKey] || longProjectionPaceFloors.balanced;
+    const matchedFloor = floors.find(([meters]) => targetMeters <= meters)?.[1] || floors[floors.length - 1][1];
+    seconds = Math.max(seconds, testPace * matchedFloor * (targetMeters / 1000));
+  }
+  const worldFloor = worldClassFloorSeconds[targetMeters];
+  if (worldFloor) seconds = Math.max(seconds, worldFloor * 1.01);
   return seconds;
 }
 
@@ -1468,12 +1513,12 @@ function renderTestHistory() {
   }
   list.innerHTML = tests.map((test) => {
     const isReference = String(test.id) === String(state.referenceTestId);
-    const label = test.type === "vo2" ? "VO2 real" : `Teste de ${test.distanceMeters}m`;
-    const value = test.type === "vo2" ? `${Number(test.vo2Value || 0).toFixed(1)} ml/kg/min` : formatDuration(test.seconds);
+    const label = test.type === "vo2" ?"VO2 real" : `Teste de ${test.distanceMeters}m`;
+    const value = test.type === "vo2" ?`${Number(test.vo2Value || 0).toFixed(1)} ml/kg/min` : formatDuration(test.seconds);
     return `
       <article class="test-history-card ${isReference ?"is-reference" : ""}" data-view-test-result="${escapeHtml(test.id)}" tabindex="0" role="button">
         <div class="test-history-main">
-          <span>${escapeHtml(label)}${isReference ? " - referência" : ""}</span>
+          <span>${escapeHtml(label)}${isReference ?" - referência" : ""}</span>
           <strong>${escapeHtml(value)}</strong>
           <p>${escapeHtml(test.date || "--")} ${test.athleteProfile ?`- ${enduranceProfiles[test.athleteProfile]?.label || "Equilibrado"}` : ""} ${test.notes ?`- ${test.notes}` : ""}</p>
         </div>
@@ -1491,8 +1536,16 @@ function renderTestsView() {
   });
   const form = document.querySelector("#performanceTestForm");
   if (form) {
-    form.querySelectorAll(".field-race-time").forEach((field) => field.hidden = state.testMode === "vo2");
-    form.querySelectorAll(".field-vo2-real").forEach((field) => field.hidden = state.testMode !== "vo2");
+    form.querySelectorAll(".field-race-time").forEach((field) => {
+      const hidden = state.testMode === "vo2";
+      field.hidden = hidden;
+      field.style.display = hidden ? "none" : "";
+    });
+    form.querySelectorAll(".field-vo2-real").forEach((field) => {
+      const hidden = state.testMode !== "vo2";
+      field.hidden = hidden;
+      field.style.display = hidden ? "none" : "";
+    });
     if (!form.elements.testDate.value) form.elements.testDate.value = dateKey(new Date());
   }
   renderTestHistory();
@@ -1520,12 +1573,11 @@ function buildPerformanceTestFromForm(form) {
   const mode = state.testMode;
   const test = {
     id: `test-${Date.now()}`,
-    type: mode === "vo2" ? "vo2" : "field",
-    distanceMeters: mode === "vo2" ? 0 : Number(mode),
-    seconds: mode === "vo2" ? 0 : parseDurationToSeconds(form.elements.testTime.value),
-    vo2Value: mode === "vo2" ? Number(form.elements.vo2Value.value || 0) : 0,
+    type: mode === "vo2" ?"vo2" : "field",
+    distanceMeters: mode === "vo2" ?0 : Number(mode),
+    seconds: mode === "vo2" ?0 : parseDurationToSeconds(form.elements.testTime.value),
+    vo2Value: mode === "vo2" ?Number(form.elements.vo2Value.value || 0) : 0,
     athleteProfile: form.elements.athleteProfile?.value || "balanced",
-    weightKg: Number(form.elements.weightKg.value || 0),
     date: form.elements.testDate.value || dateKey(new Date()),
     notes: form.elements.notes.value.trim()
   };
@@ -1784,7 +1836,7 @@ function activityMovingSeconds(activity) {
 }
 
 function activityStatus(activity) {
-  return String(activity.status || activity.raw?.status || "").toLowerCase() === "planned" ? "planned" : "executed";
+  return String(activity.status || activity.raw?.status || "").toLowerCase() === "planned" ?"planned" : "executed";
 }
 
 function isExecutedActivity(activity) {
@@ -1883,10 +1935,10 @@ function renderFocusProjection() {
       <div class="focus-projection-empty">
         <span>Prova foco</span>
         <strong>Defina a prova foco do atleta</strong>
-        <p>Informe distÃ¢ncia, tempo alvo e data no cadastro para ativar a projeÃ§Ã£o.</p>
+        <p>Informe distância, tempo alvo e data no cadastro para ativar a projeção.</p>
       </div>
     `;
-    mountCollapsibleSection(target, "focusProjection", "ProjeÃ§Ã£o da prova foco");
+    mountCollapsibleSection(target, "focusProjection", "Projeção da prova foco");
     return;
   }
 
@@ -1909,24 +1961,24 @@ function renderFocusProjection() {
     : "sem tempos importados";
   const dateLabel = athlete.targetDate
     ?new Date(`${athlete.targetDate}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })
-    : "data nÃ£o definida";
+    : "data não definida";
 
   target.innerHTML = `
     <div class="focus-projection-head">
       <div>
-        <p class="kicker">ProjeÃ§Ã£o da prova foco</p>
+        <p class="kicker">Projeção da prova foco</p>
         <h3>${escapeHtml(focusDistanceLabels[focusMeters] || `${focusMeters} m`)}</h3>
       </div>
       <strong>${escapeHtml(projectedSeconds ?formatDurationSeconds(projectedSeconds) : "--")}</strong>
     </div>
     <div class="focus-projection-grid">
       <div><span>Tempo alvo</span><strong>${escapeHtml(targetSeconds ?formatDurationSeconds(targetSeconds) : "--")}</strong><p>${escapeHtml(dateLabel)}</p></div>
-      <div><span>DiferenÃ§a</span><strong>${escapeHtml(gapLabel)}</strong><p>comparado com a projeÃ§Ã£o atual</p></div>
+      <div><span>Diferença</span><strong>${escapeHtml(gapLabel)}</strong><p>comparado com a projeção atual</p></div>
       <div><span>Melhor 90 dias</span><strong>${escapeHtml(bestRecentLabel)}</strong><p>${escapeHtml(`tempos: ${recentTimesLabel}`)}</p></div>
       <div><span>Modelo</span><strong>Riegel + 11TSS</strong><p>corridas reais e best efforts do Strava</p></div>
     </div>
   `;
-  mountCollapsibleSection(target, "focusProjection", "ProjeÃ§Ã£o da prova foco");
+  mountCollapsibleSection(target, "focusProjection", "Projeção da prova foco");
 }
 
 function collect3000Tests(athlete) {
@@ -1949,7 +2001,7 @@ function collect3000Tests(athlete) {
       source: `Strava: ${activity.title}`,
       origin: "Strava",
       title: activity.title || "Teste de 3000 m",
-      details: `${activity.distance || "--"} Â· ${activity.duration || "--"} Â· ${activity.description || "atividade importada"}`
+      details: `${activity.distance || "--"} · ${activity.duration || "--"} · ${activity.description || "atividade importada"}`
     }))
     .filter((test) => test.seconds);
   const fromActivities = visibleActivities()
@@ -1964,7 +2016,7 @@ function collect3000Tests(athlete) {
           source: `Strava auto: ${activity.title}`,
           origin: "Strava auto",
           title: activity.title || "Teste de 3000 m",
-          details: `${activity.distance || "--"} Â· ${activity.duration || "--"} Â· melhor esforÃ§o importado`
+          details: `${activity.distance || "--"} · ${activity.duration || "--"} · melhor esforço importado`
         }));
     })
     .filter((test) => test.seconds);
@@ -2050,12 +2102,12 @@ function renderFocusRoadmap() {
   if (!athlete || !model.focusMeters || !model.targetSeconds || !model.targetDate) {
     target.innerHTML = `
       <div class="focus-projection-empty">
-        <span>Caminho atÃ© a prova</span>
+        <span>Caminho até a prova</span>
         <strong>Configure prova foco, tempo alvo e data</strong>
-        <p>A projeÃ§Ã£o usa 11TSS, volume, consistÃªncia, testes de 3000 m e histÃ³rico do atleta.</p>
+        <p>A projeção usa 11TSS, volume, consistência, testes de 3000 m e histórico do atleta.</p>
       </div>
     `;
-    mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva atÃ© a prova");
+    mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva até a prova");
     return;
   }
   const width = 920;
@@ -2067,20 +2119,20 @@ function renderFocusRoadmap() {
   const startX = pad.left;
   const todayX = model.daysToRace ?startX + Math.min(1, Math.max(0, 0)) * (endX - startX) : startX;
   const targetLabel = model.targetDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-  const aiText = state.aiProjection?.text || "A anÃ¡lise preditiva considera carga 11TSS, distribuiÃ§Ã£o de intensidade, regularidade, recÃªncia dos testes de 3000 m e histÃ³rico clÃ­nico/operacional informado.";
+  const aiText = state.aiProjection?.text || "A análise preditiva considera carga 11TSS, distribuição de intensidade, regularidade, recência dos testes de 3000 m e histórico clínico/operacional informado.";
   target.innerHTML = `
     <div class="roadmap-head">
       <div>
-        <p class="kicker">Rota preditiva atÃ© a prova</p>
-        <h3>${escapeHtml(focusDistanceLabels[model.focusMeters] || `${model.focusMeters} m`)}: projeÃ§Ã£o atual para tempo alvo</h3>
+        <p class="kicker">Rota preditiva até a prova</p>
+        <h3>${escapeHtml(focusDistanceLabels[model.focusMeters] || `${model.focusMeters} m`)}: projeção atual para tempo alvo</h3>
       </div>
       <div class="probability-badge"><strong>${model.probability || "--"}%</strong><span>probabilidade</span></div>
     </div>
     <div class="roadmap-grid">
-      <div class="roadmap-metric"><span>ProjeÃ§Ã£o atual</span><strong>${escapeHtml(formatDurationSeconds(model.currentSeconds))}</strong><p>${escapeHtml(model.status)}</p></div>
+      <div class="roadmap-metric"><span>Projeção atual</span><strong>${escapeHtml(formatDurationSeconds(model.currentSeconds))}</strong><p>${escapeHtml(model.status)}</p></div>
       <div class="roadmap-metric"><span>Tempo alvo</span><strong>${escapeHtml(formatDurationSeconds(model.targetSeconds))}</strong><p>${escapeHtml(targetLabel)} - ${model.daysToRace} dias</p></div>
-      <div class="roadmap-metric"><span>Ganho necessÃ¡rio</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong><p>${escapeHtml(formatDurationSeconds(model.requiredPerWeek))} por semana</p></div>
-      <div class="roadmap-metric"><span>Base recente</span><strong>${escapeHtml(formatKm(model.volume30))}</strong><p>${model.weeklySessions.toFixed(1)} sessÃµes/semana ${model.historyRisk ?"- atenÃ§Ã£o ao histÃ³rico" : ""}</p></div>
+      <div class="roadmap-metric"><span>Ganho necessário</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong><p>${escapeHtml(formatDurationSeconds(model.requiredPerWeek))} por semana</p></div>
+      <div class="roadmap-metric"><span>Base recente</span><strong>${escapeHtml(formatKm(model.volume30))}</strong><p>${model.weeklySessions.toFixed(1)} sessões/semana ${model.historyRisk ?"- atenção ao histórico" : ""}</p></div>
     </div>
     <div class="roadmap-chart">
       <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Caminho preditivo ate a prova">
@@ -2094,9 +2146,9 @@ function renderFocusRoadmap() {
       </svg>
     </div>
     <p class="roadmap-ai">${escapeHtml(aiText)}</p>
-    <div class="roadmap-actions"><button class="secondary-action compact" type="button" data-refresh-ai>Atualizar anÃ¡lise IA</button></div>
+    <div class="roadmap-actions"><button class="secondary-action compact" type="button" data-refresh-ai>Atualizar análise IA</button></div>
   `;
-  mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva atÃ© a prova");
+  mountCollapsibleSection(target, "focusRoadmap", "Rota preditiva até a prova");
 }
 
 function goalAsAthlete(goal) {
@@ -2122,7 +2174,7 @@ function isPastGoal(goal) {
 }
 
 function goalDateLabel(goal) {
-  if (!goal.raceDate) return "data nÃ£o definida";
+  if (!goal.raceDate) return "data não definida";
   return new Date(`${goal.raceDate}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
@@ -2277,7 +2329,7 @@ function renderGoalCard(goal, resultMode = false) {
   const analysis = resultMode
     ?actualSeconds
       ?`Resultado ${detectedResult ?`detectado em ${detectedResult.title}` : "registrado"}: ${gapLabel}.`
-      : "Data da prova vencida. Registre o resultado para gerar a anÃ¡lise versus objetivo."
+      : "Data da prova vencida. Registre o resultado para gerar a análise versus objetivo."
     : `${protocol?.status || "Dados insuficientes"} - ${protocolProbability || 0}% pela faixa tangivel.`;
   return `
     <article class="goal-card ${resultMode ?"goal-card-result" : ""}">
@@ -2291,9 +2343,9 @@ function renderGoalCard(goal, resultMode = false) {
       </div>
       <div class="goal-metrics">
         <div><span>Tempo alvo</span><strong>${escapeHtml(formatDurationSeconds(targetSeconds))}</strong></div>
-        <div><span>DiferenÃ§a</span><strong>${escapeHtml(gapLabel)}</strong></div>
+        <div><span>Diferença</span><strong>${escapeHtml(gapLabel)}</strong></div>
         <div><span>Probabilidade tangivel</span><strong>${protocolProbability || "--"}%</strong></div>
-        <div><span>Ganho necessÃ¡rio</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong></div>
+        <div><span>Ganho necessário</span><strong>${escapeHtml(formatDurationSeconds(model.requiredGain))}</strong></div>
       </div>
       ${goalProjectionRoute(goal, model, resultMode && actualSeconds ?actualSeconds : 0)}
       <p class="goal-analysis">${escapeHtml(analysis)}</p>
@@ -2321,7 +2373,7 @@ function renderGoals() {
     : `<div class="empty-state">Nenhum objetivo ativo. Adicione uma prova foco para gerar a rota preditiva.</div>`;
   resultTarget.innerHTML = results.length
     ?results.map((goal) => renderGoalCard(goal, true)).join("")
-    : `<div class="empty-state">Objetivos vencidos aparecerÃ£o aqui com a anÃ¡lise do resultado versus meta.</div>`;
+    : `<div class="empty-state">Objetivos vencidos aparecerão aqui com a análise do resultado versus meta.</div>`;
 }
 
 function setGoalMessage(message, error = false) {
@@ -2346,7 +2398,7 @@ async function saveGoal(event) {
     setGoalMessage("Informe uma data valida para a prova.", true);
     return;
   }
-  if (!window.confirm(goalId ?"Confirmar alteraÃ§Ã£o deste objetivo?" :"Confirmar criaÃ§Ã£o deste objetivo?")) return;
+  if (!window.confirm(goalId ?"Confirmar alteração deste objetivo?" :"Confirmar criação deste objetivo?")) return;
   try {
     setGoalMessage("Salvando objetivo...");
     const payload = await api(goalId ?`/api/goals/${encodeURIComponent(goalId)}` : "/api/goals", {
@@ -2360,7 +2412,7 @@ async function saveGoal(event) {
     renderDashboard();
     setGoalMessage(goalId ?"Objetivo atualizado." :"Objetivo salvo.");
   } catch (error) {
-    setGoalMessage(error.message || "NÃ£o foi possÃ­vel salvar o objetivo.", true);
+    setGoalMessage(error.message || "Não foi possível salvar o objetivo.", true);
   }
 }
 
@@ -2403,11 +2455,11 @@ function renderAthleteFocusHistory() {
   const tests = collect3000Tests(athlete);
   const times = tests.map((item) => `
     <strong>${escapeHtml(formatDurationSeconds(item.seconds))}</strong>
-    <small>${escapeHtml(item.title || item.source || "teste")} Â· ${escapeHtml(item.date ?item.date.toLocaleDateString("pt-BR") : "")} Â· ${escapeHtml(item.origin || "Manual")}</small>
+    <small>${escapeHtml(item.title || item.source || "teste")} · ${escapeHtml(item.date ?item.date.toLocaleDateString("pt-BR") : "")} · ${escapeHtml(item.origin || "Manual")}</small>
   `).join("");
   target.innerHTML = `
-    <span>Ãšltimos 3 testes de 3000 m (flag/manual/auto)</span>
-    <div>${times || "<p>Nenhum teste de 3000 m disponÃ­vel.</p>"}</div>
+    <span>Últimos 3 testes de 3000 m (flag/manual/auto)</span>
+    <div>${times || "<p>Nenhum teste de 3000 m disponível.</p>"}</div>
   `;
 }
 
@@ -2441,9 +2493,9 @@ function renderTrainingInsights() {
   const last7 = activitiesSince(7);
   if (!last30.length) {
     target.innerHTML = `
-      <article><span>DistribuiÃ§Ã£o</span><strong>Sem dados</strong><p>Importe atividades reais do atleta selecionado.</p></article>
-      <article><span>Risco</span><strong>Sem dados</strong><p>A avaliaÃ§Ã£o depende do histÃ³rico importado.</p></article>
-      <article><span>PrÃ³xima aÃ§Ã£o</span><strong>Conectar fonte</strong><p>Conecte Strava ou outra plataforma antes de gerar recomendaÃ§Ãµes.</p></article>
+      <article><span>Distribuição</span><strong>Sem dados</strong><p>Importe atividades reais do atleta selecionado.</p></article>
+      <article><span>Risco</span><strong>Sem dados</strong><p>A avaliação depende do histórico importado.</p></article>
+      <article><span>Próxima ação</span><strong>Conectar fonte</strong><p>Conecte Strava ou outra plataforma antes de gerar recomendações.</p></article>
     `;
     return;
   }
@@ -2457,17 +2509,17 @@ function renderTrainingInsights() {
   const weeklyAverage = km30 / 4.285;
   const ratio = weeklyAverage ?km7 / weeklyAverage : 0;
   const risk = ratio > 1.35 ?"Alto" : ratio < 0.55 ?"Baixa carga" : "Controlado";
-  const action = risk === "Alto" ?"Reduzir carga" : risk === "Baixa carga" ?"Retomar volume" : "Manter progressÃ£o";
+  const action = risk === "Alto" ?"Reduzir carga" : risk === "Baixa carga" ?"Retomar volume" : "Manter progressão";
   const detail = risk === "Alto"
-    ?"A semana atual estÃ¡ acima da mÃ©dia recente."
+    ?"A semana atual está acima da média recente."
     : risk === "Baixa carga"
-      ?"A semana atual estÃ¡ abaixo da mÃ©dia recente."
-      : "A semana estÃ¡ compatÃ­vel com o histÃ³rico recente.";
+      ?"A semana atual está abaixo da média recente."
+      : "A semana está compatível com o histórico recente.";
 
   target.innerHTML = `
-    <article><span>DistribuiÃ§Ã£o</span><strong>${easy} / ${moderate} / ${hard}</strong><p>Leve, moderado e intenso nos Ãºltimos 30 dias.</p></article>
+    <article><span>Distribuição</span><strong>${easy} / ${moderate} / ${hard}</strong><p>Leve, moderado e intenso nos últimos 30 dias.</p></article>
     <article><span>Risco</span><strong>${escapeHtml(risk)}</strong><p>${escapeHtml(detail)}</p></article>
-    <article><span>PrÃ³xima aÃ§Ã£o</span><strong>${escapeHtml(action)}</strong><p>Baseado em ${last30.length} atividades importadas.</p></article>
+    <article><span>Próxima ação</span><strong>${escapeHtml(action)}</strong><p>Baseado em ${last30.length} atividades importadas.</p></article>
   `;
 }
 
@@ -2496,7 +2548,7 @@ function renderDashboard() {
 
   highlightTarget.innerHTML = `
     <article class="dashboard-metric-card"><span>Volume 30 dias</span><strong>${escapeHtml(formatKm(volume30))}</strong><p>${recent.length} atividades importadas</p></article>
-    <article class="dashboard-metric-card"><span>Volume semanal</span><strong>${escapeHtml(formatKm(week.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0)))}</strong><p>${week.length} sessÃµes nos Ãºltimos 7 dias</p></article>
+    <article class="dashboard-metric-card"><span>Volume semanal</span><strong>${escapeHtml(formatKm(week.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0)))}</strong><p>${week.length} sessões nos últimos 7 dias</p></article>
     <article class="dashboard-metric-card"><span>11TSS 30 dias</span><strong>${Math.round(tss30)}</strong><p>Carga acumulada recente</p></article>
     <article class="dashboard-metric-card"><span>Destaque</span><strong>${escapeHtml(bestLoad?.title || "--")}</strong><p>${bestLoad ?`${activityTss(bestLoad)} 11TSS` : "Sem atividade recente"}</p></article>
   `;
@@ -2514,7 +2566,7 @@ function renderDashboard() {
 
   typeTarget.innerHTML = Object.keys(types).length
     ?Object.entries(types).map(([type, count]) => `<article class="type-pill"><span>${escapeHtml(type)}</span><strong>${count}</strong></article>`).join("")
-    : `<div class="empty-state">Classifique treinos para alimentar a distribuiÃ§Ã£o.</div>`;
+    : `<div class="empty-state">Classifique treinos para alimentar a distribuição.</div>`;
 
   goalTarget.innerHTML = activeGoals.length
     ?activeGoals.slice(0, 4).map((goal) => {
@@ -2538,11 +2590,11 @@ function openProfileDialog() {
   target.innerHTML = `
     <section class="modal-panel is-compact" id="profileModalPanel">
       <div class="section-title">
-        <span>PreferÃªncias</span>
+        <span>Preferências</span>
         <h3>Meu perfil</h3>
       </div>
       <div class="profile-summary">
-        <strong>${escapeHtml(athlete?.name || state.currentUser?.name || "UsuÃ¡rio")}</strong>
+        <strong>${escapeHtml(athlete?.name || state.currentUser?.name || "Usuário")}</strong>
         <p>${escapeHtml(formatAthleteMeta(athlete))}</p>
       </div>
       <label class="credential-field">
@@ -2551,8 +2603,8 @@ function openProfileDialog() {
       </label>
       <div class="modal-expanded-content">
         <p>E-mail: ${escapeHtml(athlete?.email || state.currentUser?.email || "--")}</p>
-        <p>Equipe: ${escapeHtml(athlete?.teamName || "NÃ£o tenho")}</p>
-        <p>Treinador: ${escapeHtml(athlete?.coachName || "NÃ£o tenho")}</p>
+        <p>Equipe: ${escapeHtml(athlete?.teamName || "Não tenho")}</p>
+        <p>Treinador: ${escapeHtml(athlete?.coachName || "Não tenho")}</p>
       </div>
       <div class="provider-actions">
         <button class="secondary-action compact" type="button" data-expand-profile>${escapeHtml(t("profile.expand"))}</button>
@@ -2570,8 +2622,8 @@ function openHistoryDialog() {
   target.innerHTML = `
     <section class="modal-panel">
       <div class="section-title">
-        <span>HistÃ³rico</span>
-        <h3>Ãšltimos 3 testes de 3000 m</h3>
+        <span>Histórico</span>
+        <h3>Últimos 3 testes de 3000 m</h3>
       </div>
       <div class="timeline-list">
         ${tests.length ?tests.map((test) => `
@@ -2582,7 +2634,7 @@ function openHistoryDialog() {
             <small>${escapeHtml(test.details || "")}</small>
             <small>${escapeHtml(test.date ?test.date.toLocaleDateString("pt-BR") : "sem data")}</small>
           </article>
-        `).join("") : `<div class="empty-state">Nenhum teste de 3000 m disponÃ­vel.</div>`}
+        `).join("") : `<div class="empty-state">Nenhum teste de 3000 m disponível.</div>`}
       </div>
     </section>
   `;
@@ -2593,11 +2645,11 @@ function workoutRows(count) {
   return Array.from({ length: count }, (_, index) => `
     <div class="workout-row" data-workout-row>
       <label class="credential-field"><span>Data</span><input name="date" type="date" /></label>
-      <label class="credential-field"><span>HorÃ¡rio</span><input name="scheduledTime" type="time" /></label>
+      <label class="credential-field"><span>Horário</span><input name="scheduledTime" type="time" /></label>
       <label class="credential-field"><span>Status</span><select name="status"><option value="executed">Executado</option><option value="planned">Planejado</option></select></label>
-      <label class="credential-field"><span>TÃ­tulo</span><input name="title" placeholder="Treino ${index + 1}" /></label>
-      <label class="credential-field"><span>DistÃ¢ncia</span><input name="distance" placeholder="8 km" /></label>
-      <label class="credential-field"><span>DescriÃ§Ã£o</span><input name="description" placeholder="Objetivo, ritmo, observaÃ§Ãµes" /></label>
+      <label class="credential-field"><span>Título</span><input name="title" placeholder="Treino ${index + 1}" /></label>
+      <label class="credential-field"><span>Distância</span><input name="distance" placeholder="8 km" /></label>
+      <label class="credential-field"><span>Descrição</span><input name="description" placeholder="Objetivo, ritmo, observações" /></label>
       <label class="credential-field"><span>Tipo</span><select name="trainingType">${trainingTypeOptionsHtml("Treino")}</select></label>
     </div>
   `).join("");
@@ -2617,7 +2669,7 @@ function workoutStepTemplate(step = {}) {
         ].map(([value, label]) => `<option value="${value}" ${value === kind ?"selected" : ""}>${label}</option>`).join("")}
       </select></label>
       <label><span>Nome</span><input name="label" value="${escapeHtml(step.label || "")}" placeholder="Ex.: 6x800m" /></label>
-      <label><span>Medida</span><select name="durationType"><option value="time">Tempo</option><option value="distance" ${step.durationType === "distance" ?"selected" : ""}>DistÃ¢ncia</option></select></label>
+      <label><span>Medida</span><select name="durationType"><option value="time">Tempo</option><option value="distance" ${step.durationType === "distance" ?"selected" : ""}>Distância</option></select></label>
       <label><span>Valor</span><input name="durationValue" value="${escapeHtml(step.durationValue || "")}" placeholder="Ex.: 10min ou 800m" /></label>
       <label><span>Alvo</span><input name="target" value="${escapeHtml(step.target || "")}" placeholder="Ex.: 3:40/km, Z4" /></label>
       <button class="danger-action" type="button" data-remove-workout-step>Remover</button>
@@ -2691,12 +2743,12 @@ function openWorkoutDialog() {
       <div class="segmented workout-mode-switch">
         <button class="is-active" type="button" data-workout-mode="single">Avulso</button>
         <button type="button" data-workout-mode="week">Semana</button>
-        <button type="button" data-workout-mode="month">MÃªs</button>
-        <button type="button" data-workout-mode="audio">Ãudio</button>
+        <button type="button" data-workout-mode="month">Mês</button>
+        <button type="button" data-workout-mode="audio">Áudio</button>
       </div>
       <form id="workoutBuilderForm" class="workout-builder-form" data-mode="single">
         <div class="workout-range">
-          <label class="credential-field"><span>Data de inÃ­cio</span><input name="startDate" type="date" /></label>
+          <label class="credential-field"><span>Data de início</span><input name="startDate" type="date" /></label>
           <label class="credential-field"><span>Data de fim</span><input name="endDate" type="date" /></label>
         </div>
         <div id="workoutRows" class="workout-day-list">${workoutRows(1)}</div>
@@ -2704,7 +2756,7 @@ function openWorkoutDialog() {
           <div class="workout-structure-head">
             <div>
               <span>Bloco estruturado</span>
-              <strong>Modelo para relÃ³gio e execuÃ§Ã£o</strong>
+              <strong>Modelo para relógio e execução</strong>
             </div>
             <div class="workout-structure-actions">
               <label class="toggle-field"><input name="useWorkoutPlan" type="checkbox" checked /> Usar bloco</label>
@@ -2714,7 +2766,7 @@ function openWorkoutDialog() {
           <div class="workout-plan-body" data-workout-plan-body>
           <div class="workout-plan-meta">
             <label class="credential-field"><span>Nome do bloco</span><input name="workoutPlanName" value="Treino estruturado 11RUN" /></label>
-            <label class="credential-field"><span>ObservaÃ§Ãµes do bloco</span><input name="workoutPlanNotes" placeholder="Ex.: controlar recuperaÃ§Ã£o, FC, terreno" /></label>
+            <label class="credential-field"><span>Observações do bloco</span><input name="workoutPlanNotes" placeholder="Ex.: controlar recuperação, FC, terreno" /></label>
           </div>
           <div id="workoutStepList" class="workout-step-list">
             ${defaultWorkoutSteps().map(workoutStepTemplate).join("")}
@@ -2723,8 +2775,8 @@ function openWorkoutDialog() {
         </div>
         <div id="audioWorkoutArea" class="audio-workout-area" hidden>
           <label class="credential-field wide-field">
-            <span>Ãudio ou transcriÃ§Ã£o</span>
-            <textarea name="audioNotes" rows="4" placeholder="Arquitetura preparada para transcriÃ§Ã£o. Por enquanto, cole ou descreva o treino para salvar como rascunho estruturado."></textarea>
+            <span>Áudio ou transcrição</span>
+            <textarea name="audioNotes" rows="4" placeholder="Arquitetura preparada para transcrição. Por enquanto, cole ou descreva o treino para salvar como rascunho estruturado."></textarea>
           </label>
         </div>
         <button class="primary-action compact" type="submit" data-save-workout>Salvar treino</button>
@@ -2755,12 +2807,12 @@ async function saveManualWorkout(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const mode = form.dataset.mode || "single";
-  if (!window.confirm(mode === "week" ?"Confirmar criaÃ§Ã£o da semana de treinos?" : mode === "month" ?"Confirmar criaÃ§Ã£o do mÃªs de treinos?" : "Confirmar cadastro deste treino?")) return;
+  if (!window.confirm(mode === "week" ?"Confirmar criação da semana de treinos?" : mode === "month" ?"Confirmar criação do mês de treinos?" : "Confirmar cadastro deste treino?")) return;
   const message = document.querySelector("#workoutBuilderMessage");
   const rows = Array.from(form.querySelectorAll("[data-workout-row]"));
   const workoutPlan = readWorkoutPlan(form);
   const activities = mode === "audio"
-    ?[{ date: form.elements.startDate?.value || dateKey(new Date()), title: "Treino por Ã¡udio", description: form.elements.audioNotes?.value || "Entrada preparada para transcriÃ§Ã£o futura.", trainingType: "Treino", status: "planned", workoutPlan }]
+    ?[{ date: form.elements.startDate?.value || dateKey(new Date()), title: "Treino por áudio", description: form.elements.audioNotes?.value || "Entrada preparada para transcrição futura.", trainingType: "Treino", status: "planned", workoutPlan }]
     : rows.map((row) => ({ ...readNamedFields(row), workoutPlan })).filter((item) => item.date || item.title || item.description);
   if (!activities.length) {
     if (message) message.textContent = "Informe pelo menos um treino.";
@@ -2777,7 +2829,7 @@ async function saveManualWorkout(event) {
     renderDashboard();
     if (message) message.textContent = "Treinos salvos.";
   } catch (error) {
-    if (message) message.textContent = error.message || "NÃ£o foi possÃ­vel salvar os treinos.";
+    if (message) message.textContent = error.message || "Não foi possível salvar os treinos.";
   }
 }
 
@@ -2866,7 +2918,7 @@ function openBulkActivityEditor() {
           <span>Treinamentos</span>
           <h3>Editar em lote</h3>
         </div>
-        <button class="primary-action compact" type="button" data-save-bulk-activities>Salvar alteraÃ§Ãµes</button>
+        <button class="primary-action compact" type="button" data-save-bulk-activities>Salvar alterações</button>
       </div>
       <p class="bulk-editor-caption">${rows.length} registros carregados. Edite em linha como uma planilha e salve tudo de uma vez.</p>
       <div class="bulk-activity-table-wrap">
@@ -2877,13 +2929,13 @@ function openBulkActivityEditor() {
               <th>Data</th>
               <th>Hora</th>
               <th>Status</th>
-              <th>TÃ­tulo</th>
-              <th>DistÃ¢ncia</th>
+              <th>Título</th>
+              <th>Distância</th>
               <th>Tempo</th>
               <th>Pace</th>
               <th>11TSS</th>
               <th>Tipo</th>
-              <th>DescriÃ§Ã£o</th>
+              <th>Descrição</th>
             </tr>
           </thead>
           <tbody>${rows.map(bulkActivityRow).join("")}</tbody>
@@ -2909,7 +2961,7 @@ async function saveBulkActivities() {
     button.disabled = true;
     button.textContent = "Salvando...";
   }
-  if (message) message.textContent = "Salvando alteraÃ§Ãµes em lote...";
+  if (message) message.textContent = "Salvando alterações em lote...";
   try {
     const payload = await api("/api/activities/bulk", {
       method: "POST",
@@ -2921,11 +2973,11 @@ async function saveBulkActivities() {
     renderTrainingInsights();
     if (message) message.textContent = `Salvo: ${activities.length} registros atualizados.`;
   } catch (error) {
-    if (message) message.textContent = error.message || "NÃ£o foi possÃ­vel salvar em lote.";
+    if (message) message.textContent = error.message || "Não foi possível salvar em lote.";
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = "Salvar alteraÃ§Ãµes";
+      button.textContent = "Salvar alterações";
     }
   }
 }
@@ -2999,7 +3051,7 @@ function dashboardTrendSvg(series) {
   const dayTicks = series
     .map((item, index) => {
       const strong = index === 0 || index === series.length - 1 || item.date.getDate() === 1;
-      return `<text class="dash-day-label${strong ? " is-strong" : ""}" x="${xFor(index).toFixed(1)}" y="${height - 16}" text-anchor="middle">${escapeHtml(item.label)}</text>`;
+      return `<text class="dash-day-label${strong ?" is-strong" : ""}" x="${xFor(index).toFixed(1)}" y="${height - 16}" text-anchor="middle">${escapeHtml(item.label)}</text>`;
     })
     .join("");
   const nodes = volumePoints
@@ -3496,12 +3548,12 @@ function buildPerformanceDossier(athlete = getActiveAthlete()) {
   const injuryRisk = Math.max(0, Math.min(100, riskEntries.length * 16 + Math.max(0, volumeTrend - 20) * 0.7 + (fatigueScore > 65 ?18 : 0)));
   const confidence = Math.round(Math.max(42, Math.min(94, 52 + tests.length * 7 + vo2Entries.length * 6 + Math.min(20, recent90.length / 2) - riskEntries.length * 2)));
   const diagnosis = fatigueScore > 70
-    ? "Carga e sinais subjetivos sugerem cautela antes de intensificar."
+    ?"Carga e sinais subjetivos sugerem cautela antes de intensificar."
     : injuryRisk > 55
-      ? "HÃ¡ sinais relevantes de risco fÃ­sico que precisam moderar as projeÃ§Ãµes."
+      ?"Há sinais relevantes de risco físico que precisam moderar as projeções."
       : positiveEntries.length || volumeTrend > 5
-        ? "Momento com sinais de evoluÃ§Ã£o, desde que a recuperaÃ§Ã£o acompanhe a carga."
-        : "Momento neutro, dependente de consistÃªncia e novos marcadores objetivos.";
+        ?"Momento com sinais de evolução, desde que a recuperação acompanhe a carga."
+        : "Momento neutro, dependente de consistência e novos marcadores objetivos.";
   return {
     generatedAt: new Date().toISOString(),
     athleteName: athlete?.name || "Atleta",
@@ -3538,22 +3590,22 @@ function renderHistoryDossier(action = "dossier") {
   const dossier = buildPerformanceDossier(athlete);
   const m = dossier.metrics;
   const heading = {
-    dossier: "DossiÃª cronolÃ³gico gerado",
-    deep: "AnÃ¡lise profunda",
-    projection: "ProjeÃ§Ã£o contextual",
+    dossier: "Dossiê cronológico gerado",
+    deep: "Análise profunda",
+    projection: "Projeção contextual",
     alerts: "Alertas inteligentes",
-    compare: "ComparaÃ§Ã£o de perÃ­odos"
-  }[action] || "DossiÃª cronolÃ³gico";
+    compare: "Comparação de períodos"
+  }[action] || "Dossiê cronológico";
   const alerts = [
-    m.fatigueScore > 70 ? "Risco de fadiga acumulada alto: reduzir densidade de intensidade e observar sono/dor." : "",
-    m.injuryRisk > 55 ? "Risco de lesÃ£o relevante: hÃ¡ registros de dor/lesÃ£o combinados com carga recente." : "",
-    m.volumeTrend > 25 ? "ProgressÃ£o de carga agressiva nos Ãºltimos 30 dias." : "",
-    m.weeklySessions < 3 ? "ConsistÃªncia semanal baixa para projeÃ§Ãµes competitivas confiÃ¡veis." : "",
-    dossier.sections.evolution.length ? "Sinais positivos de evoluÃ§Ã£o registrados no histÃ³rico." : ""
+    m.fatigueScore > 70 ?"Risco de fadiga acumulada alto: reduzir densidade de intensidade e observar sono/dor." : "",
+    m.injuryRisk > 55 ?"Risco de lesão relevante: há registros de dor/lesão combinados com carga recente." : "",
+    m.volumeTrend > 25 ?"Progressão de carga agressiva nos últimos 30 dias." : "",
+    m.weeklySessions < 3 ?"Consistência semanal baixa para projeções competitivas confiáveis." : "",
+    dossier.sections.evolution.length ?"Sinais positivos de evolução registrados no histórico." : ""
   ].filter(Boolean);
   const projection = dossier.vo2
-    ?`VO2 estimado ${dossier.vo2.estimated.toFixed(1)} com confianÃ§a ${dossier.vo2.confidence}%, calibrado pelo Ãºltimo 3000${dossier.latestTest ?` (${formatDurationSeconds(dossier.latestTest.seconds)})` : ""}, carga recente e registros subjetivos.`
-    : "Sem teste de 3000 suficiente para calibrar projeÃ§Ã£o fisiolÃ³gica.";
+    ?`VO2 estimado ${dossier.vo2.estimated.toFixed(1)} com confiança ${dossier.vo2.confidence}%, calibrado pelo último 3000${dossier.latestTest ?` (${formatDurationSeconds(dossier.latestTest.seconds)})` : ""}, carga recente e registros subjetivos.`
+    : "Sem teste de 3000 suficiente para calibrar projeção fisiológica.";
   state.historyTimelineOutput = `
     <article class="history-dossier">
       <div class="section-title">
@@ -3563,16 +3615,16 @@ function renderHistoryDossier(action = "dossier") {
       <div class="history-dossier-grid">
         <small><b>${dossier.entries.length}</b> registros estruturados</small>
         <small><b>${escapeHtml(formatKm(m.volume90))}</b> volume 90 dias</small>
-        <small><b>${m.weeklySessions.toFixed(1)}</b> sessÃµes/semana</small>
+        <small><b>${m.weeklySessions.toFixed(1)}</b> sessões/semana</small>
         <small><b>${Math.round(m.fatigueScore)}%</b> fadiga</small>
-        <small><b>${Math.round(m.injuryRisk)}%</b> risco lesÃ£o</small>
-        <small><b>${m.confidence}%</b> confianÃ§a</small>
+        <small><b>${Math.round(m.injuryRisk)}%</b> risco lesão</small>
+        <small><b>${m.confidence}%</b> confiança</small>
       </div>
-      <p><b>DiagnÃ³stico:</b> ${escapeHtml(dossier.diagnosis)}</p>
-      <p><b>ProjeÃ§Ã£o:</b> ${escapeHtml(projection)}</p>
-      <p><b>ComparaÃ§Ã£o 30 dias:</b> ${escapeHtml(formatKm(m.volume30))} agora vs ${escapeHtml(formatKm(m.previousVolume30))} no perÃ­odo anterior (${m.volumeTrend.toFixed(0)}%).</p>
-      <p><b>Alertas:</b> ${escapeHtml(alerts.join(" ") || "Nenhum alerta crÃ­tico no dossiÃª atual.")}</p>
-      <p><b>PrÃ³ximas aÃ§Ãµes:</b> ${escapeHtml(m.injuryRisk > 55 ? "priorizar recuperaÃ§Ã£o, registrar dor diariamente e evitar novo pico de carga." : "manter registros apÃ³s treinos-chave, atualizar VO2/3000 e comparar blocos semelhantes.")}</p>
+      <p><b>Diagnóstico:</b> ${escapeHtml(dossier.diagnosis)}</p>
+      <p><b>Projeção:</b> ${escapeHtml(projection)}</p>
+      <p><b>Comparação 30 dias:</b> ${escapeHtml(formatKm(m.volume30))} agora vs ${escapeHtml(formatKm(m.previousVolume30))} no período anterior (${m.volumeTrend.toFixed(0)}%).</p>
+      <p><b>Alertas:</b> ${escapeHtml(alerts.join(" ") || "Nenhum alerta crítico no dossiê atual.")}</p>
+      <p><b>Próximas ações:</b> ${escapeHtml(m.injuryRisk > 55 ?"priorizar recuperação, registrar dor diariamente e evitar novo pico de carga." : "manter registros após treinos-chave, atualizar VO2/3000 e comparar blocos semelhantes.")}</p>
     </article>
   `;
   renderHistoryTimelineEditor();
@@ -3602,15 +3654,15 @@ function dashboardVo2Panel(athlete, tests) {
           <span>VO2 estimado</span>
           <strong>--</strong>
         </div>
-        <p>Marque um teste de 3000 m para cruzar performance, treinos recentes e histÃ³rico do perfil.</p>
+        <p>Marque um teste de 3000 m para cruzar performance, treinos recentes e histórico do perfil.</p>
       </aside>
     `;
   }
-  const riskLabel = vo2.riskHits ?`${vo2.riskHits} alerta(s) no histÃ³rico` : "histÃ³rico sem alerta forte";
+  const riskLabel = vo2.riskHits ?`${vo2.riskHits} alerta(s) no histórico` : "histórico sem alerta forte";
   const analysisText = dashboardAnalysis?.aiText || vo2.chronology.summary;
   const analysisMeta = dashboardAnalysis?.generatedAt
     ?isRunning
-      ?"Recalculando anÃ¡lise fisiolÃ³gica"
+      ?"Recalculando análise fisiológica"
       : `Recalculado em ${new Date(dashboardAnalysis.generatedAt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
     : "Aguardando recalculo manual com IA";
   return `
@@ -3619,7 +3671,7 @@ function dashboardVo2Panel(athlete, tests) {
         <div>
           <span>VO2 estimado</span>
           <strong>${vo2.estimated.toFixed(1)}</strong>
-          <p>ml/kg/min - confianÃ§a ${vo2.confidence}%</p>
+          <p>ml/kg/min - confiança ${vo2.confidence}%</p>
         </div>
         <svg viewBox="0 0 140 70" aria-hidden="true">
           <path d="M8 58 C30 12, 48 50, 67 28 S103 38, 132 10"></path>
@@ -3629,12 +3681,12 @@ function dashboardVo2Panel(athlete, tests) {
       <div class="vo2-source-grid">
         <article><span>Teste 3000</span><strong>${vo2.testVo2.toFixed(1)}</strong><p>${escapeHtml(formatDurationSeconds(vo2.lastTest.seconds))}</p></article>
         <article><span>Treinos</span><strong>${vo2.trainingModifier >= 0 ?"+" : ""}${vo2.trainingModifier.toFixed(1)}</strong><p>${escapeHtml(formatKm(vo2.weeklyVolume))}/sem</p></article>
-        <article><span>HistÃ³rico</span><strong>${vo2.historyModifier >= 0 ?"+" : ""}${vo2.historyModifier.toFixed(1)}</strong><p>${escapeHtml(vo2.measuredVo2 ?`VO2 medido ${vo2.measuredVo2}` : riskLabel)}</p></article>
+        <article><span>Histórico</span><strong>${vo2.historyModifier >= 0 ?"+" : ""}${vo2.historyModifier.toFixed(1)}</strong><p>${escapeHtml(vo2.measuredVo2 ?`VO2 medido ${vo2.measuredVo2}` : riskLabel)}</p></article>
       </div>
       <div class="vo2-context-list">
-        <span><b>${vo2.weeklySessions.toFixed(1)}</b> sessÃµes/semana nos Ãºltimos 90 dias</span>
-        <span><b>${escapeHtml(formatKm(vo2.volume30))}</b> volume dos Ãºltimos 30 dias</span>
-        <span><b>${vo2.boostHits}</b> sinal(is) positivos no histÃ³rico cronolÃ³gico</span>
+        <span><b>${vo2.weeklySessions.toFixed(1)}</b> sessões/semana nos últimos 90 dias</span>
+        <span><b>${escapeHtml(formatKm(vo2.volume30))}</b> volume dos últimos 30 dias</span>
+        <span><b>${vo2.boostHits}</b> sinal(is) positivos no histórico cronológico</span>
       </div>
       <div class="vo2-ai-analysis">
         <span>${isRunning ?`<i class="mini-loader" aria-hidden="true"></i>` : ""}${escapeHtml(analysisMeta)}</span>
@@ -3657,20 +3709,20 @@ function buildHomeMotivation() {
   const lastTest = latest3000Test(tests);
   const athleteName = athlete?.name || state.currentUser?.name || "atleta";
   const goalText = nextGoal
-    ?`${nextGoal.title || focusDistanceLabels[nextGoal.distanceM] || "prÃ³xima prova"} em ${goalDateLabel(nextGoal)}`
-    : "o prÃ³ximo objetivo";
+    ?`${nextGoal.title || focusDistanceLabels[nextGoal.distanceM] || "próxima prova"} em ${goalDateLabel(nextGoal)}`
+    : "o próximo objetivo";
   const baseText = recent.length
-    ?`${formatKm(volume30)} nos Ãºltimos 30 dias`
-    : "a base que comeÃ§a hoje";
+    ?`${formatKm(volume30)} nos últimos 30 dias`
+    : "a base que começa hoje";
   const testText = lastTest
-    ?`Ãºltimo 3000 m em ${formatDurationSeconds(lastTest.seconds)}`
+    ?`último 3000 m em ${formatDurationSeconds(lastTest.seconds)}`
     : "primeiro teste de 3000 m ainda por registrar";
   const options = [
-    `${athleteName}, transforme ${baseText} em direÃ§Ã£o clara para ${goalText}.`,
-    `O ciclo jÃ¡ deixou pistas: ${baseText}, ${testText}. Hoje Ã© sobre consistÃªncia inteligente.`,
-    `Treine com precisÃ£o: cada sessÃ£o recente aproxima ${goalText} de um plano executÃ¡vel.`,
-    `Use o histÃ³rico como bÃºssola. ${testText}; o prÃ³ximo passo Ã© consolidar ${baseText}.`,
-    `O objetivo nÃ£o pede pressa, pede leitura. ${goalText} comeÃ§a no treino bem feito de hoje.`
+    `${athleteName}, transforme ${baseText} em direção clara para ${goalText}.`,
+    `O ciclo já deixou pistas: ${baseText}, ${testText}. Hoje é sobre consistência inteligente.`,
+    `Treine com precisão: cada sessão recente aproxima ${goalText} de um plano executável.`,
+    `Use o histórico como bússola. ${testText}; o próximo passo é consolidar ${baseText}.`,
+    `O objetivo não pede pressa, pede leitura. ${goalText} começa no treino bem feito de hoje.`
   ];
   return options[Math.floor(Math.random() * options.length)];
 }
@@ -3687,11 +3739,11 @@ function renderHomeAiMessages() {
   if (!target) return;
   const messages = state.homeAiMessages.length ?state.homeAiMessages : [{
     role: "assistant",
-    content: "Pergunte em linguagem natural sobre treinos, atletas, equipes, objetivos, VO2, testes, dor, carga ou histÃ³rico cronolÃ³gico."
+    content: "Pergunte em linguagem natural sobre treinos, atletas, equipes, objetivos, VO2, testes, dor, carga ou histórico cronológico."
   }];
   target.innerHTML = messages.map((message) => `
     <article class="home-ai-message ${message.role === "user" ?"is-user" : "is-assistant"}">
-      <span>${message.role === "user" ?"VocÃª" : "IA 11RUN"}</span>
+      <span>${message.role === "user" ?"Você" : "IA 11RUN"}</span>
       <p>${escapeHtml(message.content)}</p>
     </article>
   `).join("");
@@ -3713,7 +3765,7 @@ async function askHomeAi(event) {
   state.homeAiMessages.push({ role: "user", content: question });
   input.value = "";
   state.homeAiBusy = true;
-  state.homeAiMessages.push({ role: "assistant", content: "Montando contexto do banco, cruzando atletas, treinos, objetivos e histÃ³rico..." });
+  state.homeAiMessages.push({ role: "assistant", content: "Montando contexto do banco, cruzando atletas, treinos, objetivos e histórico..." });
   renderHomeAiMessages();
   try {
     const payload = await api("/api/ai/chat", {
@@ -3722,7 +3774,7 @@ async function askHomeAi(event) {
     });
     state.homeAiMessages[state.homeAiMessages.length - 1] = {
       role: "assistant",
-      content: payload.text || "NÃ£o encontrei uma resposta textual para essa consulta."
+      content: payload.text || "Não encontrei uma resposta textual para essa consulta."
     };
   } catch (error) {
     state.homeAiMessages[state.homeAiMessages.length - 1] = {
@@ -3783,10 +3835,10 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
         ${dashboardTrendSvg(series)}
       </div>
       <div class="dashboard-metrics">
-        <article class="dashboard-metric-card"><span>Volume mensal mÃ©dio</span><strong>${escapeHtml(formatKm(monthlyAverage))}</strong><p>${recent.length} atividades nos Ãºltimos 90 dias</p></article>
-        <article class="dashboard-metric-card"><span>Volume semanal mÃ©dio</span><strong>${escapeHtml(formatKm(weeklyAverage))}</strong><p>MÃ©dia calculada em 90 dias</p></article>
-        <article class="dashboard-metric-card"><span>11TSS mÃ©dio</span><strong>${Math.round(tssAverage)}</strong><p>MÃ©dia mensal dos Ãºltimos 90 dias</p></article>
-        <article class="dashboard-metric-card"><span>Ãšltimo teste de 3000</span><strong>${escapeHtml(lastTest ?formatDurationSeconds(lastTest.seconds) : "--")}</strong><p>${escapeHtml(lastTest ?`${lastTest.title || lastTest.source || "3000 m"} - ${lastTest.date ?lastTest.date.toLocaleDateString("pt-BR") : "sem data"}` : "Nenhum teste registrado")}</p></article>
+        <article class="dashboard-metric-card"><span>Volume mensal médio</span><strong>${escapeHtml(formatKm(monthlyAverage))}</strong><p>${recent.length} atividades nos últimos 90 dias</p></article>
+        <article class="dashboard-metric-card"><span>Volume semanal médio</span><strong>${escapeHtml(formatKm(weeklyAverage))}</strong><p>Média calculada em 90 dias</p></article>
+        <article class="dashboard-metric-card"><span>11TSS médio</span><strong>${Math.round(tssAverage)}</strong><p>Média mensal dos últimos 90 dias</p></article>
+        <article class="dashboard-metric-card"><span>Último teste de 3000</span><strong>${escapeHtml(lastTest ?formatDurationSeconds(lastTest.seconds) : "--")}</strong><p>${escapeHtml(lastTest ?`${lastTest.title || lastTest.source || "3000 m"} - ${lastTest.date ?lastTest.date.toLocaleDateString("pt-BR") : "sem data"}` : "Nenhum teste registrado")}</p></article>
       </div>
     </div>
   `;
@@ -3910,12 +3962,12 @@ function renderPerformanceChart() {
 
   target.innerHTML = `
     <div class="chart-stats">
-      <div><span>PerÃ­odo</span><strong>${escapeHtml(label)}</strong></div>
+      <div><span>Período</span><strong>${escapeHtml(label)}</strong></div>
       <div><span>Volume</span><strong>${escapeHtml(formatKm(totalVolume))}</strong></div>
       <div><span>11TSS</span><strong>${Math.round(totalTss)}</strong></div>
-      <div><span>SessÃµes</span><strong>${totalSessions}</strong></div>
+      <div><span>Sessões</span><strong>${totalSessions}</strong></div>
     </div>
-    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="GrÃ¡fico de volume e 11TSS">
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Gráfico de volume e 11TSS">
       <defs>
         <linearGradient id="volumeFill" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stop-color="currentColor" stop-opacity="0.07" />
@@ -3939,7 +3991,7 @@ function renderPerformanceChart() {
       <text x="${width - padding.right}" y="16" text-anchor="end">11TSS</text>
       <g class="chart-labels">${labels}</g>
     </svg>
-    ${hasData ?"" : `<p class="chart-empty">Importe atividades do Strava para visualizar a evoluÃ§Ã£o de volume e 11TSS.</p>`}
+    ${hasData ?"" : `<p class="chart-empty">Importe atividades do Strava para visualizar a evolução de volume e 11TSS.</p>`}
   `;
 }
 
@@ -3958,11 +4010,11 @@ function renderActivity(activity) {
         : "pain-high";
   const status = activityStatus(activity);
   const analysisLine = status !== "planned" && analysis.tss
-    ?`<em>${escapeHtml(analysis.standard || "11TSS Advance")} ${escapeHtml(analysis.tss)} - agressÃ£o ${escapeHtml(analysis.aggressionScore || "--")} - ${escapeHtml(analysis.characteristic || "")}</em>`
+    ?`<em>${escapeHtml(analysis.standard || "11TSS Advance")} ${escapeHtml(analysis.tss)} - agressão ${escapeHtml(analysis.aggressionScore || "--")} - ${escapeHtml(analysis.characteristic || "")}</em>`
     : "";
   const feedbackLine = status === "planned"
-    ?`<small class="activity-feedback"><span>Planejado</span><span>NÃ£o contabiliza mÃ©tricas</span></small>`
-    : `<small class="activity-feedback"><span>ExecuÃ§Ã£o ${escapeHtml(performancePercent || "--")}%</span><span class="${painClass}">Dor ${escapeHtml(painScore === "" ?"â€”" : painScore)}/10</span></small>`;
+    ?`<small class="activity-feedback"><span>Planejado</span><span>Não contabiliza métricas</span></small>`
+    : `<small class="activity-feedback"><span>Execução ${escapeHtml(performancePercent || "--")}%</span><span class="${painClass}">Dor ${escapeHtml(painScore === "" ?"—" : painScore)}/10</span></small>`;
   const trainingType = activity.trainingType || feedback.trainingType || "";
   return `
     <button class="activity ${status === "planned" ?"is-planned" : ""}" data-activity-id="${escapeHtml(activity.id)}" data-source="${escapeHtml(activity.source)}">
@@ -4010,14 +4062,14 @@ function renderPeriodMonth(monthDate) {
   const tss = executed.reduce((sum, activity) => sum + activityTss(activity), 0);
   const list = activities.length
     ?activities.slice(0, 8).map(renderActivity).join("")
-    : `<p class="period-empty">Sem atividades importadas neste mÃªs.</p>`;
+    : `<p class="period-empty">Sem atividades importadas neste mês.</p>`;
 
   return `
     <section class="period-month">
       <div class="period-month-head">
         <div>
           <span>${monthNames[monthDate.getMonth()]} ${monthDate.getFullYear()}</span>
-          <strong>${activities.length} sessÃµes</strong>
+          <strong>${activities.length} sessões</strong>
         </div>
         <div class="period-month-stats">
           <span>${escapeHtml(formatKm(volume))}</span>
@@ -4067,7 +4119,7 @@ function renderPeriodCalendar() {
   document.querySelector("#calendarEyebrow").textContent = range.label;
   document.querySelector("#calendarTitle").textContent = hasActivitiesInCurrentRange()
     ?"Bloco de performance"
-    : "Sem atividades neste perÃ­odo";
+    : "Sem atividades neste período";
 }
 
 function renderMonthWeekHeader(weekStart, index) {
@@ -4125,7 +4177,7 @@ function renderCalendar() {
     calendar.innerHTML = header + rows;
     document.querySelector("#calendarEyebrow").textContent = `${monthNames[cursor.getMonth()]} ${cursor.getFullYear()}`;
     document.querySelector("#calendarTitle").textContent = activities.length && !hasActivitiesInCurrentRange()
-      ?`${activities.length} atividades importadas fora deste mÃªs`
+      ?`${activities.length} atividades importadas fora deste mês`
       : "Bloco de performance";
   }
 
@@ -4189,15 +4241,15 @@ function openActivity(activityId) {
   const analysisPanel = analysis.tss ?`
     <div class="analysis-panel">
       <span class="kicker">${escapeHtml(analysis.standard || "11TSS Advance")}</span>
-      <h4>${escapeHtml(analysis.characteristic || "CaracterÃ­stica do treino")}</h4>
+      <h4>${escapeHtml(analysis.characteristic || "Característica do treino")}</h4>
       <p>${escapeHtml(analysis.note || "")}</p>
       <div class="detail-grid analysis-grid">
         <div><span class="metric-label">TSS estimado</span><strong>${escapeHtml(analysis.tss)}</strong></div>
-        <div><span class="metric-label">AgressÃ£o</span><strong>${escapeHtml(analysis.aggressionScore)}</strong></div>
-        <div><span class="metric-label">VariaÃ§Ã£o de ritmo</span><strong>${escapeHtml(analysis.splitVariability || "--")}</strong></div>
+        <div><span class="metric-label">Agressão</span><strong>${escapeHtml(analysis.aggressionScore)}</strong></div>
+        <div><span class="metric-label">Variação de ritmo</span><strong>${escapeHtml(analysis.splitVariability || "--")}</strong></div>
         <div><span class="metric-label">Pace mais forte</span><strong>${escapeHtml(analysis.fastestPace || "--")}</strong></div>
       </div>
-      <p class="analysis-caption">EsforÃ§o relativo Strava: ${escapeHtml(analysis.relativeEffort || "--")} - IF por FC: ${escapeHtml(analysis.intensityFactor || "--")} - Splits: ${escapeHtml(analysis.splitCount || 0)}</p>
+      <p class="analysis-caption">Esforço relativo Strava: ${escapeHtml(analysis.relativeEffort || "--")} - IF por FC: ${escapeHtml(analysis.intensityFactor || "--")} - Splits: ${escapeHtml(analysis.splitCount || 0)}</p>
     </div>
   ` : "";
   const testFlagButton = `
@@ -4211,7 +4263,7 @@ function openActivity(activityId) {
       <h3>${escapeHtml(activity.title)}</h3>
       <p>${escapeHtml(activity.description)}</p>
       <div class="detail-grid">
-        <div><span class="metric-label">DistÃ¢ncia</span><strong>${escapeHtml(activity.distance)}</strong></div>
+        <div><span class="metric-label">Distância</span><strong>${escapeHtml(activity.distance)}</strong></div>
         <div><span class="metric-label">Tempo</span><strong>${escapeHtml(activity.duration)}</strong></div>
         <div><span class="metric-label">Pace</span><strong>${escapeHtml(activity.pace)}</strong></div>
         <div><span class="metric-label">Carga</span><strong>${escapeHtml(activity.load)}</strong></div>
@@ -4245,7 +4297,7 @@ function openActivity(activityId) {
       ${analysisPanel}
       <div class="activity-feedback-form">
         <label class="credential-field wide-field">
-          <span>DescriÃ§Ã£o do treino</span>
+          <span>Descrição do treino</span>
           <textarea name="description" rows="3">${escapeHtml(activity.description || "")}</textarea>
         </label>
         <label class="credential-field">
@@ -4255,7 +4307,7 @@ function openActivity(activityId) {
           </select>
         </label>
         <label class="credential-field">
-          <span>Grau de percepÃ§Ã£o de esforÃ§o</span>
+          <span>Grau de percepção de esforço</span>
           <select name="perceivedExertion">
             ${numericSelectOptions(1, 10, 1, perceivedExertion)}
           </select>
@@ -4267,12 +4319,12 @@ function openActivity(activityId) {
           </select>
         </label>
         <label class="credential-field">
-          <span>Dores / lesÃµes</span>
+          <span>Dores / lesões</span>
           <select name="painScore">
             ${numericSelectOptions(1, 10, 1, feedback.painScore ?? "")}
           </select>
         </label>
-        <button class="secondary-action compact" type="button" data-save-activity-feedback="${escapeHtml(activity.id)}">Salvar percepÃ§Ã£o</button>
+        <button class="secondary-action compact" type="button" data-save-activity-feedback="${escapeHtml(activity.id)}">Salvar percepção</button>
       </div>
       <div class="provider-actions">
         <button class="secondary-action compact" type="button" data-set-activity-status="${escapeHtml(activity.id)}" data-status="${status === "planned" ?"executed" : "planned"}">${status === "planned" ?"Marcar como executado" : "Marcar como planejado"}</button>
@@ -4287,7 +4339,7 @@ function openActivity(activityId) {
 async function saveActivityFeedback(activityId) {
   const wrapper = detail.querySelector(".activity-feedback-form");
   if (!wrapper) return;
-  if (!window.confirm("Confirmar alteraÃ§Ã£o deste treino?")) return;
+  if (!window.confirm("Confirmar alteração deste treino?")) return;
   const performancePercent = wrapper.querySelector('[name="performancePercent"]')?.value || "";
   const painScore = wrapper.querySelector('[name="painScore"]')?.value || "";
   const perceivedExertion = wrapper.querySelector('[name="perceivedExertion"]')?.value || "";
@@ -4302,10 +4354,10 @@ async function saveActivityFeedback(activityId) {
     renderCalendar();
     renderDashboard();
     if (dialog.open) openActivity(activityId);
-    setLog(["PercepÃ§Ã£o da atividade salva."]);
+    setLog(["Percepção da atividade salva."]);
   } catch (error) {
-    setLog([error.message || "NÃ£o foi possÃ­vel salvar a percepÃ§Ã£o da atividade."], true);
-    window.alert(error.message || "NÃ£o foi possÃ­vel salvar a percepÃ§Ã£o da atividade.");
+    setLog([error.message || "Não foi possível salvar a percepção da atividade."], true);
+    window.alert(error.message || "Não foi possível salvar a percepção da atividade.");
   }
 }
 
@@ -4369,7 +4421,7 @@ async function deleteActivityFromDetail(activityId) {
 }
 
 async function setActivity3000Flag(activityId, enabled) {
-  if (!window.confirm(enabled ?"Confirmar marcaÃ§Ã£o como teste de 3000 m?" :"Confirmar remoÃ§Ã£o dos testes de 3000 m?")) return;
+  if (!window.confirm(enabled ?"Confirmar marcação como teste de 3000 m?" :"Confirmar remoção dos testes de 3000 m?")) return;
   try {
     const payload = await api("/api/activities/flag-3000-test", {
       method: "POST",
@@ -4384,10 +4436,10 @@ async function setActivity3000Flag(activityId, enabled) {
     renderDashboard();
     if (dialog.open) openActivity(activityId);
     setLog([enabled ?"Atividade marcada como teste de 3000 m." :"Atividade removida dos testes de 3000 m."]);
-    setAthleteMessage(enabled ?"Teste de 3000 m vinculado Ã  atividade." :"Teste de 3000 m removido da atividade.");
+    setAthleteMessage(enabled ?"Teste de 3000 m vinculado à atividade." :"Teste de 3000 m removido da atividade.");
   } catch (error) {
-    setLog([error.message || "NÃ£o foi possÃ­vel atualizar o teste de 3000 m."], true);
-    window.alert(error.message || "NÃ£o foi possÃ­vel atualizar o teste de 3000 m.");
+    setLog([error.message || "Não foi possível atualizar o teste de 3000 m."], true);
+    window.alert(error.message || "Não foi possível atualizar o teste de 3000 m.");
   }
 }
 
@@ -4399,7 +4451,7 @@ function renderProviders() {
     const credentials = integration.credentials || {};
     const hasStoredToken = integration.token?.access_token === "stored" || integration.token?.refresh_token === "stored";
     const isConnected = Boolean(integration.connected || hasStoredToken);
-    const connected = isConnected ?"Conectado" : "NÃ£o conectado";
+    const connected = isConnected ?"Conectado" : "Não conectado";
     const scope = String(integration.token?.scope || "");
     const stravaScopeWarning = key === "strava" && isConnected && !scope.split(/[,\s]+/).some((item) => item === "activity:read" || item === "activity:read_all")
       ?`<p class="provider-warning">Reconecte aprovando activity:read ou activity:read_all para importar atividades.</p>`
@@ -4446,7 +4498,7 @@ function renderProviders() {
       </form>
     `;
   }).join("");
-  applyPanelCollapse(document.querySelector("#dashboardIntegrations"), "dashboardIntegrations", "ImportaÃ§Ã£o de plataformas");
+  applyPanelCollapse(document.querySelector("#dashboardIntegrations"), "dashboardIntegrations", "Importação de plataformas");
 }
 
 function getActiveAthlete() {
@@ -4466,7 +4518,7 @@ function formatAthleteMeta(athlete) {
 
 function renderAthleteIdentity() {
   const athlete = getActiveAthlete();
-  const name = athlete?.name || "Atleta nÃ£o cadastrado";
+  const name = athlete?.name || "Atleta não cadastrado";
   const sidebarName = document.querySelector("#sidebarAthleteName");
   const activeName = document.querySelector("#activeAthleteName");
   const activeMeta = document.querySelector("#activeAthleteMeta");
@@ -4579,7 +4631,7 @@ function getDirectoryCoaches() {
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 }
 
-function fillSelectOptions(select, options, currentValue = "", emptyLabel = "NÃ£o tenho", valueKey = "name", labelFn = null) {
+function fillSelectOptions(select, options, currentValue = "", emptyLabel = "Não tenho", valueKey = "name", labelFn = null) {
   if (!select) return;
   const value = String(currentValue || "");
   select.innerHTML = `<option value="">${emptyLabel}</option>${options.map((option) => {
@@ -4599,7 +4651,7 @@ function renderDirectoryOptions(athlete = null) {
     document.querySelector("#coachEmailSelect"),
     coaches,
     athlete?.coachEmail || "",
-    "NÃ£o tenho",
+    "Não tenho",
     "email",
     (coach) => `${coach.name} - ${coach.email}`
   );
@@ -4607,7 +4659,7 @@ function renderDirectoryOptions(athlete = null) {
     document.querySelector("#adminCoachEmailSelect"),
     coaches,
     "",
-    "NÃ£o tenho",
+    "Não tenho",
     "email",
     (coach) => `${coach.name} - ${coach.email}`
   );
@@ -4672,10 +4724,10 @@ function renderAthletes() {
     const profile = athlete.profileData || {};
     const profileLabel = profile.profileTypeLabel || profileTypeDefinitions[profile.profileType]?.label || athlete.roleLabel || "Atleta";
     const coachDetails = athlete.role === "coach" ?`
-          <p><strong>FormaÃ§Ã£o:</strong> ${escapeHtml(profile.education || "--")}</p>
+          <p><strong>Formação:</strong> ${escapeHtml(profile.education || "--")}</p>
           <p><strong>Especialidades:</strong> ${escapeHtml(profile.skills || "--")}</p>
-          <p><strong>ExperiÃªncia:</strong> ${escapeHtml(profile.experience || "--")}</p>
-          <p><strong>CertificaÃ§Ãµes:</strong> ${escapeHtml(profile.certifications || "--")}</p>
+          <p><strong>Experiência:</strong> ${escapeHtml(profile.experience || "--")}</p>
+          <p><strong>Certificações:</strong> ${escapeHtml(profile.certifications || "--")}</p>
     ` : "";
     const teamDetails = athlete.isTeamRecord ?`
           <p><strong>Institucional:</strong> ${escapeHtml(profile.institutionalNotes || "--")}</p>
@@ -4683,20 +4735,20 @@ function renderAthletes() {
     ` : "";
     const request = profile.relationshipRequest || {};
     const requestDetails = request.teamName || request.coachEmail ?`
-          <p><strong>SolicitaÃ§Ã£o:</strong> ${escapeHtml(request.teamName || "sem equipe")} / ${escapeHtml(request.coachName || request.coachEmail || "sem treinador")}</p>
-          <button class="secondary-action compact" type="button" data-approve-relationship="${escapeHtml(athlete.id)}">Aprovar solicitaÃ§Ã£o</button>
+          <p><strong>Solicitação:</strong> ${escapeHtml(request.teamName || "sem equipe")} / ${escapeHtml(request.coachName || request.coachEmail || "sem treinador")}</p>
+          <button class="secondary-action compact" type="button" data-approve-relationship="${escapeHtml(athlete.id)}">Aprovar solicitação</button>
     ` : "";
     return `
     <article class="athlete-list-row ${String(athlete.id) === String(state.selectedAthleteId) ?"is-selected" : ""}">
-      <button class="athlete-row-main" type="button" data-toggle-admin-user="${escapeHtml(athlete.id)}" aria-expanded="${isExpanded ? "true" : "false"}">
+      <button class="athlete-row-main" type="button" data-toggle-admin-user="${escapeHtml(athlete.id)}" aria-expanded="${isExpanded ?"true" : "false"}">
         <strong>${escapeHtml(athlete.name)}</strong>
         <span>${escapeHtml(athlete.email)}</span>
         <span>${escapeHtml(profileLabel)}</span>
         <span>${escapeHtml(athlete.teamName || "Sem equipe")}</span>
         <span>${athlete.role === "athlete" ?escapeHtml(athlete.coachName || "Sem treinador") : "--"}</span>
-        <span>${escapeHtml(athlete.whatsapp || "WhatsApp nÃ£o informado")}</span>
+        <span>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</span>
       </button>
-      ${athlete.isTeamRecord ? "" : `<div class="athlete-item-actions">
+      ${athlete.isTeamRecord ?"" : `<div class="athlete-item-actions">
         <button class="secondary-action compact" type="button" data-edit-athlete="${escapeHtml(athlete.id)}">Editar</button>
         <button class="danger-action" type="button" data-delete-athlete="${escapeHtml(athlete.id)}">Excluir</button>
       </div>`}
@@ -4704,8 +4756,8 @@ function renderAthletes() {
         <div class="athlete-row-details">
           <p><strong>Perfil:</strong> ${escapeHtml(profileLabel)}</p>
           <p><strong>Dados:</strong> ${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
-          <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "NÃ£o tenho")}</p>
-          ${athlete.role === "athlete" ?`<p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "NÃ£o tenho")}</p>` : ""}
+          <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "Não tenho")}</p>
+          ${athlete.role === "athlete" ?`<p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "Não tenho")}</p>` : ""}
           ${coachDetails}
           ${teamDetails}
           ${requestDetails}
@@ -4731,7 +4783,7 @@ function setSyncLoading(active, title = "Importando atividades", text = "Atualiz
   if (overlay) overlay.hidden = !active;
   if (titleTarget) titleTarget.textContent = title;
   if (textTarget) textTarget.textContent = text;
-  if (kickerTarget) kickerTarget.textContent = progress || "SincronizaÃ§Ã£o";
+  if (kickerTarget) kickerTarget.textContent = progress || "Sincronização";
   document.querySelectorAll("#syncSelected, [data-import-demo]").forEach((button) => {
     button.disabled = active;
     button.classList.toggle("is-loading", active);
@@ -4742,7 +4794,7 @@ async function enrichStravaDescriptions() {
   let updated = 0;
   let remaining = Number.POSITIVE_INFINITY;
   for (let batch = 1; batch <= 30 && remaining > 0; batch += 1) {
-    setSyncLoading(true, "Puxando descriÃ§Ãµes do Strava", `Lote ${batch}: buscando descriÃ§Ãµes completas sem travar o servidor.`, updated ?`${updated} descriÃ§Ãµes atualizadas` : "Detalhando atividades");
+    setSyncLoading(true, "Puxando descrições do Strava", `Lote ${batch}: buscando descrições completas sem travar o servidor.`, updated ?`${updated} descrições atualizadas` : "Detalhando atividades");
     const payload = await api("/api/strava/enrich", {
       method: "POST",
       body: JSON.stringify({ limit: 8 })
@@ -4790,12 +4842,12 @@ function historyTimelineRowTemplate(entry = {}) {
       <label class="credential-field">
         <span>Tipo</span>
         <select data-history-type>
-          <option value="context" ${type === "context" ?"selected" : ""}>Registro cronolÃ³gico</option>
+          <option value="context" ${type === "context" ?"selected" : ""}>Registro cronológico</option>
           <option value="vo2" ${type === "vo2" ?"selected" : ""}>Teste de VO2</option>
         </select>
       </label>
       <label class="credential-field">
-        <span>InÃ­cio</span>
+        <span>Início</span>
         <input type="date" data-history-start value="${escapeHtml(entry.startDate || "")}" />
       </label>
       <label class="credential-field">
@@ -4803,12 +4855,12 @@ function historyTimelineRowTemplate(entry = {}) {
         <input type="date" data-history-end value="${escapeHtml(entry.endDate || "")}" />
       </label>
       <label class="credential-field">
-        <span>TÃ­tulo / evento</span>
-        <input data-history-title value="${escapeHtml(entry.title || "")}" placeholder="Ex.: Parado por lesÃ£o, retorno progressivo, bloco de base..." />
+        <span>Título / evento</span>
+        <input data-history-title value="${escapeHtml(entry.title || "")}" placeholder="Ex.: Parado por lesão, retorno progressivo, bloco de base..." />
       </label>
       <label class="credential-field">
-        <span>DescriÃ§Ã£o / contexto</span>
-        <textarea data-history-description rows="2" placeholder="Detalhes relevantes para anÃ¡lise futura da IA.">${escapeHtml(entry.description || "")}</textarea>
+        <span>Descrição / contexto</span>
+        <textarea data-history-description rows="2" placeholder="Detalhes relevantes para análise futura da IA.">${escapeHtml(entry.description || "")}</textarea>
       </label>
       <label class="credential-field">
         <span>VO2 medido</span>
@@ -4832,12 +4884,12 @@ function historyRecordTypeLabel(type) {
   return {
     context: "Registro",
     training: "Treino",
-    sensation: "SensaÃ§Ã£o",
-    pain: "Dor / lesÃ£o",
-    recovery: "RecuperaÃ§Ã£o",
-    nutrition: "NutriÃ§Ã£o",
-    competition: "CompetiÃ§Ã£o",
-    test: "Teste fÃ­sico",
+    sensation: "Sensação",
+    pain: "Dor / lesão",
+    recovery: "Recuperação",
+    nutrition: "Nutrição",
+    competition: "Competição",
+    test: "Teste físico",
     vo2: "Teste de VO2",
     weight: "Peso",
     routine: "Rotina"
@@ -4847,43 +4899,43 @@ function historyRecordTypeLabel(type) {
 function inferHistoryRecord(raw = {}) {
   const content = [raw.type, raw.title, raw.description, raw.originalContent].filter(Boolean).join(" ").toLowerCase();
   const type = raw.type && raw.type !== "context" ?raw.type
-    : /vo2/.test(content) ? "vo2"
-    : /3000|teste|cooper|time trial|prova controlada/.test(content) ? "test"
-    : /compet|campeonato|prova|corrida oficial/.test(content) ? "competition"
-    : /dor|les|incÃ´modo|incomodo|panturrilha|posterior|joelho|tend/.test(content) ? "pain"
-    : /sono|recuper|descanso|fadiga|cansa/.test(content) ? "recovery"
-    : /peso|kg|massa/.test(content) ? "weight"
-    : /aliment|suplement|creatina|carbo|prote/.test(content) ? "nutrition"
-    : /treino|rodagem|interval|tiro|longÃ£o|longo|ritmo|pace|km/.test(content) ? "training"
-    : /ansiedade|motiva|confianÃ§a|sensaÃ§Ã£o|leve|pesado/.test(content) ? "sensation"
-    : /viagem|trabalho|rotina|mudanÃ§a/.test(content) ? "routine"
+    : /vo2/.test(content) ?"vo2"
+    : /3000|teste|cooper|time trial|prova controlada/.test(content) ?"test"
+    : /compet|campeonato|prova|corrida oficial/.test(content) ?"competition"
+    : /dor|les|incômodo|incomodo|panturrilha|posterior|joelho|tend/.test(content) ?"pain"
+    : /sono|recuper|descanso|fadiga|cansa/.test(content) ?"recovery"
+    : /peso|kg|massa/.test(content) ?"weight"
+    : /aliment|suplement|creatina|carbo|prote/.test(content) ?"nutrition"
+    : /treino|rodagem|interval|tiro|longão|longo|ritmo|pace|km/.test(content) ?"training"
+    : /ansiedade|motiva|confiança|sensação|leve|pesado/.test(content) ?"sensation"
+    : /viagem|trabalho|rotina|mudança/.test(content) ?"routine"
     : "context";
   const tags = new Set(Array.isArray(raw.tags) ?raw.tags : []);
   [
-    ["performance", /ritmo|pace|tempo|prova|teste|3000|5000|vo2|potÃªncia|potencia/],
+    ["performance", /ritmo|pace|tempo|prova|teste|3000|5000|vo2|potência|potencia/],
     ["saude", /dor|les|sono|fadiga|doente|inflama|recuper/],
-    ["carga", /volume|km|tss|longÃ£o|longo|interval|treino/],
+    ["carga", /volume|km|tss|longão|longo|interval|treino/],
     ["evolucao", /melhor|evolu|progress|recorde|forte|consist/],
     ["risco", /dor|les|fadiga|queda|parad|cansa|panturrilha/],
     ["rotina", /sono|aliment|viagem|trabalho|rotina|suplement/]
   ].forEach(([tag, pattern]) => {
     if (pattern.test(content)) tags.add(tag);
   });
-  const importance = /les|dor forte|parad|vo2|recorde|melhor marca|compet|prova|teste/.test(content) ? "alta"
-    : /fadiga|sono|peso|ritmo|volume|cansa|desconforto/.test(content) ? "mÃ©dia"
+  const importance = /les|dor forte|parad|vo2|recorde|melhor marca|compet|prova|teste/.test(content) ?"alta"
+    : /fadiga|sono|peso|ritmo|volume|cansa|desconforto/.test(content) ?"média"
     : "normal";
   const relation = [
-    /ritmo|pace|tempo|prova|teste|vo2|potÃªncia|potencia/.test(content) ? "performance" : "",
-    /dor|les|fadiga|sono|recuper|doente/.test(content) ? "saÃºde/fadiga" : "",
-    /melhor|evolu|progress|consist|volume/.test(content) ? "evoluÃ§Ã£o" : ""
+    /ritmo|pace|tempo|prova|teste|vo2|potência|potencia/.test(content) ?"performance" : "",
+    /dor|les|fadiga|sono|recuper|doente/.test(content) ?"saúde/fadiga" : "",
+    /melhor|evolu|progress|consist|volume/.test(content) ?"evolução" : ""
   ].filter(Boolean).join(", ") || "contexto";
   const possibleImpact = importance === "alta"
-    ? "Pode alterar projeÃ§Ãµes, risco e leitura de resposta ao treino."
-    : relation.includes("saÃºde")
-      ? "Pode indicar necessidade de ajuste de carga e recuperaÃ§Ã£o."
+    ?"Pode alterar projeções, risco e leitura de resposta ao treino."
+    : relation.includes("saúde")
+      ?"Pode indicar necessidade de ajuste de carga e recuperação."
       : relation.includes("performance")
-        ? "Ajuda a calibrar projeÃ§Ãµes e comparaÃ§Ã£o de treinos similares."
-        : "Serve como contexto para anÃ¡lises futuras.";
+        ?"Ajuda a calibrar projeções e comparação de treinos similares."
+        : "Serve como contexto para análises futuras.";
   return { type, tags: [...tags], importance, relation, possibleImpact };
 }
 
@@ -4941,42 +4993,42 @@ function historyRecordComposerTemplate() {
         <label class="credential-field">
           <span>Tipo</span>
           <select data-history-new-type>
-            <option value="context">AutomÃ¡tico / registro livre</option>
+            <option value="context">Automático / registro livre</option>
             <option value="training">Treino</option>
-            <option value="sensation">SensaÃ§Ã£o</option>
-            <option value="pain">Dor / lesÃ£o</option>
-            <option value="recovery">RecuperaÃ§Ã£o / sono</option>
-            <option value="nutrition">AlimentaÃ§Ã£o / suplementaÃ§Ã£o</option>
-            <option value="competition">CompetiÃ§Ã£o</option>
-            <option value="test">Teste fÃ­sico</option>
+            <option value="sensation">Sensação</option>
+            <option value="pain">Dor / lesão</option>
+            <option value="recovery">Recuperação / sono</option>
+            <option value="nutrition">Alimentação / suplementação</option>
+            <option value="competition">Competição</option>
+            <option value="test">Teste físico</option>
             <option value="vo2">Teste de VO2</option>
             <option value="weight">Peso</option>
-            <option value="routine">MudanÃ§a de rotina</option>
+            <option value="routine">Mudança de rotina</option>
           </select>
         </label>
-        <label class="credential-field"><span>TÃ­tulo curto</span><input data-history-new-title placeholder="Ex.: Voltei a correr, teste de VO2, dor na panturrilha" /></label>
+        <label class="credential-field"><span>Título curto</span><input data-history-new-title placeholder="Ex.: Voltei a correr, teste de VO2, dor na panturrilha" /></label>
       </div>
       <label class="credential-field wide-field">
-        <span>Registro cronolÃ³gico</span>
-        <textarea data-history-new-content rows="4" placeholder="Descreva qualquer fato relevante: treino, sensaÃ§Ã£o, dor, peso, FC, potÃªncia, ritmo, sono, alimentaÃ§Ã£o, prova, teste, rotina ou observaÃ§Ã£o subjetiva."></textarea>
+        <span>Registro cronológico</span>
+        <textarea data-history-new-content rows="4" placeholder="Descreva qualquer fato relevante: treino, sensação, dor, peso, FC, potência, ritmo, sono, alimentação, prova, teste, rotina ou observação subjetiva."></textarea>
       </label>
       <div class="history-metric-grid">
         <label class="credential-field"><span>VO2</span><input data-history-new-vo2 type="number" min="1" max="100" step="0.1" placeholder="ml/kg/min" /></label>
         <label class="credential-field"><span>Peso</span><input data-history-new-weight type="number" min="1" step="0.1" placeholder="kg" /></label>
-        <label class="credential-field"><span>FC mÃ©dia</span><input data-history-new-hr type="number" min="1" placeholder="bpm" /></label>
-        <label class="credential-field"><span>PotÃªncia</span><input data-history-new-power type="number" min="1" placeholder="W" /></label>
+        <label class="credential-field"><span>FC média</span><input data-history-new-hr type="number" min="1" placeholder="bpm" /></label>
+        <label class="credential-field"><span>Potência</span><input data-history-new-power type="number" min="1" placeholder="W" /></label>
         <label class="credential-field"><span>Ritmo</span><input data-history-new-pace placeholder="min/km" /></label>
         <label class="credential-field"><span>Sono</span><input data-history-new-sleep type="number" min="0" max="24" step="0.1" placeholder="h" /></label>
-        <label class="credential-field"><span>EsforÃ§o</span><select data-history-new-rpe><option value="">--</option>${Array.from({ length: 10 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join("")}</select></label>
+        <label class="credential-field"><span>Esforço</span><select data-history-new-rpe><option value="">--</option>${Array.from({ length: 10 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join("")}</select></label>
         <label class="credential-field"><span>Dor</span><select data-history-new-pain><option value="">--</option>${Array.from({ length: 11 }, (_, i) => `<option value="${i}">${i}</option>`).join("")}</select></label>
       </div>
       <div class="history-actions">
         <button class="primary-action compact" type="button" data-save-history-record>Salvar registro</button>
-        <button class="secondary-action compact" type="button" data-history-action="dossier">Gerar dossiÃª</button>
-        <button class="secondary-action compact" type="button" data-history-action="deep">Gerar anÃ¡lise profunda</button>
-        <button class="secondary-action compact" type="button" data-history-action="projection">Gerar projeÃ§Ã£o</button>
+        <button class="secondary-action compact" type="button" data-history-action="dossier">Gerar dossiê</button>
+        <button class="secondary-action compact" type="button" data-history-action="deep">Gerar análise profunda</button>
+        <button class="secondary-action compact" type="button" data-history-action="projection">Gerar projeção</button>
         <button class="secondary-action compact" type="button" data-history-action="alerts">Ver alertas</button>
-        <button class="secondary-action compact" type="button" data-history-action="compare">Comparar perÃ­odos</button>
+        <button class="secondary-action compact" type="button" data-history-action="compare">Comparar períodos</button>
       </div>
     </div>
   `;
@@ -4997,18 +5049,18 @@ function historyRecordCard(entry) {
     <details class="history-record-card" data-history-id="${escapeHtml(entry.id)}">
       <summary>
         <div>
-          <span>${escapeHtml(entry.startDate.split("-").reverse().join("/"))}${entry.time ?` ${escapeHtml(entry.time)}` : ""} Â· ${escapeHtml(historyRecordTypeLabel(entry.type))}</span>
-          <strong>${escapeHtml(entry.title || "Registro cronolÃ³gico")}</strong>
+          <span>${escapeHtml(entry.startDate.split("-").reverse().join("/"))}${entry.time ?` ${escapeHtml(entry.time)}` : ""} · ${escapeHtml(historyRecordTypeLabel(entry.type))}</span>
+          <strong>${escapeHtml(entry.title || "Registro cronológico")}</strong>
           <p>${escapeHtml(entry.description || entry.originalContent || "")}</p>
         </div>
         <button class="danger-action compact" type="button" data-remove-history-entry="${escapeHtml(entry.id)}">Remover</button>
       </summary>
       <div class="history-record-meta">
         <small><b>Tags</b>${escapeHtml((entry.tags || []).join(", ") || "contexto")}</small>
-        <small><b>ImportÃ¢ncia</b>${escapeHtml(entry.importance)}</small>
-        <small><b>RelaÃ§Ã£o</b>${escapeHtml(entry.relation)}</small>
+        <small><b>Importância</b>${escapeHtml(entry.importance)}</small>
+        <small><b>Relação</b>${escapeHtml(entry.relation)}</small>
         <small><b>Impacto futuro</b>${escapeHtml(entry.possibleImpact)}</small>
-        ${metrics.length ?`<small><b>MÃ©tricas</b>${escapeHtml(metrics.join(" Â· "))}</small>` : ""}
+        ${metrics.length ?`<small><b>Métricas</b>${escapeHtml(metrics.join(" · "))}</small>` : ""}
       </div>
     </details>
   `;
@@ -5023,10 +5075,10 @@ function historyGroupedList(entries) {
   }, {});
   return Object.entries(groups).map(([month, items]) => `
     <section class="history-month-group">
-      <h4>${escapeHtml(month === "sem-data" ? "Sem data" : new Date(`${month}-01T00:00:00`).toLocaleDateString("pt-BR", { month: "long", year: "numeric" }))}</h4>
+      <h4>${escapeHtml(month === "sem-data" ?"Sem data" : new Date(`${month}-01T00:00:00`).toLocaleDateString("pt-BR", { month: "long", year: "numeric" }))}</h4>
       <div>${items.map((entry) => historyRecordCard(entry)).join("")}</div>
     </section>
-  `).join("") || `<div class="empty-state">Nenhum registro cronolÃ³gico salvo ainda.</div>`;
+  `).join("") || `<div class="empty-state">Nenhum registro cronológico salvo ainda.</div>`;
 }
 
 function renderHistoryTimelineEditor(entries = state.historyTimelineDraft) {
@@ -5047,9 +5099,9 @@ function renderHistoryTimelineEditor(entries = state.historyTimelineDraft) {
           <option value="training" ${filter === "training" ?"selected" : ""}>Treino</option>
           <option value="test" ${filter === "test" ?"selected" : ""}>Teste</option>
           <option value="pain" ${filter === "pain" ?"selected" : ""}>Dor / risco</option>
-          <option value="competition" ${filter === "competition" ?"selected" : ""}>CompetiÃ§Ã£o</option>
-          <option value="recovery" ${filter === "recovery" ?"selected" : ""}>RecuperaÃ§Ã£o</option>
-          <option value="analysis" ${filter === "analysis" ?"selected" : ""}>Relevantes para anÃ¡lise</option>
+          <option value="competition" ${filter === "competition" ?"selected" : ""}>Competição</option>
+          <option value="recovery" ${filter === "recovery" ?"selected" : ""}>Recuperação</option>
+          <option value="analysis" ${filter === "analysis" ?"selected" : ""}>Relevantes para análise</option>
         </select>
       </label>
       <div class="history-counter"><strong>${filtered.length}</strong><span>registros exibidos de ${state.historyTimelineDraft.length}</span></div>
@@ -5071,7 +5123,7 @@ function test3000RowTemplate(test = {}, index = 1) {
         <input data-test3000-time placeholder="mm:ss" value="${escapeHtml(test.time || "")}" />
       </label>
       <label class="credential-field">
-        <span>ObservaÃ§Ã£o</span>
+        <span>Observação</span>
         <input data-test3000-notes value="${escapeHtml(test.notes || "")}" />
       </label>
       <button class="danger-action compact" type="button" data-remove-3000-test>Remover</button>
@@ -5209,7 +5261,7 @@ function editAthlete(athleteId, options = {}) {
 async function deleteAthlete(athleteId) {
   const athlete = state.athletes.find((item) => String(item.id) === String(athleteId));
   if (!athlete) return;
-  if (!window.confirm(`Excluir o atleta ${athlete.name}?Esta aÃ§Ã£o remove integraÃ§Ãµes e atividades importadas deste atleta.`)) return;
+  if (!window.confirm(`Excluir o atleta ${athlete.name}?Esta ação remove integrações e atividades importadas deste atleta.`)) return;
   try {
     setAthleteMessage("Excluindo atleta...");
     const payload = await api(`/api/athletes/${encodeURIComponent(athlete.id)}`, { method: "DELETE" });
@@ -5226,7 +5278,7 @@ async function deleteAthlete(athleteId) {
     renderCalendar();
 
     renderTrainingInsights();
-    resetAthleteForm(`Atleta ${athlete.name} excluÃ­do.`);
+    resetAthleteForm(`Atleta ${athlete.name} excluído.`);
   } catch (error) {
     setAthleteMessage(error.message, true);
     setLog([error.message], true);
@@ -5235,7 +5287,7 @@ async function deleteAthlete(athleteId) {
 
 async function saveProvider(provider) {
   if (!state.selectedAthleteId) {
-    setLog(["Cadastre e selecione um atleta antes de salvar integraÃ§Ãµes."], true);
+    setLog(["Cadastre e selecione um atleta antes de salvar integrações."], true);
     return false;
   }
   const form = document.querySelector(`[data-provider="${provider}"]`);
@@ -5266,8 +5318,8 @@ async function runSync() {
     .map((input) => input.closest(".provider-form").dataset.provider);
   let detailResult = { updated: 0, remaining: 0 };
   try {
-    setSyncLoading(true, "Importando atividades", `Sincronizando Ãºltimos ${days} dias com as fontes ativas.`, "Conectando");
-    setLog([`Sincronizando Ãºltimos ${days} dias...`]);
+    setSyncLoading(true, "Importando atividades", `Sincronizando últimos ${days} dias com as fontes ativas.`, "Conectando");
+    setLog([`Sincronizando últimos ${days} dias...`]);
     const payload = await api("/api/sync", {
       method: "POST",
       body: JSON.stringify({ days, providers })
@@ -5284,10 +5336,10 @@ async function runSync() {
         ?`Importadas/atualizadas: ${payload.imported} atividades reais.`
         : `Nenhuma atividade nova retornada pelas fontes no intervalo de ${days} dias.`,
       state.activities.length ?`Total no banco para este atleta: ${state.activities.length}.` : "Nenhuma atividade salva para este atleta.",
-      detailResult.updated ?`DescriÃ§Ãµes completas atualizadas: ${detailResult.updated}.` : "DescriÃ§Ãµes jÃ¡ estavam atualizadas ou nÃ£o retornaram detalhe adicional.",
-      detailResult.remaining ?`DescriÃ§Ãµes pendentes: ${detailResult.remaining}. Clique novamente para continuar.` : "DescriÃ§Ãµes sincronizadas em lotes.",
+      detailResult.updated ?`Descrições completas atualizadas: ${detailResult.updated}.` : "Descrições já estavam atualizadas ou não retornaram detalhe adicional.",
+      detailResult.remaining ?`Descrições pendentes: ${detailResult.remaining}. Clique novamente para continuar.` : "Descrições sincronizadas em lotes.",
       ...(payload.warnings || []),
-      "CalendÃ¡rio atualizado."
+      "Calendário atualizado."
     ]);
   } catch (error) {
     setLog([error.message], true);
@@ -5302,11 +5354,11 @@ async function testStrava() {
     return;
   }
   try {
-    setLog(["Testando conexÃ£o real com o Strava..."]);
+    setLog(["Testando conexão real com o Strava..."]);
     const payload = await api("/api/strava/test");
     const athlete = payload.athlete || {};
     const name = [athlete.firstname, athlete.lastname].filter(Boolean).join(" ") || athlete.username || "atleta Strava";
-    setLog([`Strava conectado para ${name}. Escopos: ${payload.scope || "nÃ£o informado"}.`]);
+    setLog([`Strava conectado para ${name}. Escopos: ${payload.scope || "não informado"}.`]);
     state.integrations = await api("/api/integrations");
     renderProviders();
   } catch (error) {
@@ -5492,7 +5544,7 @@ async function approveRelationshipRequest(athleteId) {
   const request = athlete?.profileData?.relationshipRequest;
   if (!athlete || !request) return;
   try {
-    setAdminMessage("Aprovando solicitaÃ§Ã£o...");
+    setAdminMessage("Aprovando solicitação...");
     const body = {
       ...athlete,
       teamName: request.teamName || athlete.teamName || "",
@@ -5513,7 +5565,7 @@ async function approveRelationshipRequest(athleteId) {
     renderAthletes();
     renderAthleteSelector();
     renderAthleteIdentity();
-    setAdminMessage("SolicitaÃ§Ã£o aprovada.");
+    setAdminMessage("Solicitação aprovada.");
   } catch (error) {
     setAdminMessage(error.message, true);
   }
@@ -5534,7 +5586,7 @@ async function setActivityStatus(activityId, status) {
     if (dialog.open) openActivity(activityId);
     setLog([`Treino marcado como ${label}.`]);
   } catch (error) {
-    setLog([error.message || "NÃ£o foi possÃ­vel alterar o status do treino."], true);
+    setLog([error.message || "Não foi possível alterar o status do treino."], true);
   }
 }
 
@@ -5593,7 +5645,7 @@ async function saveAiSettings(event) {
       body: JSON.stringify(body)
     });
     renderAiSettings();
-    document.querySelector("#aiSettingsMessage").textContent = "ConfiguraÃ§Ã£o de IA salva.";
+    document.querySelector("#aiSettingsMessage").textContent = "Configuração de IA salva.";
   } catch (error) {
     document.querySelector("#aiSettingsMessage").textContent = error.message;
   }
@@ -5615,7 +5667,7 @@ function setDashboardRecalcBusy(isBusy) {
   document.querySelectorAll("[data-recalculate-dashboard]").forEach((button) => {
     button.disabled = isBusy;
     button.classList.toggle("is-loading", isBusy);
-    button.textContent = isBusy ? "Analisando..." : "Recalcular";
+    button.textContent = isBusy ?"Analisando..." : "Recalcular";
   });
 }
 
@@ -5681,7 +5733,7 @@ async function refreshAiProjection() {
       body: JSON.stringify({ athlete, model, activities: activitiesSince(90).slice(-60) })
     });
   } catch (error) {
-    state.aiProjection = { text: `IA indisponÃ­vel: ${friendlyAiError(error.message)}` };
+    state.aiProjection = { text: `IA indisponível: ${friendlyAiError(error.message)}` };
   }
   renderFocusRoadmap();
 }
@@ -5696,14 +5748,14 @@ async function recalculateDashboardAnalysis() {
     ...localAnalysis,
     athleteId: athlete.id,
     status: "running",
-    aiText: "Etapa 1/3: dossiÃª cronolÃ³gico montado. Etapa 2/3: enviando testes, VO2, linha do tempo e carga recente para a IA."
+    aiText: "Etapa 1/3: dossiê cronológico montado. Etapa 2/3: enviando testes, VO2, linha do tempo e carga recente para a IA."
   };
   renderDashboard();
   try {
     const model = buildFocusModel(athlete);
     state.dashboardAnalysis = {
       ...state.dashboardAnalysis,
-      aiText: "Etapa 2/3: IA do sistema interpretando histÃ³rico, fadiga, evoluÃ§Ã£o e riscos antes de atualizar os resultados."
+      aiText: "Etapa 2/3: IA do sistema interpretando histórico, fadiga, evolução e riscos antes de atualizar os resultados."
     };
     renderDashboard();
     const aiProjection = await api("/api/ai/projection", {
@@ -5733,8 +5785,8 @@ async function recalculateDashboardAnalysis() {
     state.dashboardAnalysis = {
       ...localAnalysis,
       athleteId: athlete.id,
-      status: aiProjection?.ok ? "ready" : "local",
-      aiText: aiProjection?.text || "A IA respondeu, mas sem texto interpretÃ¡vel. Modelo local aplicado.",
+      status: aiProjection?.ok ?"ready" : "local",
+      aiText: aiProjection?.text || "A IA respondeu, mas sem texto interpretável. Modelo local aplicado.",
       aiModel: aiProjection?.model || "modelo local 11RUN"
     };
   } catch (error) {
@@ -5787,7 +5839,7 @@ async function boot() {
     state.goals = await api("/api/goals");
     await loadSettings();
   } catch (error) {
-    if (error.message === "Login obrigatÃ³rio.") showLogin();
+    if (error.message === "Login obrigatório.") showLogin();
     else {
       showApp();
       renderPermissions();
@@ -5823,8 +5875,8 @@ async function boot() {
   if (state.view === "athlete") editCurrentUserProfile();
 
   if (status.get("strava") === "connected") setLog(["Strava conectado. Clique em Importar e atualizar para puxar as atividades reais."]);
-  if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorizaÃ§Ã£o."}`], true);
-  if (status.get("strava") === "state_error") setLog(["Erro Strava: estado OAuth invÃ¡lido ou expirado. Clique em Conectar Strava novamente."], true);
+  if (status.get("strava") === "error") setLog([`Erro Strava: ${status.get("message") || "falha na autorização."}`], true);
+  if (status.get("strava") === "state_error") setLog(["Erro Strava: estado OAuth inválido ou expirado. Clique em Conectar Strava novamente."], true);
 }
 
 applyTheme();
@@ -5928,7 +5980,7 @@ document.querySelector("#adminAthleteSelector")?.addEventListener("change", asyn
 
     renderTrainingInsights();
     const athlete = getActiveAthlete();
-    setLog([`Atleta selecionado: ${athlete?.name || "nenhum"}. IntegraÃ§Ãµes e calendÃ¡rio atualizados.`]);
+    setLog([`Atleta selecionado: ${athlete?.name || "nenhum"}. Integrações e calendário atualizados.`]);
   } catch (error) {
     setLog([error.message], true);
   }
@@ -5941,7 +5993,7 @@ calendar.addEventListener("click", (event) => {
 
 document.addEventListener("click", async (event) => {
   if (event.target.closest("[data-toggle-theme]")) {
-    state.theme = state.theme === "dark" ? "light" : "dark";
+    state.theme = state.theme === "dark" ?"light" : "dark";
     applyTheme();
     return;
   }
@@ -5979,7 +6031,7 @@ document.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-expand-profile]");
     const expanded = !panel?.classList.contains("is-expanded");
     panel?.classList.toggle("is-expanded", expanded);
-    if (button) button.textContent = expanded ? t("profile.collapse") : t("profile.expand");
+    if (button) button.textContent = expanded ?t("profile.collapse") : t("profile.expand");
     return;
   }
   if (event.target.closest("[data-open-workout-builder]")) {
@@ -6111,13 +6163,13 @@ document.addEventListener("click", async (event) => {
   if (event.target.closest("[data-save-history-record]")) {
     const record = readHistoryComposer(document);
     if (!record) {
-      setAthleteMessage("Preencha o registro cronolÃ³gico antes de salvar.", true);
+      setAthleteMessage("Preencha o registro cronológico antes de salvar.", true);
       return;
     }
     state.historyTimelineDraft = sortHistoryEntries([...state.historyTimelineDraft, record]);
     state.historyTimelineOutput = "";
     renderHistoryTimelineEditor();
-    setAthleteMessage("Registro cronolÃ³gico salvo na linha do tempo. Clique em Salvar meu perfil para gravar no banco.");
+    setAthleteMessage("Registro cronológico salvo na linha do tempo. Clique em Salvar meu perfil para gravar no banco.");
     return;
   }
   const historyAction = event.target.closest("[data-history-action]");
@@ -6159,7 +6211,7 @@ document.addEventListener("click", async (event) => {
       state.historyTimelineDraft = state.historyTimelineDraft.filter((entry) => String(entry.id) !== String(recordId));
       state.historyTimelineOutput = "";
       renderHistoryTimelineEditor();
-      setAthleteMessage("Registro removido da linha do tempo. Clique em Salvar meu perfil para gravar a alteraÃ§Ã£o.");
+      setAthleteMessage("Registro removido da linha do tempo. Clique em Salvar meu perfil para gravar a alteração.");
       return;
     }
     const row = event.target.closest(".history-entry-row");
@@ -6182,7 +6234,7 @@ document.addEventListener("click", async (event) => {
     const activityId = testFlagButton.getAttribute("data-flag-3000-activity") || testFlagButton.dataset.flag3000Activity;
     const enabled = (testFlagButton.getAttribute("data-flag-enabled") || testFlagButton.dataset.flagEnabled) === "1";
     if (!activityId) {
-      setLog(["NÃ£o foi possÃ­vel identificar a atividade para marcar o teste de 3000 m."], true);
+      setLog(["Não foi possível identificar a atividade para marcar o teste de 3000 m."], true);
       return;
     }
     await setActivity3000Flag(activityId, enabled);
@@ -6225,7 +6277,7 @@ document.addEventListener("change", (event) => {
     applyI18n();
     const expandButton = document.querySelector("[data-expand-profile]");
     const expanded = document.querySelector("#profileModalPanel")?.classList.contains("is-expanded");
-    if (expandButton) expandButton.textContent = expanded ? t("profile.collapse") : t("profile.expand");
+    if (expandButton) expandButton.textContent = expanded ?t("profile.collapse") : t("profile.expand");
   }
   if (event.target?.closest("#workoutBuilderForm") && ["startDate", "endDate"].includes(event.target.name)) {
     syncWorkoutDates();
@@ -6287,7 +6339,7 @@ document.querySelector("#teamForm")?.addEventListener("submit", saveTeam);
 });
 document.querySelector("#athleteFilterRole")?.addEventListener("change", renderAthletes);
 document.querySelector("#aiSettingsForm")?.addEventListener("submit", saveAiSettings);
-document.querySelector("#cancelAthleteEdit")?.addEventListener("click", () => resetAthleteForm("EdiÃ§Ã£o cancelada."));
+document.querySelector("#cancelAthleteEdit")?.addEventListener("click", () => resetAthleteForm("Edição cancelada."));
 
 loadAppVersion();
 renderHistoryTimelineEditor([]);

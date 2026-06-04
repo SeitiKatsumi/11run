@@ -1355,7 +1355,7 @@ function formatGoal(row) {
     raceDate: formatDateOnly(row.race_date || row.raceDate),
     notes: row.notes || "",
     actualTimeSeconds: row.actual_time_seconds || row.actualTimeSeconds || null,
-    actualTime: row.actual_time_seconds || row.actualTimeSeconds ? formatDuration(row.actual_time_seconds || row.actualTimeSeconds) : "",
+    actualTime: row.actual_time_seconds || row.actualTimeSeconds ?formatDuration(row.actual_time_seconds || row.actualTimeSeconds) : "",
     resultNotes: row.result_notes || row.resultNotes || "",
     createdAt: row.created_at || row.createdAt || "",
     updatedAt: row.updated_at || row.updatedAt || ""
@@ -1655,7 +1655,7 @@ function activityRowToApi(row) {
     title: row.title,
     source: row.provider,
     type: row.type || "",
-    status: row.status || raw.status || (raw.manual && raw.planned ? "planned" : "executed"),
+    status: row.status || raw.status || (raw.manual && raw.planned ?"planned" : "executed"),
     plannedActivityId: row.planned_activity_id || raw.plannedActivityId || "",
     scheduledTime: raw.scheduledTime || raw.start_time || "",
     workoutPlan: raw.workoutPlan || null,
@@ -1737,7 +1737,7 @@ function normalizeTrainingType(value, fallback = "Treino") {
 
 function normalizeActivityStatus(value, fallback = "executed") {
   const text = String(value || "").trim().toLowerCase();
-  return text === "planned" || text === "planejado" ? "planned" : text === "executed" || text === "executado" ? "executed" : fallback;
+  return text === "planned" || text === "planejado" ?"planned" : text === "executed" || text === "executado" ?"executed" : fallback;
 }
 
 function normalizeWorkoutPlan(input = {}) {
@@ -2294,7 +2294,7 @@ async function upsertActivities(tenantId, athleteUserId, importedActivities) {
     const importedDate = formatDateOnly(activity.date || new Date());
     const importedDistance = safeNumber(activity.raw?.distance || activity.distanceMeters || 0);
     const nextStatus = normalizeActivityStatus(activity.status || activity.raw?.status, "executed");
-    const matchedPlanned = String(activity.source || "").toLowerCase() !== "manual" ? await query(
+    const matchedPlanned = String(activity.source || "").toLowerCase() !== "manual" ?await query(
       `SELECT provider, provider_activity_id, raw
          FROM activities
         WHERE tenant_id = $1
@@ -2453,7 +2453,7 @@ async function createManualActivities(tenantId, athleteUserId, mode, activities)
     const distanceMeters = parseDistanceToMeters(activity.distance);
     const durationSeconds = parseTimeToSeconds(activity.duration || activity.time || "") || 0;
     const status = normalizeActivityStatus(activity.status, "executed");
-    const workoutPlan = activity.workoutPlan ? normalizeWorkoutPlan(activity.workoutPlan) : null;
+    const workoutPlan = activity.workoutPlan ?normalizeWorkoutPlan(activity.workoutPlan) : null;
     const scheduledTime = String(activity.scheduledTime || "").trim().slice(0, 8);
     const raw = {
       manual: true,
