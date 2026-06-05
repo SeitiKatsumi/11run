@@ -891,16 +891,24 @@ dialog {
 
 .admin-type-icon {
   grid-area: icon;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
   border: 1px solid currentColor;
   border-radius: 999px;
   color: var(--primary);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0;
+}
+
+.admin-type-icon svg,
+.analysis-type-thumb svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .admin-type-card strong {
@@ -929,6 +937,18 @@ dialog {
   background:
     linear-gradient(135deg, rgba(255, 75, 11, 0.08), transparent 46%),
     rgba(255, 255, 255, 0.018);
+}
+
+.admin-create-panel > .admin-form-shell {
+  display: none;
+}
+
+.workflow-body .admin-form-shell,
+.workflow-body .analysis-form-shell {
+  display: grid;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .admin-form-heading {
@@ -4057,6 +4077,31 @@ dialog::backdrop {
     grid-template-columns: 1fr;
   }
 
+  .workflow-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .workflow-dialog-content {
+    max-height: calc(100dvh - 16px);
+    padding: 18px;
+  }
+
+  .workflow-body .form-grid,
+  .workflow-body .analysis-form,
+  .workflow-body .profile-dynamic-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-actions span {
+    order: -1;
+    text-align: left;
+  }
+
   .workout-structure-head {
     align-items: stretch;
     flex-direction: column;
@@ -5622,9 +5667,6 @@ html[data-theme="light"] .performance-chart .volume-line {
   border: 1px solid currentColor;
   border-radius: 14px;
   color: var(--primary);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0;
 }
 
 .analysis-type-card strong {
@@ -5650,6 +5692,10 @@ html[data-theme="light"] .performance-chart .volume-line {
   background:
     linear-gradient(135deg, rgba(255, 75, 11, 0.08), transparent 46%),
     rgba(255, 255, 255, 0.018);
+}
+
+.analyses-panel > .analysis-form-shell {
+  display: none;
 }
 
 .analysis-form-heading {
@@ -5680,6 +5726,134 @@ html[data-theme="light"] .performance-chart .volume-line {
   color: var(--muted-foreground);
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+.workflow-dialog {
+  width: min(1060px, calc(100vw - 32px));
+  max-height: min(860px, calc(100vh - 32px));
+  padding: 0;
+  overflow: hidden;
+}
+
+.workflow-dialog-content {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  max-height: min(860px, calc(100vh - 32px));
+  padding: 24px;
+  gap: 18px;
+}
+
+.workflow-modal-head {
+  padding-right: 56px;
+}
+
+.workflow-modal-head span {
+  display: block;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.workflow-modal-head h2 {
+  margin: 8px 0 0;
+  color: var(--foreground);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1.05;
+  font-weight: 780;
+}
+
+.workflow-modal-head p {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+
+.workflow-stepper {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.workflow-stepper span {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  background: var(--card);
+  font-size: 0.78rem;
+  font-weight: 760;
+}
+
+.workflow-stepper i {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 75, 11, 0.14);
+  color: var(--primary);
+  font-style: normal;
+  font-size: 0.68rem;
+}
+
+.workflow-stepper span.is-active {
+  border-color: var(--primary);
+  color: var(--foreground);
+}
+
+.workflow-stepper span.is-active i,
+.workflow-stepper span.is-done i {
+  background: var(--primary);
+  color: #fff;
+}
+
+.workflow-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.workflow-body .form-grid,
+.workflow-body .analysis-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wizard-step-hidden {
+  display: none !important;
+}
+
+.workflow-body .admin-form-heading,
+.workflow-body .analysis-form-heading {
+  display: none;
+}
+
+.workflow-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.workflow-actions span {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-align: center;
+}
+
+.workflow-body form > button[type="submit"],
+.workflow-body .analysis-action-row {
+  display: none !important;
 }
 
 .analysis-intro-grid {
@@ -6269,5 +6443,32 @@ nav a.is-active .nav-icon {
   .home-view .home-ai-agent {
     margin: 0;
     max-height: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .workflow-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .workflow-dialog-content {
+    max-height: calc(100dvh - 16px);
+    padding: 18px;
+  }
+
+  .workflow-body .form-grid,
+  .workflow-body .analysis-form,
+  .workflow-body .profile-dynamic-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-actions span {
+    order: -1;
+    text-align: left;
   }
 }

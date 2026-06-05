@@ -56,6 +56,14 @@ const state = {
   })()
 };
 
+const workflowState = {
+  type: "",
+  step: 0,
+  steps: [],
+  shell: null,
+  form: null
+};
+
 const APP_VERSION_FALLBACK = "local-ui";
 const SECRET_MASK = "********";
 const languageOptions = {
@@ -1076,6 +1084,24 @@ const controlIconPaths = {
 
 function controlIconSvg(key) {
   return `<svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true">${controlIconPaths[key] || controlIconPaths.single}</svg>`;
+}
+
+const workflowIconPaths = {
+  athlete_master: `<circle cx="12" cy="8" r="3"></circle><path d="M5 20c1.3-4 4-6 7-6s5.7 2 7 6"></path><path d="M9 3h6"></path>`,
+  athlete_future: `<circle cx="12" cy="7" r="2.8"></circle><path d="M6 20c1.2-3.5 3.6-5.2 6-5.2s4.8 1.7 6 5.2"></path><path d="M4 10h16"></path>`,
+  athlete_scholarship: `<path d="M4 7l8-4 8 4-8 4-8-4z"></path><path d="M7 10v5c2.8 2 7.2 2 10 0v-5"></path><path d="M20 8v5"></path>`,
+  coach: `<path d="M5 19V5l7-2 7 2v14"></path><path d="M8 10h8M8 14h5"></path><path d="M15 17l3 3"></path>`,
+  team: `<circle cx="8" cy="9" r="2.5"></circle><circle cx="16" cy="9" r="2.5"></circle><path d="M4 20c.8-3.2 2.5-4.8 4-4.8s3.2 1.6 4 4.8M12 20c.8-3.2 2.5-4.8 4-4.8s3.2 1.6 4 4.8"></path>`,
+  sponsor_investor: `<path d="M4 17V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10"></path><path d="M7 17v-4M12 17V9M17 17v-6"></path><path d="M3 20h18"></path>`,
+  admin: `<path d="M12 3l7 3v5c0 4.7-2.8 8-7 10-4.2-2-7-5.3-7-10V6l7-3z"></path><path d="M9 12l2 2 4-5"></path>`,
+  blood: `<path d="M12 3c3 3.8 5 6.8 5 10a5 5 0 0 1-10 0c0-3.2 2-6.2 5-10z"></path><path d="M9 13h6M12 10v6"></path>`,
+  xray: `<path d="M5 5h14v14H5z"></path><path d="M8 8l8 8M16 8l-8 8"></path><path d="M12 5v14"></path>`,
+  mri: `<rect x="4" y="5" width="16" height="14" rx="3"></rect><path d="M8 15c1.2-4 6.8-4 8 0"></path><path d="M8 9h8"></path>`,
+  body: `<circle cx="12" cy="5" r="2"></circle><path d="M12 7v7"></path><path d="M8 10h8"></path><path d="M9 21l3-7 3 7"></path>`
+};
+
+function workflowIconSvg(key) {
+  return `<svg class="workflow-thumb-icon" viewBox="0 0 24 24" aria-hidden="true">${workflowIconPaths[key] || controlIconPaths.single}</svg>`;
 }
 
 const actionIconPaths = {
@@ -2201,7 +2227,7 @@ function renderAnalysesView() {
     button.classList.toggle("is-active", button.dataset.analysisMode === state.analysisMode);
     if (button.classList.contains("analysis-type-card")) {
       button.innerHTML = `
-        <span class="analysis-type-thumb" aria-hidden="true">${escapeHtml(config.icon)}</span>
+        <span class="analysis-type-thumb" aria-hidden="true">${workflowIconSvg(button.dataset.analysisMode)}</span>
         <strong>${escapeHtml(analysisText(config.label))}</strong>
         <small>${escapeHtml(analysisText(config.short))}</small>
       `;
@@ -2256,6 +2282,159 @@ function renderAnalysisFiles() {
   list.innerHTML = files.map((file) => `
     <span class="analysis-file-pill">${escapeHtml(file.name)} <small>${Math.ceil(file.size / 1024)} KB</small></span>
   `).join("");
+}
+
+function workflowParking() {
+  let parking = document.querySelector("#workflowParking");
+  if (!parking) {
+    parking = document.createElement("div");
+    parking.id = "workflowParking";
+    parking.hidden = true;
+    document.body.appendChild(parking);
+  }
+  return parking;
+}
+
+function restoreWorkflowShell() {
+  if (workflowState.shell) {
+    workflowParking().appendChild(workflowState.shell);
+    workflowState.shell.classList.remove("is-workflow-active");
+  }
+  workflowState.type = "";
+  workflowState.step = 0;
+  workflowState.steps = [];
+  workflowState.shell = null;
+  workflowState.form = null;
+}
+
+function visibleWizardElements(elements) {
+  return elements.filter((element) => element && !element.hidden && !element.closest("[hidden]"));
+}
+
+function buildAdminWizardSteps(form) {
+  const formGrid = form?.querySelector(".form-grid");
+  const basicFields = visibleWizardElements([...formGrid?.querySelectorAll(".credential-field") || []]);
+  const blocks = [...form?.querySelectorAll(".profile-dynamic-block") || []];
+  return [
+    { label: "Dados principais", elements: basicFields.length ?basicFields : [formGrid].filter(Boolean) },
+    ...blocks.map((block) => ({
+      label: block.querySelector(".section-title h3")?.textContent?.trim() || "Dados do perfil",
+      elements: [block]
+    })),
+    { label: "Revisar e salvar", elements: visibleWizardElements([...form?.querySelectorAll('button[type="submit"]') || []]) }
+  ].filter((step) => step.elements.length);
+}
+
+function buildAnalysisWizardSteps(form) {
+  if (!form) return [];
+  const fields = [...form.querySelectorAll(".credential-field")];
+  return [
+    { label: "Identificacao", elements: visibleWizardElements(fields.slice(0, 4)) },
+    { label: "Contexto", elements: visibleWizardElements(fields.slice(4)) },
+    { label: "Arquivos e analise", elements: visibleWizardElements([document.querySelector("#analysisFileList"), ...form.querySelectorAll(".analysis-action-row")]) }
+  ].filter((step) => step.elements.length);
+}
+
+function workflowDraftKey() {
+  return `workflowDraft:${workflowState.type}:${state.adminMode || ""}:${state.analysisMode || ""}`;
+}
+
+function saveWorkflowDraft() {
+  if (!workflowState.form) return;
+  const values = {};
+  workflowState.form.querySelectorAll("input[name], select[name], textarea[name]").forEach((field) => {
+    if (field.type === "file") {
+      values[field.name] = [...(field.files || [])].map((file) => file.name);
+    } else if (field.type === "checkbox") {
+      values[field.name] = field.checked;
+    } else {
+      values[field.name] = field.value;
+    }
+  });
+  localStorage.setItem(workflowDraftKey(), JSON.stringify({ savedAt: new Date().toISOString(), values }));
+  const status = document.querySelector("#workflowDraftStatus");
+  if (status) status.textContent = "Rascunho salvo localmente.";
+}
+
+function applyWorkflowStep() {
+  const dialog = document.querySelector("#workflowDialog");
+  if (!dialog || !workflowState.form) return;
+  const allElements = workflowState.steps.flatMap((step) => step.elements);
+  allElements.forEach((element) => element.classList.add("wizard-step-hidden"));
+  const step = workflowState.steps[workflowState.step] || workflowState.steps[0];
+  (step?.elements || []).forEach((element) => element.classList.remove("wizard-step-hidden"));
+  const stepper = document.querySelector("#workflowStepper");
+  if (stepper) {
+    stepper.innerHTML = workflowState.steps.map((item, index) => `
+      <span class="${index === workflowState.step ?"is-active" : index < workflowState.step ?"is-done" : ""}">
+        <i>${index + 1}</i>${escapeHtml(item.label)}
+      </span>
+    `).join("");
+  }
+  const prev = document.querySelector("[data-workflow-prev]");
+  const next = document.querySelector("[data-workflow-next]");
+  if (prev) prev.disabled = workflowState.step === 0;
+  if (next) {
+    const finalStep = workflowState.step >= workflowState.steps.length - 1;
+    next.textContent = finalStep
+      ? workflowState.type === "analysis" ?"Gerar analise" : "Salvar cadastro"
+      : "Continuar";
+  }
+  saveWorkflowDraft();
+}
+
+function openWorkflowDialog({ type, title, description, shell, form, steps }) {
+  const dialog = document.querySelector("#workflowDialog");
+  const body = document.querySelector("#workflowBody");
+  if (!dialog || !body || !shell || !form) return;
+  restoreWorkflowShell();
+  workflowState.type = type;
+  workflowState.shell = shell;
+  workflowState.form = form;
+  workflowState.steps = steps.filter((step) => step.elements?.length);
+  workflowState.step = 0;
+  document.querySelector("#workflowEyebrow").textContent = type === "analysis" ?"Analise 11RUN" : "Cadastro 11RUN";
+  document.querySelector("#workflowTitle").textContent = title;
+  document.querySelector("#workflowDescription").textContent = description;
+  body.innerHTML = "";
+  body.appendChild(shell);
+  shell.classList.add("is-workflow-active");
+  dialog.showModal();
+  applyWorkflowStep();
+  scheduleAutoTranslate();
+}
+
+function openAdminWorkflow() {
+  renderAdminMode();
+  const isTeam = state.adminMode === "team";
+  const shell = document.querySelector(".admin-form-shell");
+  const form = document.querySelector(isTeam ?"#teamForm" : "#adminUserForm");
+  const ux = adminProfileUx[state.adminMode] || adminProfileUx.athlete_master;
+  openWorkflowDialog({
+    type: "admin",
+    title: document.querySelector("#adminFormTitle")?.textContent?.trim() || ux.title,
+    description: ux.description,
+    shell,
+    form,
+    steps: buildAdminWizardSteps(form)
+  });
+}
+
+function openAnalysisWorkflow() {
+  renderAnalysesView();
+  const mode = currentAnalysisMode();
+  const shell = document.querySelector(".analysis-form-shell");
+  const form = document.querySelector("#analysisForm");
+  const output = document.querySelector("#analysisOutput");
+  if (shell && output && !shell.contains(output)) shell.appendChild(output);
+  openWorkflowDialog({
+    type: "analysis",
+    title: analysisText(mode.label),
+    description: analysisText(mode.short),
+    shell,
+    form,
+    steps: buildAnalysisWizardSteps(form)
+  });
 }
 
 function buildAnalysisLocalResult(modeKey, values) {
@@ -6095,6 +6274,15 @@ function renderAdminMode() {
   const isSponsor = state.adminMode === "sponsor_investor";
   document.querySelectorAll("[data-admin-mode]").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.adminMode === state.adminMode);
+    if (button.classList.contains("admin-type-card")) {
+      const mode = button.dataset.adminMode;
+      const ux = adminProfileUx[mode] || adminProfileUx.athlete_master;
+      button.innerHTML = `
+        <span class="admin-type-icon" aria-hidden="true">${workflowIconSvg(mode)}</span>
+        <strong>${escapeHtml(profileTypeDefinitions[mode]?.label || ux.summary)}</strong>
+        <small>${escapeHtml(ux.description)}</small>
+      `;
+    }
   });
   const title = document.querySelector("#adminFormTitle");
   if (title) {
@@ -6216,6 +6404,8 @@ async function saveAdminUser(event) {
     state.editingAdminUserId = "";
     renderAdminMode();
     setAdminMessage(`${payload.athlete.name} ${editingId ?"atualizado" : "cadastrado"} com sucesso.`);
+    document.querySelector("#workflowDialog")?.close();
+    restoreWorkflowShell();
   } catch (error) {
     setAdminMessage(error.message, true);
   }
@@ -6294,6 +6484,8 @@ async function saveTeam(event) {
     renderAthletes();
     form.reset();
     setAdminMessage(`Equipe ${payload.team.name} cadastrada com sucesso.`);
+    document.querySelector("#workflowDialog")?.close();
+    restoreWorkflowShell();
   } catch (error) {
     setAdminMessage(error.message, true);
   }
@@ -6598,13 +6790,6 @@ document.querySelectorAll("[data-test-mode]").forEach((button) => {
   });
 });
 
-document.querySelectorAll("[data-analysis-mode]").forEach((button) => {
-  button.addEventListener("click", () => {
-    state.analysisMode = button.dataset.analysisMode || "blood";
-    renderAnalysesView();
-  });
-});
-
 document.querySelector("#performanceTestForm")?.addEventListener("submit", savePerformanceTest);
 document.querySelector("#paceCalculatorForm")?.addEventListener("submit", calculatePace);
 document.querySelector("#dateCalculatorForm")?.addEventListener("submit", calculateDates);
@@ -6681,6 +6866,51 @@ calendar.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", async (event) => {
+  const adminModeButton = event.target.closest("[data-admin-mode]");
+  if (adminModeButton) {
+    event.preventDefault();
+    state.editingAdminUserId = "";
+    document.querySelector("#adminUserForm")?.reset();
+    state.adminMode = adminModeButton.dataset.adminMode;
+    setAdminMessage("");
+    renderAdminMode();
+    if (adminModeButton.classList.contains("admin-type-card")) openAdminWorkflow();
+    return;
+  }
+  const analysisModeButton = event.target.closest("[data-analysis-mode]");
+  if (analysisModeButton) {
+    event.preventDefault();
+    state.analysisMode = analysisModeButton.dataset.analysisMode || "blood";
+    document.querySelector("#analysisForm")?.reset();
+    const output = document.querySelector("#analysisOutput");
+    if (output) output.innerHTML = "";
+    renderAnalysesView();
+    if (analysisModeButton.classList.contains("analysis-type-card")) openAnalysisWorkflow();
+    return;
+  }
+  if (event.target.closest("[data-close-workflow-dialog]")) {
+    document.querySelector("#workflowDialog")?.close();
+    restoreWorkflowShell();
+    return;
+  }
+  if (event.target.closest("[data-workflow-prev]")) {
+    event.preventDefault();
+    workflowState.step = Math.max(0, workflowState.step - 1);
+    applyWorkflowStep();
+    return;
+  }
+  if (event.target.closest("[data-workflow-next]")) {
+    event.preventDefault();
+    const finalStep = workflowState.step >= workflowState.steps.length - 1;
+    saveWorkflowDraft();
+    if (finalStep) {
+      workflowState.form?.requestSubmit();
+    } else {
+      workflowState.step = Math.min(workflowState.steps.length - 1, workflowState.step + 1);
+      applyWorkflowStep();
+    }
+    return;
+  }
   if (event.target.closest("[data-toggle-theme]")) {
     state.theme = state.theme === "dark" ?"light" : "dark";
     applyTheme();
@@ -7039,22 +7269,13 @@ document.querySelector("#coachEmailSelect")?.addEventListener("change", (event) 
   }
 });
 
-document.querySelectorAll("[data-admin-mode]").forEach((button) => {
-  button.addEventListener("click", () => {
-    state.editingAdminUserId = "";
-    document.querySelector("#adminUserForm")?.reset();
-    state.adminMode = button.dataset.adminMode;
-    setAdminMessage("");
-    renderAdminMode();
-  });
-});
-
 document.querySelector("#syncSelected")?.addEventListener("click", runSync);
 document.querySelector("[data-import-demo]")?.addEventListener("click", runSync);
 document.querySelector("#athleteForm")?.addEventListener("submit", saveAthlete);
 document.querySelector("#goalForm")?.addEventListener("submit", saveGoal);
 document.querySelector("#adminUserForm")?.addEventListener("submit", saveAdminUser);
 document.querySelector("#teamForm")?.addEventListener("submit", saveTeam);
+document.querySelector("#workflowDialog")?.addEventListener("close", restoreWorkflowShell);
 ["#athleteFilterSearch", "#athleteFilterTeam", "#athleteFilterCoach"].forEach((selector) => {
   document.querySelector(selector)?.addEventListener("input", renderAthletes);
 });
