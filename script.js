@@ -17,6 +17,8 @@ const state = {
   homeAiMessages: [],
   homeAiBusy: false,
   testMode: "3000",
+  analysisMode: "blood",
+  analysisBusy: false,
   performanceTests: (() => {
     try {
       const parsed = JSON.parse(localStorage.getItem("performanceTests") || "[]");
@@ -217,6 +219,7 @@ const officialTranslations = {
     "nav.training": "TRAINING",
     "nav.tests": "TESTS",
     "nav.calculators": "CALCULATORS",
+    "nav.analyses": "ANALYSES",
     "nav.goals": "GOALS",
     "nav.preferences": "PREFERENCES",
     "nav.settings": "SETTINGS",
@@ -238,6 +241,18 @@ const officialTranslations = {
     "dashboard.title": "Performance",
     "training.kicker": "Training",
     "training.title": "Activities",
+    "analyses.kicker": "Analyses",
+    "analyses.title": "Clinical and imaging analysis center",
+    "analyses.protocols": "Protocols",
+    "analyses.subtitle": "Choose the analysis type",
+    "analyses.examDate": "Exam date",
+    "analyses.source": "Source / lab",
+    "analyses.priority": "Priority",
+    "analyses.files": "Files",
+    "analyses.report": "Report, values or description",
+    "analyses.trainingContext": "Sports context",
+    "analyses.generate": "Generate analysis",
+    "analyses.clear": "Clear",
     "goals.kicker": "Goals",
     "goals.title": "Races and predictive routes",
     "settings.kicker": "Settings",
@@ -268,6 +283,7 @@ const officialTranslations = {
     "nav.training": "TREINAMENTOS",
     "nav.tests": "TESTES",
     "nav.calculators": "CALCULADORAS",
+    "nav.analyses": "ANÁLISES",
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERÊNCIAS",
     "nav.settings": "CONFIGURAÇÕES",
@@ -289,6 +305,18 @@ const officialTranslations = {
     "dashboard.title": "Performance",
     "training.kicker": "Treinamentos",
     "training.title": "Atividades",
+    "analyses.kicker": "Análises",
+    "analyses.title": "Centro de análises clínicas e imagens",
+    "analyses.protocols": "Protocolos",
+    "analyses.subtitle": "Escolha o tipo de análise",
+    "analyses.examDate": "Data do exame",
+    "analyses.source": "Origem / laboratório",
+    "analyses.priority": "Prioridade",
+    "analyses.files": "Arquivos",
+    "analyses.report": "Laudo, valores ou descrição",
+    "analyses.trainingContext": "Contexto esportivo",
+    "analyses.generate": "Gerar análise",
+    "analyses.clear": "Limpar",
     "goals.kicker": "Objetivos",
     "goals.title": "Provas e rotas preditivas",
     "settings.kicker": "Configurações",
@@ -319,6 +347,7 @@ const officialTranslations = {
     "nav.training": "トレーニング",
     "nav.tests": "\u30c6\u30b9\u30c8",
     "nav.calculators": "\u8a08\u7b97\u6a5f",
+    "nav.analyses": "\u5206\u6790",
     "nav.goals": "目標",
     "nav.preferences": "プロフィール",
     "nav.settings": "設定",
@@ -340,6 +369,18 @@ const officialTranslations = {
     "dashboard.title": "パフォーマンス",
     "training.kicker": "トレーニング",
     "training.title": "アクティビティ",
+    "analyses.kicker": "\u5206\u6790",
+    "analyses.title": "\u81e8\u5e8a\u30fb\u753b\u50cf\u5206\u6790\u30bb\u30f3\u30bf\u30fc",
+    "analyses.protocols": "\u30d7\u30ed\u30c8\u30b3\u30eb",
+    "analyses.subtitle": "\u5206\u6790\u30bf\u30a4\u30d7\u3092\u9078\u629e",
+    "analyses.examDate": "\u691c\u67fb\u65e5",
+    "analyses.source": "\u691c\u67fb\u5143 / \u30e9\u30dc",
+    "analyses.priority": "\u512a\u5148\u5ea6",
+    "analyses.files": "\u30d5\u30a1\u30a4\u30eb",
+    "analyses.report": "\u6240\u898b\u3001\u6570\u5024\u3001\u8aac\u660e",
+    "analyses.trainingContext": "\u30b9\u30dd\u30fc\u30c4\u6587\u8108",
+    "analyses.generate": "\u5206\u6790\u3092\u751f\u6210",
+    "analyses.clear": "\u30af\u30ea\u30a2",
     "goals.kicker": "目標",
     "goals.title": "レースと予測ルート",
     "settings.kicker": "設定",
@@ -370,6 +411,7 @@ const officialTranslations = {
     "nav.training": "ENTRENAMIENTOS",
     "nav.tests": "PRUEBAS",
     "nav.calculators": "CALCULADORAS",
+    "nav.analyses": "ANÁLISIS",
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERENCIAS",
     "nav.settings": "CONFIGURACIÓN",
@@ -391,6 +433,18 @@ const officialTranslations = {
     "dashboard.title": "Performance",
     "training.kicker": "Entrenamientos",
     "training.title": "Actividades",
+    "analyses.kicker": "Análisis",
+    "analyses.title": "Centro de análisis clínicos e imágenes",
+    "analyses.protocols": "Protocolos",
+    "analyses.subtitle": "Elige el tipo de análisis",
+    "analyses.examDate": "Fecha del examen",
+    "analyses.source": "Origen / laboratorio",
+    "analyses.priority": "Prioridad",
+    "analyses.files": "Archivos",
+    "analyses.report": "Informe, valores o descripción",
+    "analyses.trainingContext": "Contexto deportivo",
+    "analyses.generate": "Generar análisis",
+    "analyses.clear": "Limpiar",
     "goals.kicker": "Objetivos",
     "goals.title": "Pruebas y rutas predictivas",
     "settings.kicker": "Configuración",
@@ -1222,8 +1276,9 @@ function setView(view) {
   if (view === "dashboard") renderDashboard();
   if (view === "home") renderHomeMotivation();
   if (view === "tests") renderTestsView();
+  if (view === "analyses") renderAnalysesView();
   if (view === "calculators") scheduleAutoTranslate();
-  location.hash = view === "training" ?"treinamentos" : view === "tests" ?"testes" : view === "calculators" ?"calculadoras" : view === "goals" ?"objetivos" : view === "athlete" ?"preferencias" : view === "settings" ?"configuracoes" : view === "dashboard" ?"dashboard" : "home";
+  location.hash = view === "training" ?"treinamentos" : view === "tests" ?"testes" : view === "calculators" ?"calculadoras" : view === "analyses" ?"analises" : view === "goals" ?"objetivos" : view === "athlete" ?"preferencias" : view === "settings" ?"configuracoes" : view === "dashboard" ?"dashboard" : "home";
   closeMobileMenu();
   applyI18n();
 }
@@ -1234,6 +1289,7 @@ function viewFromHash(hash) {
   if (hash === "dashboard") return "dashboard";
   if (hash === "testes") return "tests";
   if (hash === "calculadoras") return "calculators";
+  if (hash === "analises" || hash === "analyses") return "analyses";
   if (hash === "configuracoes" || hash === "configuracao") return "settings";
   if (hash === "atleta" || hash === "preferencias") return "athlete";
   return "home";
@@ -2043,6 +2099,227 @@ function calculateWeightImpact(event) {
     </div>
     <p class="empty-state">Estimativa prática: redução de massa tende a ajudar mais quando preserva força, sono e disponibilidade energética.</p>
   `);
+}
+
+const analysisModeConfig = {
+  blood: {
+    label: { en: "Blood count", "pt-BR": "Hemograma", ja: "\u8840\u6db2\u691c\u67fb", es: "Hemograma" },
+    short: { en: "CBC + athlete context", "pt-BR": "Hemograma + contexto do atleta", ja: "\u8840\u6db2\u691c\u67fb + \u7af6\u6280\u6587\u8108", es: "Hemograma + contexto del atleta" },
+    icon: "CBC",
+    accept: ".pdf,.png,.jpg,.jpeg,.webp,.txt,.csv",
+    focus: [
+      { en: "Hemoglobin, hematocrit and red cell indices", "pt-BR": "Hemoglobina, hematocrito e indices vermelhos", ja: "\u30d8\u30e2\u30b0\u30ed\u30d3\u30f3\u3001\u30d8\u30de\u30c8\u30af\u30ea\u30c3\u30c8\u3001\u8d64\u8840\u7403\u6307\u6a19", es: "Hemoglobina, hematocrito e indices rojos" },
+      { en: "Iron, ferritin, B12, folate and inflammation signals", "pt-BR": "Ferro, ferritina, B12, folato e sinais inflamatorios", ja: "\u9244\u3001\u30d5\u30a7\u30ea\u30c1\u30f3\u3001B12\u3001\u8449\u9178\u3001\u708e\u75c7\u30b5\u30a4\u30f3", es: "Hierro, ferritina, B12, folato y senales inflamatorias" },
+      { en: "Training load compatibility and recovery risk", "pt-BR": "Compatibilidade com carga de treino e risco de recuperacao", ja: "\u30c8\u30ec\u30fc\u30cb\u30f3\u30b0\u8ca0\u8377\u3068\u56de\u5fa9\u30ea\u30b9\u30af", es: "Compatibilidad con carga de entrenamiento y riesgo de recuperacion" }
+    ]
+  },
+  xray: {
+    label: { en: "X-ray", "pt-BR": "Raio X", ja: "X\u7dda", es: "Rayos X" },
+    short: { en: "Bone, alignment and impact review", "pt-BR": "Ossos, alinhamento e impacto", ja: "\u9aa8\u3001\u914d\u5217\u3001\u885d\u6483\u8a55\u4fa1", es: "Huesos, alineacion e impacto" },
+    icon: "XR",
+    accept: ".pdf,.png,.jpg,.jpeg,.webp",
+    focus: [
+      { en: "Possible fracture, stress reaction or alignment finding", "pt-BR": "Possivel fratura, reacao de estresse ou alteracao de alinhamento", ja: "\u9aa8\u6298\u3001\u75b2\u52b4\u6027\u53cd\u5fdc\u3001\u914d\u5217\u306e\u6240\u898b", es: "Posible fractura, reaccion por estres o alteracion de alineacion" },
+      { en: "Impact load adjustment and return-to-run caution", "pt-BR": "Ajuste de impacto e cautela no retorno a corrida", ja: "\u885d\u6483\u8ca0\u8377\u8abf\u6574\u3068\u5fa9\u5e30\u6642\u306e\u6ce8\u610f", es: "Ajuste de impacto y cautela en la vuelta a correr" },
+      { en: "Need for medical report confirmation", "pt-BR": "Necessidade de confirmacao por laudo medico", ja: "\u533b\u5b66\u7684\u6240\u898b\u306e\u78ba\u8a8d\u304c\u5fc5\u8981", es: "Necesidad de confirmacion por informe medico" }
+    ]
+  },
+  mri: {
+    label: { en: "MRI", "pt-BR": "MRI", ja: "MRI", es: "MRI" },
+    short: { en: "Soft tissue, bone stress and lesion staging", "pt-BR": "Tecidos, estresse osseo e estagio de lesao", ja: "\u8edf\u90e8\u7d44\u7e54\u3001\u9aa8\u30b9\u30c8\u30ec\u30b9\u3001\u640d\u50b7\u6bb5\u968e", es: "Tejidos, estres oseo y estadio de lesion" },
+    icon: "MRI",
+    accept: ".pdf,.png,.jpg,.jpeg,.webp",
+    focus: [
+      { en: "Tendon, muscle, cartilage, ligament or bone edema patterns", "pt-BR": "Tendao, musculo, cartilagem, ligamento ou edema osseo", ja: "\u8171\u3001\u7b4b\u3001\u8edf\u9aa8\u3001\u9771\u5e2f\u3001\u9aa8\u9ac4\u6d6e\u816b\u306e\u30d1\u30bf\u30fc\u30f3", es: "Tendon, musculo, cartilago, ligamento o edema oseo" },
+      { en: "Load restriction and cross-training strategy", "pt-BR": "Restricao de carga e estrategia de cross-training", ja: "\u8ca0\u8377\u5236\u9650\u3068\u4ee3\u66ff\u30c8\u30ec\u30fc\u30cb\u30f3\u30b0", es: "Restriccion de carga y estrategia de cross-training" },
+      { en: "Red flags for specialist follow-up", "pt-BR": "Sinais de alerta para acompanhamento especializado", ja: "\u5c02\u9580\u5bb6\u30d5\u30a9\u30ed\u30fc\u306e\u8b66\u6212\u30b5\u30a4\u30f3", es: "Senales de alerta para seguimiento especializado" }
+    ]
+  },
+  body: {
+    label: { en: "Body image", "pt-BR": "Imagem Corporal", ja: "\u8eab\u4f53\u753b\u50cf", es: "Imagen corporal" },
+    short: { en: "Visual screening and systemic traits", "pt-BR": "Triagem visual e caracteristicas sistemicas", ja: "\u8996\u899a\u30b9\u30af\u30ea\u30fc\u30cb\u30f3\u30b0\u3068\u5168\u8eab\u7279\u6027", es: "Cribado visual y caracteristicas sistemicas" },
+    icon: "IMG",
+    accept: ".png,.jpg,.jpeg,.webp,.pdf",
+    focus: [
+      { en: "Posture, asymmetry and visible overload clues", "pt-BR": "Postura, assimetria e pistas visuais de sobrecarga", ja: "\u59ff\u52e2\u3001\u975e\u5bfe\u79f0\u3001\u904e\u8ca0\u8377\u306e\u8996\u899a\u7684\u624b\u304c\u304b\u308a", es: "Postura, asimetria y pistas visuales de sobrecarga" },
+      { en: "Body composition trend only when comparable images exist", "pt-BR": "Tendencia de composicao corporal apenas com imagens comparaveis", ja: "\u6bd4\u8f03\u53ef\u80fd\u306a\u753b\u50cf\u304c\u3042\u308b\u5834\u5408\u306e\u307f\u4f53\u7d44\u6210\u50be\u5411", es: "Tendencia de composicion corporal solo con imagenes comparables" },
+      { en: "Privacy, consent and clinical confirmation", "pt-BR": "Privacidade, consentimento e confirmacao clinica", ja: "\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc\u3001\u540c\u610f\u3001\u81e8\u5e8a\u78ba\u8a8d", es: "Privacidad, consentimiento y confirmacion clinica" }
+    ]
+  }
+};
+
+function analysisText(value) {
+  return localizedValue(value);
+}
+
+function currentAnalysisMode() {
+  return analysisModeConfig[state.analysisMode] || analysisModeConfig.blood;
+}
+
+function renderAnalysesView() {
+  const mode = currentAnalysisMode();
+  document.querySelectorAll("[data-analysis-mode]").forEach((button) => {
+    const config = analysisModeConfig[button.dataset.analysisMode] || analysisModeConfig.blood;
+    button.classList.toggle("is-active", button.dataset.analysisMode === state.analysisMode);
+    button.textContent = analysisText(config.label);
+    button.dataset.noAutoTranslate = "1";
+  });
+  const intro = document.querySelector("#analysisModeIntro");
+  if (intro) {
+    intro.innerHTML = `
+      <article class="analysis-mode-card is-primary">
+        <span>${escapeHtml(mode.icon)}</span>
+        <strong>${escapeHtml(analysisText(mode.label))}</strong>
+        <p>${escapeHtml(analysisText(mode.short))}</p>
+      </article>
+      ${mode.focus.map((item) => `
+        <article class="analysis-mode-card">
+          <span>+</span>
+          <p>${escapeHtml(analysisText(item))}</p>
+        </article>
+      `).join("")}
+    `;
+  }
+  const form = document.querySelector("#analysisForm");
+  if (form) {
+    if (!form.elements.examDate.value) form.elements.examDate.value = dateKey(new Date());
+    if (form.elements.files) form.elements.files.accept = mode.accept;
+  }
+  renderAnalysisFiles();
+  enhanceSystemControls();
+  scheduleAutoTranslate();
+}
+
+function renderAnalysisFiles() {
+  const list = document.querySelector("#analysisFileList");
+  const input = document.querySelector("#analysisForm input[name='files']");
+  if (!list || !input) return;
+  const files = Array.from(input.files || []);
+  if (!files.length) {
+    list.innerHTML = "";
+    return;
+  }
+  list.innerHTML = files.map((file) => `
+    <span class="analysis-file-pill">${escapeHtml(file.name)} <small>${Math.ceil(file.size / 1024)} KB</small></span>
+  `).join("");
+}
+
+function buildAnalysisLocalResult(modeKey, values) {
+  const recentRuns = activitiesSince(90).filter(isRunningActivity);
+  const volume30 = activitiesSince(30).filter(isRunningActivity).reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const loadSignal = recentRuns.length >= 36 ? "alto volume recente" : recentRuns.length >= 18 ? "boa consistencia recente" : "poucos treinos recentes registrados";
+  const report = `${values.reportText} ${values.trainingContext}`.toLowerCase();
+  const flags = [];
+  if (/dor|pain|les[aã]o|injury|edema|fratura|fracture|tend[aã]o|ligamento/i.test(report)) flags.push("risco musculo-esqueletico");
+  if (/ferritina|ferro|hemoglobina|hemat[oó]crito|anemia|b12|folato/i.test(report)) flags.push("atencao hematologica/nutricional");
+  if (/sono|cansa|fadiga|fatigue|stress|estresse/i.test(report)) flags.push("recuperacao e fadiga");
+  if (!flags.length) flags.push("monitoramento preventivo");
+
+  const modeSpecific = {
+    blood: [
+      "Cruzar hemoglobina, hematocrito, VCM, HCM, RDW, leucocitos, plaquetas, ferritina, B12 e folato com a carga recente.",
+      "Se houver queda de hemoglobina/ferritina ou sinais inflamatorios, reduzir blocos intensos e priorizar recuperacao ate validacao clinica.",
+      "Nutricao: revisar ferro, proteina, energia disponivel, hidratacao e janela pos-treino conforme laudo e sintomas."
+    ],
+    xray: [
+      "Usar o laudo para confirmar se ha fratura, reacao de estresse, desalinhamento ou achado degenerativo.",
+      "Enquanto houver dor mecanica, trocar impacto por bike, eliptico, piscina ou forca sem dor e reintroduzir corrida progressivamente.",
+      "Treinos de intensidade devem esperar liberacao clinica quando houver suspeita ossea."
+    ],
+    mri: [
+      "Classificar gravidade por estrutura: tendao, musculo, cartilagem, ligamento, fascia ou edema osseo.",
+      "Ajustar carga pela irritabilidade: dor durante, dor 24h depois e perda de funcao no treino seguinte.",
+      "Usar cross-training e forca terapeutica para preservar VO2 sem agravar o tecido."
+    ],
+    body: [
+      "Usar imagens apenas como triagem visual, comparando mesma luz, posicao, distancia e data.",
+      "Observar assimetrias, postura, controle de quadril/tornozelo, sinais de sobrecarga e evolucao corporal.",
+      "Nao inferir diagnostico por foto isolada; confirmar achados com avaliacao profissional quando houver dor ou alteracao."
+    ]
+  };
+
+  return {
+    headline: `${analysisText(currentAnalysisMode().label)}: leitura preliminar integrada`,
+    confidence: String(values.reportText || "").length > 80 ? "moderada" : "baixa, faltam dados do laudo",
+    flags,
+    metrics: [
+      { label: "Treinos 90 dias", value: String(recentRuns.length) },
+      { label: "Volume 30 dias", value: `${formatKm(volume30)}` },
+      { label: "Carga contextual", value: loadSignal }
+    ],
+    recommendations: modeSpecific[modeKey] || modeSpecific.blood,
+    caution: "Esta analise nao substitui medico, nutricionista, fisioterapeuta ou laudo oficial. Use como apoio para organizar perguntas, carga e proximos passos."
+  };
+}
+
+function renderAnalysisOutput(result, aiText = "", loading = false) {
+  const output = document.querySelector("#analysisOutput");
+  if (!output) return;
+  if (loading) {
+    output.innerHTML = `
+      <div class="analysis-loader">
+        <i class="mini-loader" aria-hidden="true"></i>
+        <strong>Gerando analise multidimensional...</strong>
+        <span>Cruzando exame, historico, carga recente e contexto do atleta.</span>
+      </div>
+    `;
+    return;
+  }
+  output.innerHTML = `
+    <article class="analysis-result-card">
+      <div class="section-title">
+        <span>Relatorio</span>
+        <h3>${escapeHtml(result.headline)}</h3>
+      </div>
+      <div class="analysis-result-grid">
+        <div><span>Confianca</span><strong>${escapeHtml(result.confidence)}</strong></div>
+        ${result.metrics.map((metric) => `<div><span>${escapeHtml(metric.label)}</span><strong>${escapeHtml(metric.value)}</strong></div>`).join("")}
+      </div>
+      <div class="analysis-chip-grid">
+        ${result.flags.map((flag) => `<span>${escapeHtml(flag)}</span>`).join("")}
+      </div>
+      <div class="analysis-recommendation-list">
+        ${result.recommendations.map((item) => `<p>${escapeHtml(item)}</p>`).join("")}
+      </div>
+      ${aiText ?`<div class="analysis-ai-text"><span>IA 11RUN</span><p>${escapeHtml(aiText)}</p></div>` : ""}
+      <p class="analysis-caution">${escapeHtml(result.caution)}</p>
+    </article>
+  `;
+  scheduleAutoTranslate();
+}
+
+async function generateClinicalAnalysis(event) {
+  event.preventDefault();
+  if (state.analysisBusy) return;
+  const form = event.currentTarget;
+  const values = Object.fromEntries(new FormData(form).entries());
+  const modeKey = state.analysisMode;
+  const result = buildAnalysisLocalResult(modeKey, values);
+  state.analysisBusy = true;
+  renderAnalysisOutput(result, "", true);
+  let aiText = "";
+  try {
+    const prompt = [
+      `Tipo de analise: ${analysisText(currentAnalysisMode().label)}`,
+      `Data: ${values.examDate || ""}`,
+      `Origem: ${values.source || ""}`,
+      `Prioridade: ${values.priority || ""}`,
+      `Laudo/valores: ${values.reportText || ""}`,
+      `Contexto esportivo: ${values.trainingContext || ""}`,
+      `Resumo local: ${result.recommendations.join(" | ")}`,
+      "Responda em portugues, de forma tecnica, objetiva, com diagnostico situacional, riscos, ajustes de treino e nutricionais quando aplicavel. Nao faca diagnostico medico definitivo."
+    ].join("\n");
+    const payload = await api("/api/ai/chat", {
+      method: "POST",
+      body: JSON.stringify({ question: prompt })
+    });
+    aiText = payload.text || "";
+  } catch (error) {
+    aiText = friendlyAiError(error.message);
+  } finally {
+    state.analysisBusy = false;
+    renderAnalysisOutput(result, aiText);
+  }
 }
 
 function visibleActivities() {
@@ -6260,6 +6537,13 @@ document.querySelectorAll("[data-test-mode]").forEach((button) => {
   });
 });
 
+document.querySelectorAll("[data-analysis-mode]").forEach((button) => {
+  button.addEventListener("click", () => {
+    state.analysisMode = button.dataset.analysisMode || "blood";
+    renderAnalysesView();
+  });
+});
+
 document.querySelector("#performanceTestForm")?.addEventListener("submit", savePerformanceTest);
 document.querySelector("#paceCalculatorForm")?.addEventListener("submit", calculatePace);
 document.querySelector("#dateCalculatorForm")?.addEventListener("submit", calculateDates);
@@ -6612,6 +6896,16 @@ document.addEventListener("click", async (event) => {
     await deleteActivityFromDetail(deleteActivityButton.dataset.deleteActivity);
     return;
   }
+  const clearAnalysisButton = event.target.closest("[data-clear-analysis]");
+  if (clearAnalysisButton) {
+    event.preventDefault();
+    const form = document.querySelector("#analysisForm");
+    form?.reset();
+    const output = document.querySelector("#analysisOutput");
+    if (output) output.innerHTML = "";
+    renderAnalysesView();
+    return;
+  }
 });
 
 document.addEventListener("change", (event) => {
@@ -6627,6 +6921,7 @@ document.addEventListener("change", (event) => {
       renderTrainingInsights();
     }
     if (state.view === "tests") renderTestsView();
+    if (state.view === "analyses") renderAnalysesView();
     if (state.view === "goals") renderGoals();
     if (state.view === "athlete") editCurrentUserProfile();
     if (state.view === "settings") {
@@ -6650,6 +6945,9 @@ document.addEventListener("change", (event) => {
     state.historyTimelineFilter = event.target.value || "all";
     renderHistoryTimelineEditor();
   }
+  if (event.target?.matches("#analysisForm input[name='files']")) {
+    renderAnalysisFiles();
+  }
 });
 
 document.addEventListener("keydown", (event) => {
@@ -6666,6 +6964,9 @@ document.addEventListener("submit", async (event) => {
   }
   if (event.target?.id === "homeAiForm") {
     await askHomeAi(event);
+  }
+  if (event.target?.id === "analysisForm") {
+    await generateClinicalAnalysis(event);
   }
 });
 

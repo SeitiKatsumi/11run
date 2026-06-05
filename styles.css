@@ -5341,6 +5341,209 @@ html[data-theme="light"] .performance-chart .volume-line {
   gap: 18px;
 }
 
+.analyses-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.analysis-mode-switch {
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.analysis-intro-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.15fr) repeat(3, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.analysis-mode-card,
+.analysis-result-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(255, 75, 11, 0.08), transparent 54%),
+    var(--card);
+}
+
+.analysis-mode-card {
+  min-height: 124px;
+  padding: 16px;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.analysis-mode-card span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 75, 11, 0.42);
+  border-radius: 999px;
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.analysis-mode-card strong {
+  color: var(--foreground);
+  font-size: 1rem;
+}
+
+.analysis-mode-card p {
+  margin: 0;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+
+.analysis-mode-card.is-primary {
+  background:
+    linear-gradient(135deg, rgba(255, 75, 11, 0.18), transparent 60%),
+    var(--card);
+}
+
+.analysis-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.analysis-form .wide-field,
+.analysis-file-list,
+.analysis-action-row {
+  grid-column: 1 / -1;
+}
+
+.analysis-file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.analysis-file-pill,
+.analysis-chip-grid span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 75, 11, 0.32);
+  border-radius: 999px;
+  background: rgba(255, 75, 11, 0.06);
+  color: var(--foreground);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.analysis-file-pill small {
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+
+.analysis-action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.analysis-action-row .primary-action,
+.analysis-action-row .secondary-action {
+  min-width: min(260px, 100%);
+}
+
+.analysis-output {
+  display: grid;
+  gap: 14px;
+}
+
+.analysis-loader {
+  min-height: 138px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 20px;
+  border: 1px dashed rgba(255, 75, 11, 0.38);
+  border-radius: var(--radius);
+  background: rgba(255, 75, 11, 0.04);
+  text-align: center;
+}
+
+.analysis-loader strong {
+  color: var(--foreground);
+}
+
+.analysis-loader span {
+  color: var(--muted-foreground);
+}
+
+.analysis-result-card {
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.analysis-result-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.analysis-result-grid > div,
+.analysis-ai-text {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 75, 11, 0.035);
+}
+
+.analysis-result-grid span,
+.analysis-ai-text span {
+  display: block;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.analysis-result-grid strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--foreground);
+  font-size: clamp(1rem, 1.4vw, 1.25rem);
+}
+
+.analysis-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.analysis-recommendation-list {
+  display: grid;
+  gap: 8px;
+}
+
+.analysis-recommendation-list p,
+.analysis-caution,
+.analysis-ai-text p {
+  margin: 0;
+  color: var(--muted-foreground);
+  line-height: 1.55;
+}
+
+.analysis-recommendation-list p {
+  padding: 12px 14px;
+  border-left: 2px solid var(--primary);
+  border-radius: var(--radius);
+  background: rgba(255, 75, 11, 0.035);
+}
+
+.analysis-caution {
+  font-size: 0.9rem;
+}
+
 .test-help-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -5370,6 +5573,9 @@ html[data-theme="light"] .performance-chart .volume-line {
 
 @media (max-width: 900px) {
   .test-entry-form,
+  .analysis-form,
+  .analysis-intro-grid,
+  .analysis-result-grid,
   .test-summary-grid,
   .calculator-result-grid,
   .calculator-grid,
@@ -5388,6 +5594,11 @@ html[data-theme="light"] .performance-chart .volume-line {
   .test-history-card {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .analysis-action-row .primary-action,
+  .analysis-action-row .secondary-action {
+    width: 100%;
   }
 }
 
