@@ -270,7 +270,44 @@
               <button type="button" data-analysis-mode="mri">MRI</button>
               <button type="button" data-analysis-mode="body">Imagem Corporal</button>
             </div>
+            <div class="analysis-create-intro">
+              <div>
+                <strong>Central inteligente de exames e imagens</strong>
+                <p>Escolha um protocolo para abrir um painel focado. O sistema cruza laudo, arquivos, contexto esportivo, carga recente e historico do atleta.</p>
+              </div>
+              <span id="analysisModeSummary">Hemograma</span>
+            </div>
+            <div class="analysis-type-grid" role="tablist" aria-label="Protocolos de analise">
+              <button type="button" class="analysis-type-card is-active" data-analysis-mode="blood">
+                <span class="analysis-type-thumb" aria-hidden="true">CBC</span>
+                <strong>Hemograma</strong>
+                <small>Perfil sanguineo, ferro, inflamacao e recuperacao.</small>
+              </button>
+              <button type="button" class="analysis-type-card" data-analysis-mode="xray">
+                <span class="analysis-type-thumb" aria-hidden="true">XR</span>
+                <strong>Raio X</strong>
+                <small>Achados osseos, impacto, alinhamento e retorno a corrida.</small>
+              </button>
+              <button type="button" class="analysis-type-card" data-analysis-mode="mri">
+                <span class="analysis-type-thumb" aria-hidden="true">MRI</span>
+                <strong>MRI</strong>
+                <small>Tecido mole, edema osseo, estagio da lesao e carga.</small>
+              </button>
+              <button type="button" class="analysis-type-card" data-analysis-mode="body">
+                <span class="analysis-type-thumb" aria-hidden="true">IMG</span>
+                <strong>Imagem Corporal</strong>
+                <small>Triagem visual, assimetrias, postura e sinais sistemicos.</small>
+              </button>
+            </div>
             <div id="analysisModeIntro" class="analysis-intro-grid"></div>
+            <div class="analysis-form-shell">
+              <div class="analysis-form-heading">
+                <div>
+                  <span id="analysisFormEyebrow">Analise ativa</span>
+                  <h3 id="analysisFormTitle">Hemograma</h3>
+                  <p id="analysisFormDescription">Inclua o laudo ou valores principais para gerar uma leitura integrada ao historico esportivo.</p>
+                </div>
+              </div>
             <form id="analysisForm" class="analysis-form">
               <label class="credential-field">
                 <span data-i18n="analyses.examDate">Data do exame</span>
@@ -306,6 +343,7 @@
                 <button class="secondary-action" type="button" data-clear-analysis data-i18n="analyses.clear">Limpar</button>
               </div>
             </form>
+            </div>
             <div id="analysisOutput" class="analysis-output" aria-live="polite"></div>
           </section>
         </section>
@@ -691,18 +729,61 @@
             <div class="panel admin-create-panel">
               <div class="section-title">
                 <span>Cadastros</span>
-                <h3 id="adminFormTitle">Adicionar atleta</h3>
+                <h3>Escolha o cadastro</h3>
               </div>
-              <div class="segmented admin-mode-switch" role="tablist" aria-label="Tipo de cadastro">
-                <button class="is-active" type="button" data-admin-mode="athlete_master">Atleta master</button>
-                <button type="button" data-admin-mode="athlete_future">Atleta do futuro</button>
-                <button type="button" data-admin-mode="athlete_scholarship">Atleta bolsista</button>
-                <button type="button" data-admin-mode="coach">Adicionar treinador</button>
-                <button type="button" data-admin-mode="team">Adicionar equipe</button>
-                <button type="button" data-admin-mode="sponsor_investor">Patrocinador / investidor</button>
-                <button class="admin-only" type="button" data-admin-mode="admin" hidden>Adicionar super admin</button>
+              <div class="admin-create-intro">
+                <div>
+                  <strong>Central de cadastros 11RUN</strong>
+                  <p>Selecione um perfil para abrir apenas o formulario necessario. Cada cadastro herda permissoes, campos oficiais e blocos inteligentes do seu tipo.</p>
+                </div>
+                <span id="adminModeSummary">Atleta Master</span>
+              </div>
+              <div class="admin-type-grid" role="tablist" aria-label="Tipo de cadastro">
+                <button class="admin-type-card is-active" type="button" data-admin-mode="athlete_master">
+                  <span class="admin-type-icon" aria-hidden="true">AM</span>
+                  <strong>Atleta Master</strong>
+                  <small>Adultos, veteranos e categorias master.</small>
+                </button>
+                <button class="admin-type-card" type="button" data-admin-mode="athlete_future">
+                  <span class="admin-type-icon" aria-hidden="true">AF</span>
+                  <strong>Atleta do Futuro</strong>
+                  <small>Base, menores, escolas e projetos sociais.</small>
+                </button>
+                <button class="admin-type-card" type="button" data-admin-mode="athlete_scholarship">
+                  <span class="admin-type-icon" aria-hidden="true">AB</span>
+                  <strong>Atleta Bolsista</strong>
+                  <small>Bolsas, oportunidades e dossies institucionais.</small>
+                </button>
+                <button class="admin-type-card" type="button" data-admin-mode="coach">
+                  <span class="admin-type-icon" aria-hidden="true">TR</span>
+                  <strong>Treinador</strong>
+                  <small>Perfil tecnico, certificacoes e atletas vinculados.</small>
+                </button>
+                <button class="admin-type-card" type="button" data-admin-mode="team">
+                  <span class="admin-type-icon" aria-hidden="true">EQ</span>
+                  <strong>Equipe</strong>
+                  <small>Clubes, assessorias, projetos e centros de treino.</small>
+                </button>
+                <button class="admin-type-card" type="button" data-admin-mode="sponsor_investor">
+                  <span class="admin-type-icon" aria-hidden="true">PI</span>
+                  <strong>Patrocinador / Investidor</strong>
+                  <small>Marcas, apoiadores, universidades e investidores.</small>
+                </button>
+                <button class="admin-type-card admin-only" type="button" data-admin-mode="admin" hidden>
+                  <span class="admin-type-icon" aria-hidden="true">SA</span>
+                  <strong>Super Admin</strong>
+                  <small>Acesso total, validacoes e gestao do sistema.</small>
+                </button>
               </div>
 
+              <div class="admin-form-shell">
+                <div class="admin-form-heading">
+                  <div>
+                    <span id="adminFormEyebrow">Cadastro ativo</span>
+                    <h3 id="adminFormTitle">Adicionar atleta master</h3>
+                    <p id="adminFormDescription">Preencha os dados essenciais e avance pelos blocos especificos desse perfil.</p>
+                  </div>
+                </div>
               <form id="adminUserForm" class="admin-user-form">
                 <input name="role" type="hidden" value="athlete" />
                 <div class="form-grid">
@@ -803,6 +884,7 @@
                 <div id="teamProfileFields" class="dynamic-profile-fields"></div>
                 <button class="primary-action compact" type="submit">Salvar equipe</button>
               </form>
+              </div>
               <p id="adminMessage" class="form-message" aria-live="polite"></p>
             </div>
 

@@ -607,6 +607,44 @@ const profileTypeDefinitions = {
   admin: { label: "Super Admin", role: "admin" }
 };
 
+const adminProfileUx = {
+  athlete_master: {
+    title: "Adicionar atleta master",
+    summary: "Atleta Master",
+    description: "Cadastro para atletas adultos, veteranos e categorias master com provas foco, registros oficiais, performance e saude."
+  },
+  athlete_future: {
+    title: "Adicionar atleta do futuro",
+    summary: "Atleta do Futuro",
+    description: "Cadastro para base, menores, escolas e projetos, incluindo responsavel legal, protecao de dados e evolucao esportiva."
+  },
+  athlete_scholarship: {
+    title: "Adicionar atleta bolsista",
+    summary: "Atleta Bolsista",
+    description: "Cadastro orientado a bolsas, universidades, patrocinio e oportunidades com dados esportivos, academicos e elegibilidade."
+  },
+  coach: {
+    title: "Adicionar treinador",
+    summary: "Treinador",
+    description: "Perfil tecnico com formacao, certificacoes, metodologia, especialidades e permissoes para acompanhar atletas."
+  },
+  team: {
+    title: "Adicionar equipe",
+    summary: "Equipe",
+    description: "Cadastro institucional para clubes, assessorias, projetos, escolas, universidades e centros de treinamento."
+  },
+  sponsor_investor: {
+    title: "Adicionar patrocinador / investidor",
+    summary: "Patrocinador / Investidor",
+    description: "Cadastro para marcas, apoiadores, universidades, clubes, institutos e investidores com perfil de interesse."
+  },
+  admin: {
+    title: "Adicionar super admin",
+    summary: "Super Admin",
+    description: "Perfil administrativo com acesso amplo para validacoes, usuarios, documentos, permissoes e configuracoes do sistema."
+  }
+};
+
 const profileOptionSets = {
   profileStatus: ["Perfil ativo", "Perfil pendente", "Perfil bloqueado", "Perfil inativo"],
   validationStatus: ["Cadastro não iniciado", "Cadastro incompleto", "Cadastro completo", "Em análise", "Validado", "Reprovado", "Bloqueado", "Arquivado"],
@@ -1090,7 +1128,7 @@ function enhanceSystemControls() {
     ...document.querySelectorAll("[data-workout-mode]"),
     ...document.querySelectorAll("[data-open-workout-builder]"),
     ...document.querySelectorAll("[data-open-bulk-activity-editor]")
-  ];
+  ].filter((button) => !button.classList.contains("admin-type-card"));
   controls.forEach((button) => {
     if (button.dataset.controlEnhanced === "1") return;
     const label = button.textContent.trim();
@@ -2161,9 +2199,25 @@ function renderAnalysesView() {
   document.querySelectorAll("[data-analysis-mode]").forEach((button) => {
     const config = analysisModeConfig[button.dataset.analysisMode] || analysisModeConfig.blood;
     button.classList.toggle("is-active", button.dataset.analysisMode === state.analysisMode);
-    button.textContent = analysisText(config.label);
+    if (button.classList.contains("analysis-type-card")) {
+      button.innerHTML = `
+        <span class="analysis-type-thumb" aria-hidden="true">${escapeHtml(config.icon)}</span>
+        <strong>${escapeHtml(analysisText(config.label))}</strong>
+        <small>${escapeHtml(analysisText(config.short))}</small>
+      `;
+    } else {
+      button.textContent = analysisText(config.label);
+    }
     button.dataset.noAutoTranslate = "1";
   });
+  const summary = document.querySelector("#analysisModeSummary");
+  if (summary) summary.textContent = analysisText(mode.label);
+  const formTitle = document.querySelector("#analysisFormTitle");
+  if (formTitle) formTitle.textContent = analysisText(mode.label);
+  const formDescription = document.querySelector("#analysisFormDescription");
+  if (formDescription) formDescription.textContent = analysisText(mode.short);
+  const formEyebrow = document.querySelector("#analysisFormEyebrow");
+  if (formEyebrow) formEyebrow.textContent = "Analise ativa";
   const intro = document.querySelector("#analysisModeIntro");
   if (intro) {
     intro.innerHTML = `
@@ -6033,6 +6087,7 @@ async function refreshDirectory() {
 
 function renderAdminMode() {
   const profileDef = profileTypeDefinitions[state.adminMode] || profileTypeDefinitions.athlete_master;
+  const profileUx = adminProfileUx[state.adminMode] || adminProfileUx.athlete_master;
   const isTeam = state.adminMode === "team";
   const isCoach = state.adminMode === "coach";
   const isAdminMode = state.adminMode === "admin";
@@ -6044,8 +6099,14 @@ function renderAdminMode() {
   const title = document.querySelector("#adminFormTitle");
   if (title) {
     const action = state.editingAdminUserId ?"Editar" : "Adicionar";
-    title.textContent = `${action} ${profileDef.label.toLowerCase()}`;
+    title.textContent = state.editingAdminUserId ?`${action} ${profileDef.label.toLowerCase()}` : profileUx.title;
   }
+  const summary = document.querySelector("#adminModeSummary");
+  if (summary) summary.textContent = state.editingAdminUserId ?"Modo de edicao" : profileUx.summary;
+  const eyebrow = document.querySelector("#adminFormEyebrow");
+  if (eyebrow) eyebrow.textContent = state.editingAdminUserId ?"Editando cadastro" : "Cadastro ativo";
+  const description = document.querySelector("#adminFormDescription");
+  if (description) description.textContent = profileUx.description;
   const userForm = document.querySelector("#adminUserForm");
   const teamForm = document.querySelector("#teamForm");
   if (userForm) {
