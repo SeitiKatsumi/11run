@@ -5274,6 +5274,23 @@ nav a {
   stroke-width: 1.2 !important;
 }
 
+.dashboard-trend-svg .dash-line {
+  stroke-width: 0.9 !important;
+}
+
+.dashboard-trend-svg .dash-node-volume {
+  fill: var(--chart-1) !important;
+  stroke: var(--background) !important;
+  stroke-width: 1 !important;
+}
+
+.dashboard-trend-svg .dash-node-tss {
+  fill: var(--chart-2) !important;
+  stroke: var(--background) !important;
+  stroke-width: 1 !important;
+  opacity: 0.9;
+}
+
 html[data-theme="light"] .dashboard-hero-panel::before,
 html[data-theme="light"] .dashboard-panel::before,
 html[data-theme="light"] .performance-chart-panel::before {

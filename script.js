@@ -3877,14 +3877,17 @@ function dashboardTrendSvg(series) {
   const width = 1040;
   const height = 270;
   const pad = { top: 44, right: 34, bottom: 54, left: 38 };
-  const maxVolume = Math.max(1, ...series.map((item) => item.volume));
-  const maxTss = Math.max(1, ...series.map((item) => item.tss));
+  const activeEntries = series
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => item.count);
+  const maxVolume = Math.max(1, ...activeEntries.map(({ item }) => item.volume));
+  const maxTss = Math.max(1, ...activeEntries.map(({ item }) => item.tss));
   const xFor = (index) => pad.left + (index * (width - pad.left - pad.right) / Math.max(1, series.length - 1));
   const yForVolume = (value) => height - pad.bottom - ((value / maxVolume) * (height - pad.top - pad.bottom));
   const yForTss = (value) => height - pad.bottom - ((value / maxTss) * (height - pad.top - pad.bottom));
-  const volumePoints = series.map((item, index) => ({ x: xFor(index), y: yForVolume(item.volume) }));
-  const tssPoints = series.map((item, index) => ({ x: xFor(index), y: yForTss(item.tss) }));
-  const activeCount = series.filter((item) => item.count).length;
+  const volumePoints = activeEntries.map(({ item, index }) => ({ x: xFor(index), y: yForVolume(item.volume) }));
+  const tssPoints = activeEntries.map(({ item, index }) => ({ x: xFor(index), y: yForTss(item.tss) }));
+  const activeCount = activeEntries.length;
   if (!activeCount) return `<div class="empty-state">Importe atividades para ativar o centro visual.</div>`;
   const monthGroups = series.reduce((groups, item, index) => {
     const key = item.date.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
@@ -3908,9 +3911,17 @@ function dashboardTrendSvg(series) {
       return `<text class="dash-day-label${strong ?" is-strong" : ""}" x="${xFor(index).toFixed(1)}" y="${height - 16}" text-anchor="middle">${escapeHtml(item.label)}</text>`;
     })
     .join("");
-  const nodes = volumePoints
-    .filter((_, index) => series[index].count)
-    .map((point) => `<circle class="dash-node" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="1.8"></circle>`)
+  const volumeNodes = volumePoints
+    .map((point, index) => {
+      const item = activeEntries[index].item;
+      return `<circle class="dash-node dash-node-volume" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="1.8"><title>${escapeHtml(`${item.date.toLocaleDateString("pt-BR")} - ${formatKm(item.volume)}`)}</title></circle>`;
+    })
+    .join("");
+  const tssNodes = tssPoints
+    .map((point, index) => {
+      const item = activeEntries[index].item;
+      return `<circle class="dash-node dash-node-tss" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="1.5"><title>${escapeHtml(`${item.date.toLocaleDateString("pt-BR")} - ${Math.round(item.tss)} 11TSS`)}</title></circle>`;
+    })
     .join("");
   return `
     <svg class="dashboard-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Volume e 11TSS dos ultimos 90 dias">
@@ -3924,7 +3935,8 @@ function dashboardTrendSvg(series) {
       ${[0.25, 0.5, 0.75].map((ratio) => `<line class="dash-grid" x1="${pad.left}" x2="${width - pad.right}" y1="${pad.top + ratio * (height - pad.top - pad.bottom)}" y2="${pad.top + ratio * (height - pad.top - pad.bottom)}"></line>`).join("")}
       <polyline class="dash-line dash-line-volume" pathLength="1" points="${svgPolyline(volumePoints)}"></polyline>
       <polyline class="dash-line dash-line-tss" pathLength="1" points="${svgPolyline(tssPoints)}"></polyline>
-      ${nodes}
+      ${volumeNodes}
+      ${tssNodes}
       ${dayTicks}
     </svg>
   `;
@@ -4648,7 +4660,7 @@ function latest3000Test(tests) {
 }
 
 function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarget, vo2Target) {
-  const recent = activitiesSince(90).filter(isRunningActivity);
+  const recent = activitiesSince(90).filter((activity) => isExecutedActivity(activity) && isRunningActivity(activity));
   const volume90 = recent.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
   const tss90 = recent.reduce((sum, activity) => sum + activityTss(activity), 0);
   const monthlyAverage = volume90 / 3;
