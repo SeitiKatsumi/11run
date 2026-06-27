@@ -116,6 +116,99 @@ CREATE TABLE IF NOT EXISTS athlete_goals (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS breathing_protocols (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  objective TEXT NOT NULL,
+  description TEXT NOT NULL,
+  inhale_seconds INTEGER NOT NULL DEFAULT 4,
+  hold_in_seconds INTEGER NOT NULL DEFAULT 0,
+  exhale_seconds INTEGER NOT NULL DEFAULT 6,
+  hold_out_seconds INTEGER NOT NULL DEFAULT 0,
+  duration_minutes INTEGER NOT NULL DEFAULT 5,
+  difficulty_level TEXT NOT NULL DEFAULT 'iniciante',
+  age_group TEXT NOT NULL DEFAULT 'adulto',
+  safety_notes TEXT,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS breathing_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  protocol_id UUID REFERENCES breathing_protocols(id) ON DELETE SET NULL,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  ended_at TIMESTAMPTZ,
+  duration_seconds INTEGER NOT NULL DEFAULT 0,
+  completed BOOLEAN NOT NULL DEFAULT false,
+  context TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS breathing_checkins (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  session_id UUID NOT NULL REFERENCES breathing_sessions(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  anxiety_before INTEGER CHECK (anxiety_before BETWEEN 0 AND 10),
+  tension_before INTEGER CHECK (tension_before BETWEEN 0 AND 10),
+  pain_before BOOLEAN NOT NULL DEFAULT false,
+  pain_location JSONB NOT NULL DEFAULT '[]',
+  breathing_state_before TEXT,
+  goal TEXT,
+  sleep_quality INTEGER CHECK (sleep_quality IS NULL OR sleep_quality BETWEEN 0 AND 10),
+  recovery_perception INTEGER CHECK (recovery_perception IS NULL OR recovery_perception BETWEEN 0 AND 10),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS breathing_checkouts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  session_id UUID NOT NULL REFERENCES breathing_sessions(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  anxiety_after INTEGER CHECK (anxiety_after BETWEEN 0 AND 10),
+  tension_after INTEGER CHECK (tension_after BETWEEN 0 AND 10),
+  pain_after BOOLEAN NOT NULL DEFAULT false,
+  breathing_state_after TEXT,
+  body_state_after TEXT,
+  perceived_effect TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS breathing_ai_insights (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  session_id UUID REFERENCES breathing_sessions(id) ON DELETE CASCADE,
+  insight_type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  recommendation TEXT,
+  risk_level TEXT NOT NULL DEFAULT 'baixo',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS breathing_user_preferences (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  preferred_audio BOOLEAN NOT NULL DEFAULT true,
+  preferred_vibration BOOLEAN NOT NULL DEFAULT false,
+  preferred_protocol_duration INTEGER NOT NULL DEFAULT 5,
+  preferred_voice_style TEXT NOT NULL DEFAULT 'coach',
+  visual_mode TEXT NOT NULL DEFAULT 'dark',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, user_id)
+);
+
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_data JSONB NOT NULL DEFAULT '{}';
 ALTER TABLE teams ADD COLUMN IF NOT EXISTS manager_user_id UUID REFERENCES users(id) ON DELETE SET NULL;
@@ -142,3 +235,7 @@ CREATE INDEX IF NOT EXISTS idx_activities_tenant_date ON activities(tenant_id, a
 CREATE INDEX IF NOT EXISTS idx_activities_status ON activities(tenant_id, athlete_user_id, status, activity_date);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_athlete_goals_athlete_date ON athlete_goals(tenant_id, athlete_user_id, race_date);
+CREATE INDEX IF NOT EXISTS idx_breathing_protocols_tenant ON breathing_protocols(tenant_id, category, age_group, is_active);
+CREATE INDEX IF NOT EXISTS idx_breathing_sessions_user ON breathing_sessions(tenant_id, user_id, started_at);
+CREATE INDEX IF NOT EXISTS idx_breathing_checkins_user ON breathing_checkins(tenant_id, user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_breathing_insights_user ON breathing_ai_insights(tenant_id, user_id, created_at);

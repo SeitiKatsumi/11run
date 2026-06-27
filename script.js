@@ -19,6 +19,14 @@ const state = {
   testMode: "3000",
   analysisMode: "blood",
   analysisBusy: false,
+  breathingData: null,
+  breathingBusy: false,
+  breathingTimer: null,
+  breathingTimerStartedAt: 0,
+  breathingTimerRemaining: 0,
+  breathingSelectedProtocolId: "",
+  breathingCheckin: null,
+  breathingExecutionStartedAt: "",
   performanceTests: (() => {
     try {
       const parsed = JSON.parse(localStorage.getItem("performanceTests") || "[]");
@@ -227,7 +235,7 @@ const officialTranslations = {
     "nav.training": "TRAINING",
     "nav.tests": "TESTS",
     "nav.calculators": "CALCULATORS",
-    "nav.analyses": "ANALYSES",
+    "nav.analyses": "AI ANALYZER",
     "nav.goals": "GOALS",
     "nav.preferences": "PREFERENCES",
     "nav.settings": "SETTINGS",
@@ -249,8 +257,8 @@ const officialTranslations = {
     "dashboard.title": "Performance",
     "training.kicker": "Training",
     "training.title": "Activities",
-    "analyses.kicker": "Analyses",
-    "analyses.title": "Clinical and imaging analysis center",
+    "analyses.kicker": "AI Analyzer",
+    "analyses.title": "Performance, exams and neural breathing",
     "analyses.protocols": "Protocols",
     "analyses.subtitle": "Choose the analysis type",
     "analyses.examDate": "Exam date",
@@ -291,7 +299,7 @@ const officialTranslations = {
     "nav.training": "TREINAMENTOS",
     "nav.tests": "TESTES",
     "nav.calculators": "CALCULADORAS",
-    "nav.analyses": "ANÁLISES",
+    "nav.analyses": "ANALISADOR IA",
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERÊNCIAS",
     "nav.settings": "CONFIGURAÇÕES",
@@ -313,8 +321,8 @@ const officialTranslations = {
     "dashboard.title": "Performance",
     "training.kicker": "Treinamentos",
     "training.title": "Atividades",
-    "analyses.kicker": "Análises",
-    "analyses.title": "Centro de análises clínicas e imagens",
+    "analyses.kicker": "Analisador IA",
+    "analyses.title": "Performance, exames e respiração neural",
     "analyses.protocols": "Protocolos",
     "analyses.subtitle": "Escolha o tipo de análise",
     "analyses.examDate": "Data do exame",
@@ -355,7 +363,7 @@ const officialTranslations = {
     "nav.training": "トレーニング",
     "nav.tests": "\u30c6\u30b9\u30c8",
     "nav.calculators": "\u8a08\u7b97\u6a5f",
-    "nav.analyses": "\u5206\u6790",
+    "nav.analyses": "AI\u5206\u6790",
     "nav.goals": "目標",
     "nav.preferences": "プロフィール",
     "nav.settings": "設定",
@@ -419,7 +427,7 @@ const officialTranslations = {
     "nav.training": "ENTRENAMIENTOS",
     "nav.tests": "PRUEBAS",
     "nav.calculators": "CALCULADORAS",
-    "nav.analyses": "ANÁLISIS",
+    "nav.analyses": "ANALIZADOR IA",
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERENCIAS",
     "nav.settings": "CONFIGURACIÓN",
@@ -441,8 +449,8 @@ const officialTranslations = {
     "dashboard.title": "Performance",
     "training.kicker": "Entrenamientos",
     "training.title": "Actividades",
-    "analyses.kicker": "Análisis",
-    "analyses.title": "Centro de análisis clínicos e imágenes",
+    "analyses.kicker": "Analizador IA",
+    "analyses.title": "Performance, examenes y respiracion neural",
     "analyses.protocols": "Protocolos",
     "analyses.subtitle": "Elige el tipo de análisis",
     "analyses.examDate": "Fecha del examen",
@@ -1171,7 +1179,7 @@ function enhanceSystemControls() {
 }
 
 async function api(path, options = {}) {
-  const scopedPaths = ["/api/integrations", "/api/activities", "/api/goals", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich", "/api/ai/projection", "/api/ai/test", "/api/ai/chat"];
+  const scopedPaths = ["/api/integrations", "/api/activities", "/api/goals", "/api/breathing", "/api/sync", "/api/strava/auth", "/api/strava/test", "/api/strava/enrich", "/api/ai/projection", "/api/ai/test", "/api/ai/chat"];
   const shouldScopeAthlete = scopedPaths.some((prefix) => path.startsWith(prefix));
   const athleteHeaders = shouldScopeAthlete && state.selectedAthleteId ?{ "X-Athlete-Id": state.selectedAthleteId } : {};
   const response = await fetch(path, {
@@ -2209,6 +2217,17 @@ const analysisModeConfig = {
       { en: "Body composition trend only when comparable images exist", "pt-BR": "Tendencia de composicao corporal apenas com imagens comparaveis", ja: "\u6bd4\u8f03\u53ef\u80fd\u306a\u753b\u50cf\u304c\u3042\u308b\u5834\u5408\u306e\u307f\u4f53\u7d44\u6210\u50be\u5411", es: "Tendencia de composicion corporal solo con imagenes comparables" },
       { en: "Privacy, consent and clinical confirmation", "pt-BR": "Privacidade, consentimento e confirmacao clinica", ja: "\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc\u3001\u540c\u610f\u3001\u81e8\u5e8a\u78ba\u8a8d", es: "Privacidad, consentimiento y confirmacion clinica" }
     ]
+  },
+  breathing: {
+    label: { en: "Neural Breathing", "pt-BR": "Respiracao Neural", ja: "\u30cb\u30e5\u30fc\u30e9\u30eb\u547c\u5438", es: "Respiracion neural" },
+    short: { en: "Respiratory neuromodulation for performance, recovery and neural regulation", "pt-BR": "Neuromodulacao respiratoria para performance, recuperacao e regulacao neural", ja: "\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9\u3001\u56de\u5fa9\u3001\u795e\u7d4c\u8abf\u6574\u306e\u547c\u5438\u30cb\u30e5\u30fc\u30ed\u30e2\u30b8\u30e5\u30ec\u30fc\u30b7\u30e7\u30f3", es: "Neuromodulacion respiratoria para performance, recuperacion y regulacion neural" },
+    icon: "BR",
+    accept: "",
+    focus: [
+      { en: "Pre-workout anxiety, recovery and body alertness", "pt-BR": "Ansiedade pre-treino, recuperacao e alerta corporal", ja: "\u30c8\u30ec\u30fc\u30cb\u30f3\u30b0\u524d\u4e0d\u5b89\u3001\u56de\u5fa9\u3001\u8eab\u4f53\u8b66\u6212", es: "Ansiedad pre-entreno, recuperacion y alerta corporal" },
+      { en: "Guided protocols with check-in, checkout and AI insights", "pt-BR": "Protocolos guiados com check-in, checkout e insights de IA", ja: "\u30c1\u30a7\u30c3\u30af\u30a4\u30f3\u3001\u30c1\u30a7\u30c3\u30af\u30a2\u30a6\u30c8\u3001AI\u30a4\u30f3\u30b5\u30a4\u30c8", es: "Protocolos guiados con check-in, checkout e insights de IA" },
+      { en: "Safe sports education for athletes, coaches and families", "pt-BR": "Educacao esportiva segura para atletas, treinadores e familias", ja: "\u9078\u624b\u3001\u30b3\u30fc\u30c1\u3001\u5bb6\u65cf\u5411\u3051\u306e\u5b89\u5168\u306a\u6559\u80b2", es: "Educacion deportiva segura para atletas, entrenadores y familias" }
+    ]
   }
 };
 
@@ -2222,6 +2241,7 @@ function currentAnalysisMode() {
 
 function renderAnalysesView() {
   const mode = currentAnalysisMode();
+  const isBreathingMode = state.analysisMode === "breathing";
   document.querySelectorAll("[data-analysis-mode]").forEach((button) => {
     const config = analysisModeConfig[button.dataset.analysisMode] || analysisModeConfig.blood;
     button.classList.toggle("is-active", button.dataset.analysisMode === state.analysisMode);
@@ -2245,6 +2265,19 @@ function renderAnalysesView() {
   const formEyebrow = document.querySelector("#analysisFormEyebrow");
   if (formEyebrow) formEyebrow.textContent = "Analise ativa";
   const intro = document.querySelector("#analysisModeIntro");
+  const breathingModule = document.querySelector("#breathingModule");
+  const formShell = document.querySelector(".analysis-form-shell");
+  const analysisOutput = document.querySelector("#analysisOutput");
+  if (breathingModule) breathingModule.hidden = !isBreathingMode;
+  if (formShell) formShell.hidden = isBreathingMode;
+  if (analysisOutput) analysisOutput.hidden = isBreathingMode;
+  if (isBreathingMode) {
+    if (intro) intro.innerHTML = "";
+    renderBreathingModule();
+    enhanceSystemControls();
+    scheduleAutoTranslate();
+    return;
+  }
   if (intro) {
     intro.innerHTML = `
       <article class="analysis-mode-card is-primary">
@@ -2552,6 +2585,390 @@ async function generateClinicalAnalysis(event) {
   } finally {
     state.analysisBusy = false;
     renderAnalysisOutput(result, aiText);
+  }
+}
+
+function breathingCategoryLabel(category) {
+  return {
+    pre_treino: "Pre-treino",
+    pre_prova: "Pre-prova",
+    recuperacao: "Recuperacao",
+    ansiedade: "Ansiedade e hiperalerta",
+    sono: "Sono",
+    foco: "Foco",
+    jovens: "Jovens atletas"
+  }[category] || category || "Protocolo";
+}
+
+function activeBreathingProtocol() {
+  const protocols = state.breathingData?.protocols || [];
+  return protocols.find((protocol) => String(protocol.id) === String(state.breathingSelectedProtocolId)) || protocols[0] || null;
+}
+
+function breathingMetricSummary() {
+  const sessions = state.breathingData?.sessions || [];
+  const completed = sessions.filter((session) => session.completed);
+  const totalMinutes = Math.round(completed.reduce((sum, session) => sum + Number(session.durationSeconds || 0), 0) / 60);
+  const reductions = completed.map((session) => {
+    const beforeAnxiety = Number(session.checkin?.anxietyBefore ?? session.checkin?.anxiety_before);
+    const afterAnxiety = Number(session.checkout?.anxietyAfter ?? session.checkout?.anxiety_after);
+    const beforeTension = Number(session.checkin?.tensionBefore ?? session.checkin?.tension_before);
+    const afterTension = Number(session.checkout?.tensionAfter ?? session.checkout?.tension_after);
+    return {
+      anxiety: beforeAnxiety > 0 && Number.isFinite(afterAnxiety) ?Math.max(0, Math.round(((beforeAnxiety - afterAnxiety) / beforeAnxiety) * 100)) : 0,
+      tension: beforeTension > 0 && Number.isFinite(afterTension) ?Math.max(0, Math.round(((beforeTension - afterTension) / beforeTension) * 100)) : 0
+    };
+  });
+  const avg = (key) => reductions.length ?Math.round(reductions.reduce((sum, item) => sum + item[key], 0) / reductions.length) : 0;
+  return {
+    sessions: sessions.length,
+    completed: completed.length,
+    totalMinutes,
+    completionRate: sessions.length ?Math.round((completed.length / sessions.length) * 100) : 0,
+    anxietyReduction: avg("anxiety"),
+    tensionReduction: avg("tension")
+  };
+}
+
+async function loadBreathingData(force = false) {
+  if (state.breathingData && !force) return state.breathingData;
+  const data = await api("/api/breathing");
+  state.breathingData = data;
+  if (!state.breathingSelectedProtocolId) state.breathingSelectedProtocolId = data.protocols?.[0]?.id || "";
+  return data;
+}
+
+async function renderBreathingModule() {
+  const target = document.querySelector("#breathingModule");
+  if (!target) return;
+  if (!state.breathingData) {
+    target.innerHTML = `
+      <div class="analysis-loader">
+        <i class="mini-loader" aria-hidden="true"></i>
+        <strong>Carregando Respiração Neural 11RUN...</strong>
+        <span>Preparando protocolos, histórico e suporte da Ayla Breath AI.</span>
+      </div>
+    `;
+    try {
+      await loadBreathingData();
+    } catch (error) {
+      target.innerHTML = `<p class="empty-state">Não foi possível carregar o módulo respiratório: ${escapeHtml(error.message)}</p>`;
+      return;
+    }
+  }
+  const data = state.breathingData || {};
+  const protocols = data.protocols || [];
+  if (!state.breathingSelectedProtocolId && protocols[0]) state.breathingSelectedProtocolId = protocols[0].id;
+  const selected = activeBreathingProtocol();
+  const metrics = breathingMetricSummary();
+  const latest = data.sessions?.[0];
+  const latestInsight = data.insights?.[0];
+  const safety = data.safetyMessage || "Interrompa em caso de dor no peito, tontura forte, falta de ar incomum ou dor aguda persistente.";
+  target.innerHTML = `
+    <div class="breathing-hero">
+      <div>
+        <span class="kicker">Respiração Neural 11RUN</span>
+        <h3>Ayla Breath AI</h3>
+        <p>Sistema esportivo de neuromodulação respiratória para performance, recuperação, foco, sono e regulação neural.</p>
+      </div>
+      <button class="primary-action" type="button" data-breathing-scroll="checkin">Iniciar Protocolo</button>
+    </div>
+
+    <div class="breathing-dashboard">
+      <article><span>Estado atual</span><strong>${latest?.checkout ? "Regulado apos sessao" : "Levemente ativado"}</strong><p>${latestInsight?.content || "Preencha o check-in para a IA recomendar o protocolo do dia."}</p></article>
+      <article><span>Recomendação</span><strong>${escapeHtml(selected?.name || "4:6 pre-esforco")}</strong><p>${escapeHtml(selected?.objective || "Reduzir alerta antes do treino")}</p></article>
+      <article><span>Última sessão</span><strong>${latest ?`${Math.round(Number(latest.durationSeconds || 0) / 60)} min` : "--"}</strong><p>${latest ?new Date(latest.startedAt).toLocaleString("pt-BR") : "Nenhuma sessão registrada"}</p></article>
+      <article><span>Resposta percebida</span><strong>${metrics.tensionReduction}%</strong><p>Redução média de tensão nas sessões concluídas.</p></article>
+    </div>
+
+    <div class="breathing-grid">
+      <section class="breathing-panel" id="breathingLibrary">
+        <div class="section-title"><span>Biblioteca</span><h3>Protocolos por objetivo</h3></div>
+        <div class="breathing-protocol-grid">
+          ${protocols.map((protocol) => `
+            <button type="button" class="breathing-protocol-card ${String(protocol.id) === String(selected?.id) ?"is-active" : ""}" data-breathing-protocol="${escapeHtml(protocol.id)}">
+              <span>${escapeHtml(breathingCategoryLabel(protocol.category))}</span>
+              <strong>${escapeHtml(protocol.name)}</strong>
+              <small>${escapeHtml(protocol.description)}</small>
+              <i>${protocol.inhaleSeconds}:${protocol.exhaleSeconds} / ${protocol.durationMinutes} min</i>
+            </button>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="breathing-panel breathing-detail">
+        <div class="section-title"><span>Detalhe do protocolo</span><h3>${escapeHtml(selected?.name || "Selecione um protocolo")}</h3></div>
+        <p>${escapeHtml(selected?.description || "")}</p>
+        <div class="breathing-step-grid">
+          <div><span>Inspirar</span><strong>${selected?.inhaleSeconds || 4}s</strong></div>
+          <div><span>Segurar</span><strong>${selected?.holdInSeconds || 0}s</strong></div>
+          <div><span>Expirar</span><strong>${selected?.exhaleSeconds || 6}s</strong></div>
+          <div><span>Repousar</span><strong>${selected?.holdOutSeconds || 0}s</strong></div>
+        </div>
+        <p class="analysis-caution">${escapeHtml(selected?.safetyNotes || safety)}</p>
+      </section>
+
+      <section class="breathing-panel" id="breathingCheckin">
+        <div class="section-title"><span>Check-in</span><h3>Antes do protocolo</h3></div>
+        <form id="breathingCheckinForm" class="breathing-form">
+          <label class="credential-field"><span>Ansiedade agora (0-10)</span><input name="anxietyBefore" type="range" min="0" max="10" value="5" /></label>
+          <label class="credential-field"><span>Tensão muscular (0-10)</span><input name="tensionBefore" type="range" min="0" max="10" value="5" /></label>
+          <label class="credential-field"><span>Dor ou fisgada?</span><select name="painBefore"><option value="false">Não</option><option value="true">Sim</option></select></label>
+          <label class="credential-field"><span>Onde sente tensão?</span><select name="painLocation" multiple size="5"><option>panturrilha</option><option>posterior de coxa</option><option>quadril</option><option>lombar</option><option>ombros</option><option>mandíbula</option><option>peito</option><option>respiração presa</option><option>outro</option></select></label>
+          <label class="credential-field"><span>Objetivo</span><select name="goal"><option>aquecer com calma</option><option>controlar ansiedade</option><option>recuperar após treino</option><option>dormir melhor</option><option>soltar tensão</option><option>preparar para prova</option><option>reduzir medo de lesão</option><option>melhorar foco</option></select></label>
+          <label class="credential-field"><span>Sono (0-10)</span><input name="sleepQuality" type="range" min="0" max="10" value="6" /></label>
+          <label class="credential-field"><span>Recuperação (0-10)</span><input name="recoveryPerception" type="range" min="0" max="10" value="6" /></label>
+          <button class="primary-action" type="submit">Recomendar com IA</button>
+        </form>
+        <div id="breathingAiOutput" class="breathing-ai-output">${latestInsight ?`<strong>${escapeHtml(latestInsight.title)}</strong><p>${escapeHtml(latestInsight.recommendation || latestInsight.content)}</p>` : ""}</div>
+      </section>
+
+      <section class="breathing-panel breathing-execution" id="breathingExecution">
+        <div class="section-title"><span>Execução guiada</span><h3>Círculo respiratório</h3></div>
+        <div class="breathing-orb" data-breathing-orb><span data-breathing-phase>Pronto</span><strong data-breathing-count>${selected?.durationMinutes || 5}:00</strong></div>
+        <div class="breathing-controls">
+          <button class="primary-action compact" type="button" data-breathing-start>Iniciar</button>
+          <button class="secondary-action compact" type="button" data-breathing-pause>Pausar</button>
+          <button class="secondary-action compact" type="button" data-breathing-stop>Encerrar</button>
+        </div>
+        <div class="breathing-toggles">
+          <label><input type="checkbox" data-breathing-audio ${data.preferences?.preferredAudio ?"checked" : ""} /> Áudio</label>
+          <label><input type="checkbox" data-breathing-vibration ${data.preferences?.preferredVibration ?"checked" : ""} /> Vibração</label>
+        </div>
+      </section>
+
+      <section class="breathing-panel" id="breathingCheckout">
+        <div class="section-title"><span>Check-out</span><h3>Depois do protocolo</h3></div>
+        <form id="breathingCheckoutForm" class="breathing-form">
+          <label class="credential-field"><span>Ansiedade depois (0-10)</span><input name="anxietyAfter" type="range" min="0" max="10" value="3" /></label>
+          <label class="credential-field"><span>Tensão depois (0-10)</span><input name="tensionAfter" type="range" min="0" max="10" value="3" /></label>
+          <label class="credential-field"><span>Dor após?</span><select name="painAfter"><option value="false">Não</option><option value="true">Sim</option></select></label>
+          <label class="credential-field"><span>Sensação respiratória</span><select name="breathingStateAfter"><option>mais leve</option><option>igual</option><option>pior</option><option>mais profunda</option><option>mais travada</option></select></label>
+          <label class="credential-field"><span>Sensação corporal</span><select name="bodyStateAfter"><option>relaxou</option><option>continua rígido</option><option>aumentou desconforto</option><option>reduziu dor</option><option>ficou sonolento</option><option>ficou mais focado</option></select></label>
+          <label class="credential-field wide-field"><span>Observação livre</span><textarea name="notes" rows="3" placeholder="Como o corpo respondeu? Houve tensão, sono, foco, dor ou alívio?"></textarea></label>
+          <button class="primary-action" type="submit">Salvar sessão</button>
+        </form>
+      </section>
+
+      <section class="breathing-panel">
+        <div class="section-title"><span>Insights da IA</span><h3>Evolução e alertas</h3></div>
+        <div class="breathing-insight-list">${(data.insights || []).slice(0, 6).map((insight) => `<article><span>${escapeHtml(insight.riskLevel || "baixo")}</span><strong>${escapeHtml(insight.title)}</strong><p>${escapeHtml(insight.content)}</p><small>${escapeHtml(insight.recommendation || "")}</small></article>`).join("") || `<p class="empty-state">Os insights aparecem após salvar sessões.</p>`}</div>
+      </section>
+
+      <section class="breathing-panel">
+        <div class="section-title"><span>Histórico</span><h3>Sessões respiratórias</h3></div>
+        <div class="breathing-history">${(data.sessions || []).slice(0, 8).map((session) => `<article><strong>${escapeHtml(session.protocolName || "Protocolo")}</strong><span>${new Date(session.startedAt).toLocaleString("pt-BR")} - ${Math.round(Number(session.durationSeconds || 0) / 60)} min</span><p>Ansiedade ${session.checkin?.anxietyBefore ?? "--"} -> ${session.checkout?.anxietyAfter ?? "--"} | Tensão ${session.checkin?.tensionBefore ?? "--"} -> ${session.checkout?.tensionAfter ?? "--"}</p></article>`).join("") || `<p class="empty-state">Nenhuma sessão registrada.</p>`}</div>
+      </section>
+
+      <section class="breathing-panel">
+        <div class="section-title"><span>Gráficos de evolução</span><h3>Resposta individual</h3></div>
+        <div class="breathing-chart">
+          <div style="--value:${metrics.anxietyReduction}"><span>Ansiedade</span><strong>${metrics.anxietyReduction}%</strong></div>
+          <div style="--value:${metrics.tensionReduction}"><span>Tensão</span><strong>${metrics.tensionReduction}%</strong></div>
+          <div style="--value:${metrics.completionRate}"><span>Conclusão</span><strong>${metrics.completionRate}%</strong></div>
+          <div style="--value:${Math.min(100, metrics.totalMinutes * 2)}"><span>Minutos</span><strong>${metrics.totalMinutes}</strong></div>
+        </div>
+      </section>
+
+      <section class="breathing-panel">
+        <div class="section-title"><span>Configurações</span><h3>Preferências do módulo</h3></div>
+        <form id="breathingPreferencesForm" class="breathing-form">
+          <label class="credential-field"><span>Áudio guiado</span><select name="preferredAudio"><option value="true">Ativo</option><option value="false">Inativo</option></select></label>
+          <label class="credential-field"><span>Vibração leve</span><select name="preferredVibration"><option value="false">Inativa</option><option value="true">Ativa</option></select></label>
+          <label class="credential-field"><span>Duração preferida</span><input name="preferredProtocolDuration" type="number" min="2" max="12" value="${data.preferences?.preferredProtocolDuration || 5}" /></label>
+          <label class="credential-field"><span>Estilo de voz</span><select name="preferredVoiceStyle"><option value="coach">Coach técnico</option><option value="calm">Calmo educativo</option><option value="kids">Kids lúdico</option></select></label>
+          <button class="secondary-action" type="submit">Salvar preferências</button>
+        </form>
+      </section>
+
+      <section class="breathing-panel">
+        <div class="section-title"><span>Área do treinador</span><h3>Adesão e sobrecarga</h3></div>
+        <div class="breathing-coach-grid">
+          <article><span>Adesão</span><strong>${metrics.completed}/${metrics.sessions}</strong><p>Sessões concluídas pelo atleta selecionado.</p></article>
+          <article><span>Sinal emocional</span><strong>${metrics.anxietyReduction}%</strong><p>Redução média de ansiedade percebida.</p></article>
+          <article><span>LGPD</span><strong>Restrito</strong><p>Dados sensíveis devem respeitar consentimento e permissões do perfil.</p></article>
+        </div>
+      </section>
+
+      <section class="breathing-panel">
+        <div class="section-title"><span>Pais e responsáveis</span><h3>Base e jovens atletas</h3></div>
+        <p>Antes da prova, evite transformar a largada em cobrança. Ajude a criança a respirar, brincar, se sentir segura e lembrar que competir também é aprender.</p>
+        <div class="breathing-badges"><span>Foguete calmo</span><span>Tartaruga campeã</span><span>Sono campeão</span></div>
+      </section>
+
+      <section class="breathing-panel">
+        <div class="section-title"><span>Conteúdos educativos</span><h3>Ciência aplicada</h3></div>
+        <div class="breathing-education">
+          ${["O que é neuromodulação respiratória?", "Por que expirar mais longo acalma?", "O que é HRV?", "Respiração antes da prova: o que fazer?", "Respiração antes do treino forte: o que evitar?", "Respiração e panturrilha travada", "Ansiedade pré-prova em crianças", "Quando procurar ajuda"].map((item) => `<article>${escapeHtml(item)}</article>`).join("")}
+        </div>
+      </section>
+
+      <section class="breathing-panel breathing-alerts">
+        <div class="section-title"><span>Alertas e recomendações</span><h3>Segurança primeiro</h3></div>
+        <p>${escapeHtml(safety)}</p>
+        <p>Não pratique em piscina, banho, direção ou ambiente de risco. O módulo não substitui médico, fisioterapeuta, psicólogo ou treinador.</p>
+      </section>
+    </div>
+  `;
+  const prefForm = target.querySelector("#breathingPreferencesForm");
+  if (prefForm) {
+    prefForm.elements.preferredAudio.value = String(Boolean(data.preferences?.preferredAudio));
+    prefForm.elements.preferredVibration.value = String(Boolean(data.preferences?.preferredVibration));
+    prefForm.elements.preferredVoiceStyle.value = data.preferences?.preferredVoiceStyle || "coach";
+  }
+  scheduleAutoTranslate();
+}
+
+async function recommendBreathingProtocol(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const painLocation = [...form.elements.painLocation.selectedOptions].map((option) => option.value);
+  const checkin = {
+    anxietyBefore: Number(form.elements.anxietyBefore.value || 0),
+    tensionBefore: Number(form.elements.tensionBefore.value || 0),
+    painBefore: form.elements.painBefore.value === "true",
+    painLocation,
+    goal: form.elements.goal.value,
+    sleepQuality: Number(form.elements.sleepQuality.value || 0),
+    recoveryPerception: Number(form.elements.recoveryPerception.value || 0)
+  };
+  state.breathingCheckin = checkin;
+  const output = document.querySelector("#breathingAiOutput");
+  if (output) output.innerHTML = `<div class="analysis-loader"><i class="mini-loader" aria-hidden="true"></i><strong>Ayla Breath AI analisando...</strong></div>`;
+  try {
+    const result = await api("/api/breathing/recommend", {
+      method: "POST",
+      body: JSON.stringify({ checkin, context: checkin.goal })
+    });
+    if (result.protocol?.id) state.breathingSelectedProtocolId = result.protocol.id;
+    if (output) output.innerHTML = `<strong>${escapeHtml(result.protocol?.name || "Protocolo recomendado")}</strong><p>${escapeHtml(result.text || "")}</p>`;
+    await renderBreathingModule();
+  } catch (error) {
+    if (output) output.innerHTML = `<p class="analysis-caution">${escapeHtml(error.message)}</p>`;
+  }
+}
+
+function updateBreathingTimerDisplay() {
+  const protocol = activeBreathingProtocol();
+  const count = document.querySelector("[data-breathing-count]");
+  const phase = document.querySelector("[data-breathing-phase]");
+  const orb = document.querySelector("[data-breathing-orb]");
+  if (!protocol || !count || !phase || !orb) return;
+  const remaining = Math.max(0, state.breathingTimerRemaining);
+  const minutes = Math.floor(remaining / 60);
+  const seconds = Math.floor(remaining % 60);
+  count.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
+  const cycle = protocol.inhaleSeconds + protocol.holdInSeconds + protocol.exhaleSeconds + protocol.holdOutSeconds;
+  const elapsedInCycle = cycle ?Math.floor(((protocol.durationMinutes * 60) - remaining) % cycle) : 0;
+  let label = "Inspirar";
+  let mode = "inhale";
+  if (elapsedInCycle >= protocol.inhaleSeconds + protocol.holdInSeconds + protocol.exhaleSeconds) {
+    label = "Repousar";
+    mode = "rest";
+  } else if (elapsedInCycle >= protocol.inhaleSeconds + protocol.holdInSeconds) {
+    label = "Expirar";
+    mode = "exhale";
+  } else if (elapsedInCycle >= protocol.inhaleSeconds) {
+    label = "Segurar";
+    mode = "hold";
+  }
+  phase.textContent = label;
+  orb.dataset.phase = mode;
+}
+
+function startBreathingTimer() {
+  const protocol = activeBreathingProtocol();
+  if (!protocol) return;
+  clearInterval(state.breathingTimer);
+  state.breathingExecutionStartedAt = new Date().toISOString();
+  state.breathingTimerRemaining = protocol.durationMinutes * 60;
+  updateBreathingTimerDisplay();
+  state.breathingTimer = setInterval(() => {
+    state.breathingTimerRemaining = Math.max(0, state.breathingTimerRemaining - 1);
+    updateBreathingTimerDisplay();
+    if (state.breathingTimerRemaining <= 0) {
+      clearInterval(state.breathingTimer);
+      document.querySelector("[data-breathing-phase]").textContent = "Concluído";
+      document.querySelector("#breathingCheckout")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, 1000);
+}
+
+function pauseBreathingTimer() {
+  clearInterval(state.breathingTimer);
+}
+
+function stopBreathingTimer() {
+  clearInterval(state.breathingTimer);
+  const protocol = activeBreathingProtocol();
+  state.breathingTimerRemaining = protocol ?protocol.durationMinutes * 60 : 0;
+  updateBreathingTimerDisplay();
+}
+
+async function saveBreathingCheckout(event) {
+  event.preventDefault();
+  const protocol = activeBreathingProtocol();
+  if (!protocol) return;
+  const form = event.currentTarget;
+  const checkout = {
+    anxietyAfter: Number(form.elements.anxietyAfter.value || 0),
+    tensionAfter: Number(form.elements.tensionAfter.value || 0),
+    painAfter: form.elements.painAfter.value === "true",
+    breathingStateAfter: form.elements.breathingStateAfter.value,
+    bodyStateAfter: form.elements.bodyStateAfter.value,
+    notes: form.elements.notes.value
+  };
+  const durationSeconds = Math.max(1, (protocol.durationMinutes * 60) - Number(state.breathingTimerRemaining || 0));
+  try {
+    const payload = await api("/api/breathing/session", {
+      method: "POST",
+      body: JSON.stringify({
+        protocolId: protocol.id,
+        startedAt: state.breathingExecutionStartedAt || new Date().toISOString(),
+        endedAt: new Date().toISOString(),
+        durationSeconds,
+        completed: true,
+        context: state.breathingCheckin?.goal || protocol.objective,
+        checkin: state.breathingCheckin || {
+          anxietyBefore: 5,
+          tensionBefore: 5,
+          painBefore: false,
+          painLocation: [],
+          goal: protocol.objective,
+          sleepQuality: 6,
+          recoveryPerception: 6
+        },
+        checkout
+      })
+    });
+    state.breathingData.sessions = payload.sessions || state.breathingData.sessions;
+    state.breathingData.insights = payload.insights || state.breathingData.insights;
+    stopBreathingTimer();
+    form.reset();
+    await renderBreathingModule();
+  } catch (error) {
+    setLog([error.message], true);
+  }
+}
+
+async function saveBreathingPreferences(event) {
+  event.preventDefault();
+  const values = Object.fromEntries(new FormData(event.currentTarget).entries());
+  const prefs = {
+    preferredAudio: values.preferredAudio === "true",
+    preferredVibration: values.preferredVibration === "true",
+    preferredProtocolDuration: Number(values.preferredProtocolDuration || 5),
+    preferredVoiceStyle: values.preferredVoiceStyle || "coach",
+    visualMode: "dark"
+  };
+  try {
+    state.breathingData.preferences = await api("/api/breathing/preferences", {
+      method: "POST",
+      body: JSON.stringify(prefs)
+    });
+    await renderBreathingModule();
+  } catch (error) {
+    setLog([error.message], true);
   }
 }
 
@@ -5436,6 +5853,8 @@ async function editCurrentUserProfile() {
     state.integrations = integrations;
     state.activities = activities;
     state.goals = goals;
+    state.breathingData = null;
+    state.breathingSelectedProtocolId = "";
     renderProviders();
     renderCalendar();
 
@@ -6897,7 +7316,32 @@ document.addEventListener("click", async (event) => {
     const output = document.querySelector("#analysisOutput");
     if (output) output.innerHTML = "";
     renderAnalysesView();
-    if (analysisModeButton.classList.contains("analysis-type-card")) openAnalysisWorkflow();
+    if (analysisModeButton.classList.contains("analysis-type-card") && state.analysisMode !== "breathing") openAnalysisWorkflow();
+    return;
+  }
+  const breathingProtocolButton = event.target.closest("[data-breathing-protocol]");
+  if (breathingProtocolButton) {
+    event.preventDefault();
+    state.breathingSelectedProtocolId = breathingProtocolButton.dataset.breathingProtocol;
+    await renderBreathingModule();
+    return;
+  }
+  const breathingScroll = event.target.closest("[data-breathing-scroll]");
+  if (breathingScroll) {
+    event.preventDefault();
+    document.querySelector(`#breathing${breathingScroll.dataset.breathingScroll === "checkin" ?"Checkin" : "Execution"}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  if (event.target.closest("[data-breathing-start]")) {
+    startBreathingTimer();
+    return;
+  }
+  if (event.target.closest("[data-breathing-pause]")) {
+    pauseBreathingTimer();
+    return;
+  }
+  if (event.target.closest("[data-breathing-stop]")) {
+    stopBreathingTimer();
     return;
   }
   if (event.target.closest("[data-close-workflow-dialog]")) {
@@ -7270,6 +7714,15 @@ document.addEventListener("submit", async (event) => {
   }
   if (event.target?.id === "analysisForm") {
     await generateClinicalAnalysis(event);
+  }
+  if (event.target?.id === "breathingCheckinForm") {
+    await recommendBreathingProtocol(event);
+  }
+  if (event.target?.id === "breathingCheckoutForm") {
+    await saveBreathingCheckout(event);
+  }
+  if (event.target?.id === "breathingPreferencesForm") {
+    await saveBreathingPreferences(event);
   }
 });
 

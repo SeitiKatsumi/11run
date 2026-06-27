@@ -17,6 +17,7 @@ const INTEGRATIONS_FILE = path.join(DATA_DIR, "integrations.json");
 const ACTIVITIES_FILE = path.join(DATA_DIR, "activities.json");
 const ATHLETES_FILE = path.join(DATA_DIR, "athletes.json");
 const GOALS_FILE = path.join(DATA_DIR, "goals.json");
+const BREATHING_FILE = path.join(DATA_DIR, "breathing.json");
 const SCHEMA_FILE = path.join(ROOT, "db", "schema.sql");
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://127.0.0.1:${PORT}`).replace(/\/$/, "");
 const DEFAULT_TENANT_SLUG = process.env.DEFAULT_TENANT_SLUG || "default";
@@ -208,11 +209,41 @@ const DEMO_ACTIVITIES = [
   }
 ];
 
+const BREATHING_AI_PROMPT = `Voce e a IA Respiracao Neural 11RUN, uma assistente especializada em neuromodulacao respiratoria aplicada ao esporte, endurance, corrida, ciclismo, jovens atletas e recuperacao neural.
+
+Sua funcao e ajudar atletas, pais e treinadores a escolherem, executarem e entenderem protocolos respiratorios seguros para regulacao do sistema nervoso, controle de ansiedade, recuperacao, foco e suporte ao desempenho.
+
+Voce deve usar linguagem clara, humana, esportiva e educativa. Nunca faca diagnostico medico. Nunca substitua medico, fisioterapeuta, psicologo ou treinador. Em sinais de risco, recomende interromper a pratica e buscar orientacao profissional.
+
+Voce deve analisar os dados de check-in, check-out, historico de sessoes, sono, tensao, dor, treino e percepcao de esforco para sugerir protocolos e gerar insights personalizados.
+
+Evite linguagem mistica. Use uma abordagem baseada em ciencia, performance e seguranca. Para criancas, use linguagem ludica, simples e acolhedora.`;
+
+const BREATHING_SAFETY_MESSAGE = "Se houver dor no peito, tontura forte, falta de ar incomum, desmaio, perda de forca ou dor aguda persistente, interrompa o protocolo e procure orientacao profissional.";
+
+const DEFAULT_BREATHING_PROTOCOLS = [
+  { key: "pre-46", name: "Protocolo 4:6 - Regulacao pre-esforco", category: "pre_treino", objective: "Reduzir alerta antes do treino", description: "Cadencia nasal com expiracao mais longa para reduzir hiperativacao sem sedar o atleta.", inhaleSeconds: 4, holdInSeconds: 0, exhaleSeconds: 6, holdOutSeconds: 0, durationMinutes: 5, difficultyLevel: "iniciante", ageGroup: "adulto", safetyNotes: "Sem retencao prolongada. Interromper se houver tontura." },
+  { key: "pre-36", name: "Protocolo 3:6 - Descompressao rapida", category: "pre_treino", objective: "Reduzir tensao e sensacao de ameaca", description: "Entrada curta para momentos de ansiedade alta antes do aquecimento.", inhaleSeconds: 3, holdInSeconds: 0, exhaleSeconds: 6, holdOutSeconds: 0, durationMinutes: 3, difficultyLevel: "iniciante", ageGroup: "adulto", safetyNotes: "Respirar leve, sem puxar ar com forca." },
+  { key: "grounding", name: "Aterramento competitivo", category: "pre_prova", objective: "Entrar no treino sem brigar com o corpo", description: "Respiracao nasal leve, expiracao longa e relaxamento de mandibula, ombros e panturrilhas.", inhaleSeconds: 4, holdInSeconds: 0, exhaleSeconds: 7, holdOutSeconds: 0, durationMinutes: 4, difficultyLevel: "iniciante", ageGroup: "adulto", safetyNotes: "Evitar se houver falta de ar incomum." },
+  { key: "downshift", name: "Downshift Neural 11RUN", category: "recuperacao", objective: "Ativar recuperacao parassimpatica", description: "Transicao pos-treino com expiracao prolongada para reduzir estado de luta.", inhaleSeconds: 4, holdInSeconds: 0, exhaleSeconds: 8, holdOutSeconds: 0, durationMinutes: 5, difficultyLevel: "intermediario", ageGroup: "adulto", safetyNotes: "Nao usar durante direcao, banho ou ambiente de risco." },
+  { key: "reset-intensity", name: "Reset pos-intensidade", category: "recuperacao", objective: "Soltar tensao depois de carga alta", description: "Respiracao baixa com relaxamento progressivo para baixar tonus e reorganizar recuperacao.", inhaleSeconds: 4, holdInSeconds: 0, exhaleSeconds: 8, holdOutSeconds: 2, durationMinutes: 8, difficultyLevel: "intermediario", ageGroup: "adulto", safetyNotes: "Pular repouso se gerar desconforto." },
+  { key: "anti-lock", name: "Protocolo Antitravamento", category: "ansiedade", objective: "Reduzir travamento muscular e hiperalerta", description: "Checagem corporal, 4:6 e frases de seguranca corporal para panturrilha, quadril, ombros e face.", inhaleSeconds: 4, holdInSeconds: 0, exhaleSeconds: 6, holdOutSeconds: 0, durationMinutes: 5, difficultyLevel: "iniciante", ageGroup: "adulto", safetyNotes: "Dor forte ou fisgada persistente exige pausa e avaliacao." },
+  { key: "safe-body", name: "Meu corpo esta seguro", category: "ansiedade", objective: "Reduzir ameaca percebida", description: "Expiracao longa e atencao aos pes no chao para reduzir alerta corporal antes da largada.", inhaleSeconds: 4, holdInSeconds: 0, exhaleSeconds: 7, holdOutSeconds: 0, durationMinutes: 4, difficultyLevel: "iniciante", ageGroup: "adulto", safetyNotes: "Nao usar para mascarar dor aguda." },
+  { key: "sleep-race", name: "Sono pre-prova", category: "sono", objective: "Desacelerar na noite anterior", description: "Interface silenciosa e expiracao longa para baixar adrenalina sem estimulos agressivos.", inhaleSeconds: 4, holdInSeconds: 0, exhaleSeconds: 8, holdOutSeconds: 0, durationMinutes: 10, difficultyLevel: "iniciante", ageGroup: "adulto", safetyNotes: "Praticar deitado apenas em ambiente seguro." },
+  { key: "adrenaline-down", name: "Baixar adrenalina", category: "sono", objective: "Preparar sono e recuperacao", description: "Respiracao nasal lenta com relaxamento corporal guiado.", inhaleSeconds: 4, holdInSeconds: 0, exhaleSeconds: 8, holdOutSeconds: 2, durationMinutes: 8, difficultyLevel: "iniciante", ageGroup: "adulto", safetyNotes: "Sem retencoes se houver ansiedade respiratoria." },
+  { key: "clean-focus", name: "Foco limpo", category: "foco", objective: "Concentrar sem sedacao excessiva", description: "Cadencia equilibrada 5:5 para presenca, foco e controle emocional.", inhaleSeconds: 5, holdInSeconds: 0, exhaleSeconds: 5, holdOutSeconds: 0, durationMinutes: 3, difficultyLevel: "iniciante", ageGroup: "adulto", safetyNotes: "Manter respiracao confortavel e nasal quando possivel." },
+  { key: "rocket", name: "Respiracao do foguete calmo", category: "jovens", objective: "Ajudar jovens atletas a pousar com calma", description: "Inspira enchendo o foguete e solta o ar devagar para pousar antes da largada.", inhaleSeconds: 3, holdInSeconds: 0, exhaleSeconds: 5, holdOutSeconds: 0, durationMinutes: 3, difficultyLevel: "kids", ageGroup: "jovem", safetyNotes: "Sem prender o ar. Usar linguagem leve e brincadeira." },
+  { key: "turtle", name: "Respiracao da tartaruga campea", category: "jovens", objective: "Calma simples antes da prova", description: "Respiracao lenta, corpo relaxado e foco em calma sem cobranca.", inhaleSeconds: 3, holdInSeconds: 0, exhaleSeconds: 5, holdOutSeconds: 0, durationMinutes: 2, difficultyLevel: "kids", ageGroup: "jovem", safetyNotes: "Nunca transformar a pratica em competicao." }
+];
+
 function ensureDataFiles() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(INTEGRATIONS_FILE)) writeJson(INTEGRATIONS_FILE, defaultIntegrations());
   if (!fs.existsSync(ACTIVITIES_FILE)) writeJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
   if (!fs.existsSync(ATHLETES_FILE)) writeJson(ATHLETES_FILE, []);
+  if (!fs.existsSync(BREATHING_FILE)) {
+    writeJson(BREATHING_FILE, { protocols: DEFAULT_BREATHING_PROTOCOLS, sessions: [], insights: [], preferences: {} });
+  }
 }
 
 function readJson(filePath, fallback) {
@@ -428,6 +459,7 @@ async function initDatabase() {
   const tenant = await getTenant(DEFAULT_TENANT_SLUG);
   await ensureDefaultAdmin(tenant.id);
   await ensureTenantIntegrations(tenant.id);
+  await ensureBreathingProtocols(tenant.id);
 }
 
 async function getTenant(slug = DEFAULT_TENANT_SLUG) {
@@ -968,6 +1000,443 @@ async function canAccessAthlete(tenantId, user, athleteUserId) {
   if (user.role === "athlete") return String(user.id) === String(athleteUserId);
   const visible = await listAthletes(tenantId, user);
   return visible.some((athlete) => String(athlete.id) === String(athleteUserId));
+}
+
+function clampScore(value, fallback = 0) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(0, Math.min(10, Math.round(number)));
+}
+
+function normalizeStringArray(value, limit = 12) {
+  const source = Array.isArray(value) ?value : String(value || "").split(",");
+  return source.map((item) => String(item || "").trim()).filter(Boolean).slice(0, limit);
+}
+
+function breathingStore() {
+  const store = readJson(BREATHING_FILE, null);
+  if (store && typeof store === "object") {
+    store.protocols = Array.isArray(store.protocols) ?store.protocols : [];
+    store.sessions = Array.isArray(store.sessions) ?store.sessions : [];
+    store.insights = Array.isArray(store.insights) ?store.insights : [];
+    store.preferences = store.preferences && typeof store.preferences === "object" ?store.preferences : {};
+    return store;
+  }
+  return { protocols: DEFAULT_BREATHING_PROTOCOLS, sessions: [], insights: [], preferences: {} };
+}
+
+function saveBreathingStore(store) {
+  writeJson(BREATHING_FILE, store);
+}
+
+function formatBreathingProtocol(row) {
+  return {
+    id: row.id || row.key || crypto.randomUUID(),
+    name: row.name,
+    category: row.category,
+    objective: row.objective,
+    description: row.description,
+    inhaleSeconds: Number(row.inhale_seconds ?? row.inhaleSeconds ?? 4),
+    holdInSeconds: Number(row.hold_in_seconds ?? row.holdInSeconds ?? 0),
+    exhaleSeconds: Number(row.exhale_seconds ?? row.exhaleSeconds ?? 6),
+    holdOutSeconds: Number(row.hold_out_seconds ?? row.holdOutSeconds ?? 0),
+    durationMinutes: Number(row.duration_minutes ?? row.durationMinutes ?? 5),
+    difficultyLevel: row.difficulty_level || row.difficultyLevel || "iniciante",
+    ageGroup: row.age_group || row.ageGroup || "adulto",
+    safetyNotes: row.safety_notes || row.safetyNotes || "",
+    isActive: row.is_active ?? row.isActive ?? true
+  };
+}
+
+function formatBreathingSession(row) {
+  const checkin = row.checkin || parseJsonObject(row.checkin_json) || null;
+  const checkout = row.checkout || parseJsonObject(row.checkout_json) || null;
+  return {
+    id: row.id,
+    userId: row.user_id || row.userId,
+    protocolId: row.protocol_id || row.protocolId,
+    startedAt: row.started_at || row.startedAt,
+    endedAt: row.ended_at || row.endedAt || "",
+    durationSeconds: Number(row.duration_seconds ?? row.durationSeconds ?? 0),
+    completed: Boolean(row.completed),
+    context: row.context || "",
+    notes: row.notes || "",
+    protocolName: row.protocol_name || row.protocolName || "",
+    protocolCategory: row.protocol_category || row.protocolCategory || "",
+    checkin,
+    checkout
+  };
+}
+
+function formatBreathingPreferences(row = {}) {
+  return {
+    preferredAudio: row.preferred_audio ?? row.preferredAudio ?? true,
+    preferredVibration: row.preferred_vibration ?? row.preferredVibration ?? false,
+    preferredProtocolDuration: Number(row.preferred_protocol_duration ?? row.preferredProtocolDuration ?? 5),
+    preferredVoiceStyle: row.preferred_voice_style || row.preferredVoiceStyle || "coach",
+    visualMode: row.visual_mode || row.visualMode || "dark"
+  };
+}
+
+async function ensureBreathingProtocols(tenantId) {
+  if (!pool) return;
+  for (const protocol of DEFAULT_BREATHING_PROTOCOLS) {
+    await query(
+      `INSERT INTO breathing_protocols (
+         tenant_id, name, category, objective, description, inhale_seconds,
+         hold_in_seconds, exhale_seconds, hold_out_seconds, duration_minutes,
+         difficulty_level, age_group, safety_notes, is_active
+       )
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,true)
+       ON CONFLICT (tenant_id, name) DO UPDATE SET
+         category = EXCLUDED.category,
+         objective = EXCLUDED.objective,
+         description = EXCLUDED.description,
+         inhale_seconds = EXCLUDED.inhale_seconds,
+         hold_in_seconds = EXCLUDED.hold_in_seconds,
+         exhale_seconds = EXCLUDED.exhale_seconds,
+         hold_out_seconds = EXCLUDED.hold_out_seconds,
+         duration_minutes = EXCLUDED.duration_minutes,
+         difficulty_level = EXCLUDED.difficulty_level,
+         age_group = EXCLUDED.age_group,
+         safety_notes = EXCLUDED.safety_notes,
+         is_active = true,
+         updated_at = now()`,
+      [
+        tenantId,
+        protocol.name,
+        protocol.category,
+        protocol.objective,
+        protocol.description,
+        protocol.inhaleSeconds,
+        protocol.holdInSeconds,
+        protocol.exhaleSeconds,
+        protocol.holdOutSeconds,
+        protocol.durationMinutes,
+        protocol.difficultyLevel,
+        protocol.ageGroup,
+        protocol.safetyNotes
+      ]
+    );
+  }
+}
+
+async function listBreathingProtocols(tenantId) {
+  if (!pool) {
+    const store = breathingStore();
+    if (!store.protocols.length) store.protocols = DEFAULT_BREATHING_PROTOCOLS;
+    store.protocols = store.protocols.map((protocol) => ({ id: protocol.id || protocol.key || crypto.randomUUID(), ...protocol }));
+    saveBreathingStore(store);
+    return store.protocols.map(formatBreathingProtocol).filter((protocol) => protocol.isActive);
+  }
+  await ensureBreathingProtocols(tenantId);
+  const result = await query(
+    `SELECT *
+       FROM breathing_protocols
+      WHERE tenant_id = $1 AND is_active = true
+      ORDER BY category, duration_minutes, name`,
+    [tenantId]
+  );
+  return result.rows.map(formatBreathingProtocol);
+}
+
+async function listBreathingSessions(tenantId, userId) {
+  if (!pool) {
+    const store = breathingStore();
+    const protocols = store.protocols.map(formatBreathingProtocol);
+    return store.sessions
+      .filter((session) => String(session.userId) === String(userId))
+      .sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)))
+      .map((session) => {
+        const protocol = protocols.find((item) => String(item.id) === String(session.protocolId));
+        return formatBreathingSession({ ...session, protocolName: protocol?.name || "", protocolCategory: protocol?.category || "" });
+      });
+  }
+  const result = await query(
+    `SELECT s.*,
+            p.name AS protocol_name,
+            p.category AS protocol_category,
+            row_to_json(ci.*) AS checkin_json,
+            row_to_json(co.*) AS checkout_json
+       FROM breathing_sessions s
+       LEFT JOIN breathing_protocols p ON p.id = s.protocol_id
+       LEFT JOIN breathing_checkins ci ON ci.session_id = s.id
+       LEFT JOIN breathing_checkouts co ON co.session_id = s.id
+      WHERE s.tenant_id = $1 AND s.user_id = $2
+      ORDER BY s.started_at DESC
+      LIMIT 120`,
+    [tenantId, userId]
+  );
+  return result.rows.map(formatBreathingSession);
+}
+
+async function listBreathingInsights(tenantId, userId) {
+  if (!pool) {
+    return breathingStore().insights
+      .filter((insight) => String(insight.userId) === String(userId))
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+      .slice(0, 24);
+  }
+  const result = await query(
+    `SELECT id, user_id AS "userId", session_id AS "sessionId", insight_type AS "insightType",
+            title, content, recommendation, risk_level AS "riskLevel", created_at AS "createdAt"
+       FROM breathing_ai_insights
+      WHERE tenant_id = $1 AND user_id = $2
+      ORDER BY created_at DESC
+      LIMIT 24`,
+    [tenantId, userId]
+  );
+  return result.rows;
+}
+
+function recommendedBreathingProtocol(protocols, checkin = {}, context = "") {
+  const anxiety = clampScore(checkin.anxietyBefore ?? checkin.anxiety_before, 0);
+  const tension = clampScore(checkin.tensionBefore ?? checkin.tension_before, 0);
+  const pain = Boolean(checkin.painBefore ?? checkin.pain_before);
+  const goal = String(checkin.goal || context || "").toLowerCase();
+  const locations = normalizeStringArray(checkin.painLocation || checkin.pain_location).join(" ").toLowerCase();
+  const category = goal.includes("dorm") || goal.includes("sono")
+    ? "sono"
+    : goal.includes("recuper")
+      ? "recuperacao"
+      : goal.includes("foco")
+        ? "foco"
+        : goal.includes("prova")
+          ? "pre_prova"
+          : anxiety >= 7 || tension >= 7 || goal.includes("lesao") || pain
+            ? "ansiedade"
+            : "pre_treino";
+  const safeProtocols = protocols.filter((protocol) => {
+    if (pain && (protocol.holdInSeconds > 0 || protocol.holdOutSeconds > 2)) return false;
+    return protocol.ageGroup !== "jovem" || goal.includes("crianca") || goal.includes("jovem");
+  });
+  const poolForCategory = safeProtocols.filter((protocol) => protocol.category === category);
+  const chosen = (poolForCategory[0] || safeProtocols.find((protocol) => protocol.category === "pre_treino") || protocols[0]);
+  const reason = pain
+    ? `Voce relatou dor ou fisgada em ${locations || "uma regiao corporal"}. A recomendacao evita hiperventilacao e retencao prolongada.`
+    : anxiety >= 7 || tension >= 7
+      ? "Seu check-in mostra ativacao alta. A prioridade e reduzir alerta sem tirar prontidao para o treino."
+      : "A recomendacao equilibra controle respiratorio, foco e seguranca para o contexto informado.";
+  return { protocol: chosen, reason };
+}
+
+function buildBreathingMetrics(sessions = []) {
+  const completed = sessions.filter((session) => session.completed);
+  const totalMinutes = Math.round(completed.reduce((sum, session) => sum + Number(session.durationSeconds || 0), 0) / 60);
+  const reductions = completed.map((session) => {
+    const beforeAnxiety = Number(session.checkin?.anxietyBefore ?? session.checkin?.anxiety_before);
+    const afterAnxiety = Number(session.checkout?.anxietyAfter ?? session.checkout?.anxiety_after);
+    const beforeTension = Number(session.checkin?.tensionBefore ?? session.checkin?.tension_before);
+    const afterTension = Number(session.checkout?.tensionAfter ?? session.checkout?.tension_after);
+    return {
+      anxiety: beforeAnxiety > 0 && Number.isFinite(afterAnxiety) ?Math.round(((beforeAnxiety - afterAnxiety) / beforeAnxiety) * 100) : 0,
+      tension: beforeTension > 0 && Number.isFinite(afterTension) ?Math.round(((beforeTension - afterTension) / beforeTension) * 100) : 0
+    };
+  });
+  const average = (key) => reductions.length ?Math.round(reductions.reduce((sum, item) => sum + item[key], 0) / reductions.length) : 0;
+  const protocolUse = completed.reduce((map, session) => {
+    const name = session.protocolName || "Protocolo";
+    map[name] = (map[name] || 0) + 1;
+    return map;
+  }, {});
+  const topProtocol = Object.entries(protocolUse).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+  return {
+    sessions: sessions.length,
+    completed: completed.length,
+    totalMinutes,
+    completionRate: sessions.length ?Math.round((completed.length / sessions.length) * 100) : 0,
+    anxietyReduction: average("anxiety"),
+    tensionReduction: average("tension"),
+    topProtocol
+  };
+}
+
+function buildBreathingInsight({ session, protocol, checkin, checkout }) {
+  const beforeAnxiety = clampScore(checkin.anxietyBefore, 0);
+  const afterAnxiety = clampScore(checkout.anxietyAfter, beforeAnxiety);
+  const beforeTension = clampScore(checkin.tensionBefore, 0);
+  const afterTension = clampScore(checkout.tensionAfter, beforeTension);
+  const anxietyReduction = beforeAnxiety > 0 ?Math.max(0, Math.round(((beforeAnxiety - afterAnxiety) / beforeAnxiety) * 100)) : 0;
+  const tensionReduction = beforeTension > 0 ?Math.max(0, Math.round(((beforeTension - afterTension) / beforeTension) * 100)) : 0;
+  const risk = checkout.painAfter || afterAnxiety > beforeAnxiety || afterTension > beforeTension ? "atencao" : "baixo";
+  const title = risk === "atencao" ? "Resposta exige acompanhamento" : "Resposta neural registrada";
+  const content = risk === "atencao"
+    ? `A sessao ${protocol?.name || ""} nao reduziu completamente os sinais percebidos. Ansiedade ${beforeAnxiety}/10 para ${afterAnxiety}/10 e tensao ${beforeTension}/10 para ${afterTension}/10.`
+    : `A sessao reduziu ansiedade em ${anxietyReduction}% e tensao em ${tensionReduction}%. Isso sugere boa resposta a expiracao prolongada neste contexto.`;
+  const recommendation = risk === "atencao"
+    ? `Use protocolos curtos e sem retencao antes do proximo treino. ${BREATHING_SAFETY_MESSAGE}`
+    : "Registrar o mesmo protocolo em contextos parecidos ajuda a confirmar se ele funciona melhor antes de treino, prova ou recuperacao.";
+  return {
+    id: crypto.randomUUID(),
+    userId: session.userId,
+    sessionId: session.id,
+    insightType: risk === "atencao" ? "alerta" : "evolucao",
+    title,
+    content,
+    recommendation,
+    riskLevel: risk,
+    createdAt: new Date().toISOString()
+  };
+}
+
+async function getBreathingPreferences(tenantId, userId) {
+  if (!pool) {
+    const prefs = breathingStore().preferences[userId] || {};
+    return formatBreathingPreferences(prefs);
+  }
+  const result = await query(
+    `SELECT *
+       FROM breathing_user_preferences
+      WHERE tenant_id = $1 AND user_id = $2
+      LIMIT 1`,
+    [tenantId, userId]
+  );
+  return formatBreathingPreferences(result.rows[0] || {});
+}
+
+async function saveBreathingPreferences(tenantId, userId, input = {}) {
+  const prefs = formatBreathingPreferences(input);
+  if (!pool) {
+    const store = breathingStore();
+    store.preferences[userId] = prefs;
+    saveBreathingStore(store);
+    return prefs;
+  }
+  await query(
+    `INSERT INTO breathing_user_preferences (
+       tenant_id, user_id, preferred_audio, preferred_vibration,
+       preferred_protocol_duration, preferred_voice_style, visual_mode
+     )
+     VALUES ($1,$2,$3,$4,$5,$6,$7)
+     ON CONFLICT (tenant_id, user_id) DO UPDATE SET
+       preferred_audio = EXCLUDED.preferred_audio,
+       preferred_vibration = EXCLUDED.preferred_vibration,
+       preferred_protocol_duration = EXCLUDED.preferred_protocol_duration,
+       preferred_voice_style = EXCLUDED.preferred_voice_style,
+       visual_mode = EXCLUDED.visual_mode,
+       updated_at = now()`,
+    [tenantId, userId, prefs.preferredAudio, prefs.preferredVibration, prefs.preferredProtocolDuration, prefs.preferredVoiceStyle, prefs.visualMode]
+  );
+  return prefs;
+}
+
+async function saveBreathingSession(tenantId, userId, input = {}) {
+  const protocols = await listBreathingProtocols(tenantId);
+  const protocol = protocols.find((item) => String(item.id) === String(input.protocolId)) || protocols[0];
+  if (!protocol) throw httpError("Protocolo respiratorio nao encontrado.", 404);
+  const now = new Date().toISOString();
+  const durationSeconds = Math.max(0, Math.round(Number(input.durationSeconds || protocol.durationMinutes * 60)));
+  const checkin = {
+    anxietyBefore: clampScore(input.checkin?.anxietyBefore),
+    tensionBefore: clampScore(input.checkin?.tensionBefore),
+    painBefore: Boolean(input.checkin?.painBefore),
+    painLocation: normalizeStringArray(input.checkin?.painLocation),
+    breathingStateBefore: String(input.checkin?.breathingStateBefore || "respiracao curta").slice(0, 80),
+    goal: String(input.checkin?.goal || input.context || protocol.objective).slice(0, 120),
+    sleepQuality: clampScore(input.checkin?.sleepQuality, 5),
+    recoveryPerception: clampScore(input.checkin?.recoveryPerception, 5)
+  };
+  const checkout = {
+    anxietyAfter: clampScore(input.checkout?.anxietyAfter, checkin.anxietyBefore),
+    tensionAfter: clampScore(input.checkout?.tensionAfter, checkin.tensionBefore),
+    painAfter: Boolean(input.checkout?.painAfter),
+    breathingStateAfter: String(input.checkout?.breathingStateAfter || "mais leve").slice(0, 80),
+    bodyStateAfter: String(input.checkout?.bodyStateAfter || "relaxou").slice(0, 80),
+    perceivedEffect: String(input.checkout?.perceivedEffect || "").slice(0, 120),
+    notes: String(input.checkout?.notes || input.notes || "").slice(0, 1200)
+  };
+  if (checkin.painBefore && checkin.anxietyBefore >= 8 && checkout.painAfter) {
+    checkout.notes = `${checkout.notes ?`${checkout.notes} ` : ""}${BREATHING_SAFETY_MESSAGE}`.slice(0, 1200);
+  }
+  const session = {
+    id: crypto.randomUUID(),
+    tenantId,
+    userId,
+    protocolId: protocol.id,
+    startedAt: String(input.startedAt || now),
+    endedAt: String(input.endedAt || now),
+    durationSeconds,
+    completed: Boolean(input.completed ?? true),
+    context: String(input.context || checkin.goal || "").slice(0, 120),
+    notes: String(input.notes || "").slice(0, 1200),
+    protocolName: protocol.name,
+    protocolCategory: protocol.category,
+    checkin,
+    checkout
+  };
+  const insight = buildBreathingInsight({ session, protocol, checkin, checkout });
+  if (!pool) {
+    const store = breathingStore();
+    store.sessions.unshift(session);
+    store.insights.unshift(insight);
+    saveBreathingStore(store);
+    return { session, insight };
+  }
+  const inserted = await query(
+    `INSERT INTO breathing_sessions (id, tenant_id, user_id, protocol_id, started_at, ended_at, duration_seconds, completed, context, notes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+     RETURNING *`,
+    [session.id, tenantId, userId, protocol.id, session.startedAt, session.endedAt, durationSeconds, session.completed, session.context, session.notes]
+  );
+  await query(
+    `INSERT INTO breathing_checkins (
+       tenant_id, session_id, user_id, anxiety_before, tension_before, pain_before,
+       pain_location, breathing_state_before, goal, sleep_quality, recovery_perception
+     )
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+    [tenantId, session.id, userId, checkin.anxietyBefore, checkin.tensionBefore, checkin.painBefore, JSON.stringify(checkin.painLocation), checkin.breathingStateBefore, checkin.goal, checkin.sleepQuality, checkin.recoveryPerception]
+  );
+  await query(
+    `INSERT INTO breathing_checkouts (
+       tenant_id, session_id, user_id, anxiety_after, tension_after, pain_after,
+       breathing_state_after, body_state_after, perceived_effect, notes
+     )
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [tenantId, session.id, userId, checkout.anxietyAfter, checkout.tensionAfter, checkout.painAfter, checkout.breathingStateAfter, checkout.bodyStateAfter, checkout.perceivedEffect, checkout.notes]
+  );
+  await query(
+    `INSERT INTO breathing_ai_insights (
+       id, tenant_id, user_id, session_id, insight_type, title, content, recommendation, risk_level
+     )
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [insight.id, tenantId, userId, session.id, insight.insightType, insight.title, insight.content, insight.recommendation, insight.riskLevel]
+  );
+  return { session: formatBreathingSession({ ...inserted.rows[0], protocolName: protocol.name, protocolCategory: protocol.category, checkin, checkout }), insight };
+}
+
+async function buildBreathingAiAnalysis(tenantId, userId, input = {}) {
+  const protocols = await listBreathingProtocols(tenantId);
+  const sessions = await listBreathingSessions(tenantId, userId);
+  const recommendation = recommendedBreathingProtocol(protocols, input.checkin || {}, input.context || "");
+  const metrics = buildBreathingMetrics(sessions);
+  const riskSignals = [];
+  const checkin = input.checkin || {};
+  if (Boolean(checkin.painBefore) && clampScore(checkin.tensionBefore) >= 7) riskSignals.push("dor ou fisgada com tensao alta");
+  if (clampScore(checkin.anxietyBefore) >= 8) riskSignals.push("ansiedade pre-treino elevada");
+  if (sessions.slice(0, 4).filter((session) => session.checkout?.painAfter || session.checkout?.pain_after).length >= 2) riskSignals.push("dor recorrente apos protocolos");
+  const localText = riskSignals.length
+    ? `Percebi ${riskSignals.join(", ")}. Recomendo ${recommendation.protocol.name}, curto e sem retencao prolongada. ${BREATHING_SAFETY_MESSAGE}`
+    : `${recommendation.reason} Recomendo ${recommendation.protocol.name} por ${recommendation.protocol.durationMinutes} minutos.`;
+
+  const settings = await getRawAppSettings(tenantId);
+  const apiKey = settings.openai_api_key || settings.openaiApiKey || process.env.OPENAI_API_KEY || "";
+  const model = settings.openai_model || settings.openaiModel || DEFAULT_OPENAI_MODEL;
+  const enabled = Boolean(settings.openai_enabled || settings.openaiEnabled || process.env.OPENAI_API_KEY);
+  if (!enabled || !apiKey) {
+    return { protocol: recommendation.protocol, text: localText, metrics, riskSignals, model: "modelo local 11RUN" };
+  }
+  try {
+    const prompt = [
+      BREATHING_AI_PROMPT,
+      "Dados estruturados:",
+      JSON.stringify({ checkin, context: input.context || "", recommendation: recommendation.protocol, metrics, lastSessions: sessions.slice(0, 8) }, null, 2),
+      "Responda em portugues do Brasil em ate 900 caracteres, com recomendacao pratica e mensagem de seguranca se houver risco."
+    ].join("\n\n");
+    const result = await callOpenAiText(apiKey, model, prompt, 420);
+    return { protocol: recommendation.protocol, text: result.text || localText, metrics, riskSignals, model: result.model || model };
+  } catch (error) {
+    return { protocol: recommendation.protocol, text: `${localText} ${publicOpenAiError(error)}`, metrics, riskSignals, model: "modelo local 11RUN" };
+  }
 }
 
 function validateAthlete(input, actorUser = null) {
@@ -3522,6 +3991,56 @@ async function handleApi(req, res, url) {
       requireUser(user);
       await deleteGoal(tenant.id, athleteUserId, decodeURIComponent(goalItemMatch[1]));
       sendJson(res, 200, { ok: true, goals: await listGoals(tenant.id, athleteUserId) });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/breathing") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const targetUserId = athleteUserId || user.id;
+      sendJson(res, 200, {
+        protocols: await listBreathingProtocols(tenant.id),
+        sessions: await listBreathingSessions(tenant.id, targetUserId),
+        insights: await listBreathingInsights(tenant.id, targetUserId),
+        preferences: await getBreathingPreferences(tenant.id, targetUserId),
+        safetyMessage: BREATHING_SAFETY_MESSAGE,
+        aiPrompt: BREATHING_AI_PROMPT
+      });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/breathing/recommend") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      const targetUserId = athleteUserId || user.id;
+      sendJson(res, 200, await buildBreathingAiAnalysis(tenant.id, targetUserId, body));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/breathing/session") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      const targetUserId = athleteUserId || user.id;
+      if (!targetUserId || !(await canAccessAthlete(tenant.id, user, targetUserId))) {
+        throw httpError("Usuario sem permissao para registrar sessao respiratoria deste atleta.", 403);
+      }
+      const result = await saveBreathingSession(tenant.id, targetUserId, body);
+      sendJson(res, 201, {
+        ...result,
+        sessions: await listBreathingSessions(tenant.id, targetUserId),
+        insights: await listBreathingInsights(tenant.id, targetUserId)
+      });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/breathing/preferences") {
+      const { tenant, user, athleteUserId } = await contextFromReq(req);
+      requireUser(user);
+      const body = await readRequestBody(req);
+      const targetUserId = athleteUserId || user.id;
+      sendJson(res, 200, await saveBreathingPreferences(tenant.id, targetUserId, body));
       return;
     }
 

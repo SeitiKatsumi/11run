@@ -269,6 +269,7 @@
               <button type="button" data-analysis-mode="xray">Raio X</button>
               <button type="button" data-analysis-mode="mri">MRI</button>
               <button type="button" data-analysis-mode="body">Imagem Corporal</button>
+              <button type="button" data-analysis-mode="breathing">RespiraÃ§Ã£o Neural</button>
             </div>
             <div class="analysis-create-intro">
               <div>
@@ -298,7 +299,13 @@
                 <strong>Imagem Corporal</strong>
                 <small>Triagem visual, assimetrias, postura e sinais sistemicos.</small>
               </button>
+              <button type="button" class="analysis-type-card" data-analysis-mode="breathing">
+                <span class="analysis-type-thumb" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4c4 0 7 3 7 7s-3 9-7 9-7-5-7-9 3-7 7-7z"></path><path d="M9 12c1.7 1.6 4.3 1.6 6 0"></path><path d="M12 8v8"></path></svg></span>
+                <strong>RespiraÃ§Ã£o Neural</strong>
+                <small>NeuromodulaÃ§Ã£o respiratÃ³ria, recuperaÃ§Ã£o, foco e seguranÃ§a.</small>
+              </button>
             </div>
+            <section id="breathingModule" class="breathing-module" hidden></section>
             <div id="analysisModeIntro" class="analysis-intro-grid"></div>
             <div class="analysis-form-shell">
               <div class="analysis-form-heading">

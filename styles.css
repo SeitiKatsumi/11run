@@ -3053,6 +3053,303 @@ dialog {
   margin-top: 18px;
 }
 
+.breathing-module {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.breathing-hero,
+.breathing-panel,
+.breathing-dashboard article,
+.breathing-protocol-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.16);
+}
+
+.breathing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 22px;
+}
+
+.breathing-hero h3 {
+  margin: 4px 0 8px;
+  color: var(--heading);
+  font-size: 30px;
+  font-weight: 560;
+}
+
+.breathing-hero p,
+.breathing-panel p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.breathing-dashboard,
+.breathing-step-grid,
+.breathing-coach-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.breathing-dashboard article,
+.breathing-step-grid div,
+.breathing-coach-grid article {
+  padding: 14px;
+}
+
+.breathing-dashboard span,
+.breathing-step-grid span,
+.breathing-coach-grid span,
+.breathing-protocol-card span,
+.breathing-insight-list span {
+  color: var(--tone-primary);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.breathing-dashboard strong,
+.breathing-step-grid strong,
+.breathing-coach-grid strong {
+  display: block;
+  margin: 6px 0;
+  color: var(--heading);
+  font-size: 20px;
+  font-weight: 560;
+}
+
+.breathing-dashboard p,
+.breathing-coach-grid p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.breathing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.breathing-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
+}
+
+.breathing-protocol-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.breathing-protocol-card {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  padding: 14px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.breathing-protocol-card:hover,
+.breathing-protocol-card.is-active {
+  transform: translateY(-2px);
+  border-color: rgba(255, 122, 0, 0.45);
+  background: rgba(255, 122, 0, 0.08);
+}
+
+.breathing-protocol-card strong {
+  color: var(--heading);
+  font-size: 15px;
+  font-weight: 560;
+}
+
+.breathing-protocol-card small,
+.breathing-protocol-card i {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.4;
+}
+
+.breathing-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.breathing-form .wide-field,
+.breathing-form button {
+  grid-column: 1 / -1;
+}
+
+.breathing-form input[type="range"] {
+  accent-color: var(--tone-primary);
+}
+
+.breathing-ai-output,
+.breathing-insight-list,
+.breathing-history,
+.breathing-education,
+.breathing-badges {
+  display: grid;
+  gap: 10px;
+}
+
+.breathing-ai-output:not(:empty),
+.breathing-insight-list article,
+.breathing-history article,
+.breathing-education article,
+.breathing-badges span {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.breathing-insight-list strong,
+.breathing-history strong,
+.breathing-ai-output strong {
+  display: block;
+  color: var(--heading);
+  font-weight: 560;
+}
+
+.breathing-insight-list small,
+.breathing-history span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.breathing-execution {
+  align-content: start;
+}
+
+.breathing-orb {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  width: min(280px, 70vw);
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 122, 0, 0.28);
+  border-radius: 50%;
+  background: rgba(255, 122, 0, 0.06);
+  transition: transform 1s ease, background 1s ease, border-color 1s ease;
+}
+
+.breathing-orb[data-phase="inhale"] {
+  transform: scale(1.08);
+  background: rgba(255, 122, 0, 0.1);
+}
+
+.breathing-orb[data-phase="exhale"] {
+  transform: scale(0.86);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.breathing-orb[data-phase="hold"],
+.breathing-orb[data-phase="rest"] {
+  transform: scale(0.96);
+}
+
+.breathing-orb span {
+  color: var(--tone-primary);
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.breathing-orb strong {
+  color: var(--heading);
+  font-size: 36px;
+  font-weight: 560;
+}
+
+.breathing-controls,
+.breathing-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.breathing-toggles label {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.breathing-chart {
+  display: grid;
+  gap: 12px;
+}
+
+.breathing-chart div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 54px;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.breathing-chart div::before {
+  content: "";
+  grid-column: 2;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset calc(var(--value, 0) * 1%) 0 0 rgba(255, 122, 0, 0.72);
+}
+
+.breathing-chart span {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.breathing-chart strong {
+  grid-column: 3;
+  grid-row: 1;
+  color: var(--heading);
+  font-weight: 560;
+  text-align: right;
+}
+
+.breathing-education {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.breathing-badges {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.breathing-badges span {
+  color: var(--heading);
+  font-size: 12px;
+}
+
+.breathing-alerts {
+  grid-column: 1 / -1;
+  border-color: rgba(255, 122, 0, 0.38);
+}
+
 .settings-header {
   display: flex;
   justify-content: space-between;
@@ -6487,5 +6784,30 @@ nav a.is-active .nav-icon {
   .workflow-actions span {
     order: -1;
     text-align: left;
+  }
+}
+
+@media (max-width: 900px) {
+  .breathing-hero,
+  .breathing-dashboard,
+  .breathing-grid,
+  .breathing-protocol-grid,
+  .breathing-form,
+  .breathing-step-grid,
+  .breathing-coach-grid,
+  .breathing-education {
+    grid-template-columns: 1fr;
+  }
+
+  .breathing-hero {
+    align-items: stretch;
+  }
+
+  .breathing-hero .primary-action {
+    width: 100%;
+  }
+
+  .breathing-orb {
+    width: min(240px, 78vw);
   }
 }
