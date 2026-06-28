@@ -3350,6 +3350,92 @@ dialog {
   border-color: rgba(255, 122, 0, 0.38);
 }
 
+.differentials-section {
+  display: grid;
+  gap: 18px;
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.differentials-hero,
+.differentials-grid article,
+.differentials-claim {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.differentials-hero {
+  display: grid;
+  gap: 8px;
+  padding: 22px;
+}
+
+.differentials-hero h3 {
+  max-width: 820px;
+  margin: 0;
+  color: var(--heading);
+  font-size: clamp(28px, 4vw, 52px);
+  font-weight: 560;
+  line-height: 1;
+}
+
+.differentials-hero p,
+.differentials-grid p,
+.differentials-claim p {
+  max-width: 840px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.differentials-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.differentials-grid article {
+  display: grid;
+  gap: 9px;
+  min-height: 190px;
+  padding: 16px;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.differentials-grid article:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 122, 0, 0.42);
+  background: rgba(255, 122, 0, 0.07);
+}
+
+.differentials-grid span {
+  color: var(--tone-primary);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.differentials-grid strong,
+.differentials-claim strong {
+  color: var(--heading);
+  font-size: 18px;
+  font-weight: 560;
+  line-height: 1.15;
+}
+
+.differentials-grid p {
+  font-size: 12px;
+}
+
+.differentials-claim {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-color: rgba(255, 122, 0, 0.36);
+}
+
 .settings-header {
   display: flex;
   justify-content: space-between;
@@ -6795,7 +6881,8 @@ nav a.is-active .nav-icon {
   .breathing-form,
   .breathing-step-grid,
   .breathing-coach-grid,
-  .breathing-education {
+  .breathing-education,
+  .differentials-grid {
     grid-template-columns: 1fr;
   }
 
