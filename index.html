@@ -58,6 +58,7 @@
           <a href="#testes" data-view-link="tests"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8"></path><path d="M10 4v5l-4 8a3 3 0 0 0 2.7 4h6.6a3 3 0 0 0 2.7-4l-4-8V4"></path><path d="M8 15h8"></path></svg></span><span class="nav-label" data-i18n="nav.tests">TESTES</span></a>
           <a href="#calculadoras" data-view-link="calculators"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 7h8"></path><path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"></path></svg></span><span class="nav-label" data-i18n="nav.calculators">CALCULADORAS</span></a>
           <a href="#analises" data-view-link="analyses"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5v5"></path><path d="M4 14v5"></path><path d="M20 5v5"></path><path d="M20 14v5"></path><path d="M8 5h8"></path><path d="M8 19h8"></path><path d="M8 12h8"></path><path d="M12 8v8"></path></svg></span><span class="nav-label" data-i18n="nav.analyses">ANÁLISES</span></a>
+          <a href="#diferenciais" data-view-link="differentials"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.2 5.6.5-4.2 3.7 1.3 5.5L12 15l-4.9 2.9 1.3-5.5-4.2-3.7 5.6-.5z"></path><path d="M4 21h16"></path></svg></span><span class="nav-label" data-i18n="nav.differentials">DIFERENCIAIS</span></a>
           <a href="#objetivos" data-view-link="goals"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="4"></circle><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path></svg></span><span class="nav-label" data-i18n="nav.goals">OBJETIVOS</span></a>
           <a href="#preferencias" data-view-link="athlete"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 21a7 7 0 0 1 14 0"></path></svg></span><span class="nav-label" data-i18n="nav.preferences">PREFERÊNCIAS</span></a>
           <a href="#configuracoes" class="manager-only" data-view-link="settings" hidden><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h10"></path><path d="M18 7h2"></path><circle cx="16" cy="7" r="2"></circle><path d="M4 17h2"></path><path d="M10 17h10"></path><circle cx="8" cy="17" r="2"></circle></svg></span><span class="nav-label" data-i18n="nav.settings">CONFIGURAÇÕES</span></a>
@@ -269,6 +270,7 @@
               <button type="button" data-analysis-mode="xray">Raio X</button>
               <button type="button" data-analysis-mode="mri">MRI</button>
               <button type="button" data-analysis-mode="body">Imagem Corporal</button>
+              <button type="button" data-analysis-mode="race">Analisador de Provas</button>
               <button type="button" data-analysis-mode="breathing">RespiraÃ§Ã£o Neural</button>
             </div>
             <div class="analysis-create-intro">
@@ -299,6 +301,11 @@
                 <strong>Imagem Corporal</strong>
                 <small>Triagem visual, assimetrias, postura e sinais sistemicos.</small>
               </button>
+              <button type="button" class="analysis-type-card" data-analysis-mode="race">
+                <span class="analysis-type-thumb" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19V5"></path><path d="M5 7h10l-2 4 2 4H5"></path><path d="M18 19l-3-6"></path><path d="M12 19l3-6 3 6"></path></svg></span>
+                <strong>Analisador de Provas</strong>
+                <small>Probabilidade, rota preditiva, carga, risco e estrategia para competir melhor.</small>
+              </button>
               <button type="button" class="analysis-type-card" data-analysis-mode="breathing">
                 <span class="analysis-type-thumb" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4c4 0 7 3 7 7s-3 9-7 9-7-5-7-9 3-7 7-7z"></path><path d="M9 12c1.7 1.6 4.3 1.6 6 0"></path><path d="M12 8v8"></path></svg></span>
                 <strong>RespiraÃ§Ã£o Neural</strong>
@@ -306,6 +313,7 @@
               </button>
             </div>
             <section id="breathingModule" class="breathing-module" hidden></section>
+            <section id="raceAnalyzerModule" class="race-analyzer-module" hidden></section>
             <div id="analysisModeIntro" class="analysis-intro-grid"></div>
             <div class="analysis-form-shell">
               <div class="analysis-form-heading">
@@ -405,6 +413,95 @@
                 <p>E uma plataforma de inteligencia esportiva para corredores, equipes e jovens atletas que une ciencia, IA, dados sensiveis, prevencao, performance e experiencia premium.</p>
               </div>
             </section>
+          </section>
+        </section>
+
+        <section class="view" data-view="differentials">
+          <header class="page-header">
+            <div>
+              <p class="kicker">Diferenciais</p>
+              <h2>Landing page de apresentação 11RUN</h2>
+            </div>
+          </header>
+          <section class="differentials-page">
+            <div class="differentials-page-hero">
+              <span class="kicker">11RUN AI Performance OS</span>
+              <h1>A IA mais avançada do mundo para corrida</h1>
+              <p>Uma plataforma de inteligência esportiva que une treino, provas, exames, imagem corporal, respiração neural, dados de wearables, histórico do atleta, treinadores, pais e equipes em um sistema único de decisão.</p>
+              <div class="differentials-page-actions">
+                <a class="primary-action compact" href="#analises" data-view-link="analyses">Abrir Analisador IA</a>
+                <a class="secondary-action compact" href="#dashboard" data-view-link="dashboard">Ver Dashboard</a>
+              </div>
+            </div>
+
+            <div class="differentials-page-grid is-featured">
+              <article>
+                <span>Ferramenta inédita</span>
+                <strong>Analisador de Provas 11RUN</strong>
+                <p>Da largada à chegada, interpreta ritmo, frequência cardíaca, splits, altimetria, cadência, potência, eventos críticos, estratégia, quebra, reação final e recomendações de treino.</p>
+              </article>
+              <article>
+                <span>Neuromodulação esportiva</span>
+                <strong>Respiração Neural 11RUN</strong>
+                <p>Protocolos respiratórios com check-in, execução guiada, check-out, insights de IA, segurança e integração com ansiedade pré-prova, recuperação, sono e foco.</p>
+              </article>
+              <article>
+                <span>IA clínica-esportiva</span>
+                <strong>Exames e imagens conectados à performance</strong>
+                <p>Hemograma, raio X, MRI e imagem corporal deixam de ser dados soltos e passam a orientar carga, retorno, risco, recuperação e perguntas para profissionais.</p>
+              </article>
+            </div>
+
+            <div class="differentials-page-band">
+              <div>
+                <span class="kicker">O que torna o 11RUN diferente</span>
+                <h3>Não é só planilha. É inteligência aplicada ao atleta inteiro.</h3>
+              </div>
+              <p>O 11RUN analisa o que o atleta treinou, como competiu, como recuperou, onde perdeu desempenho, quais sinais apareceram no corpo e quais decisões o treinador precisa tomar.</p>
+            </div>
+
+            <div class="differentials-page-grid">
+              <article><span>IA de prova</span><strong>Detecta onde o atleta ganhou ou perdeu performance</strong><p>Largada forte demais, queda de pace, deriva cardíaca, cadência em queda, subida custosa, final sem reação ou sobra de energia no sprint.</p></article>
+              <article><span>IA preditiva</span><strong>Probabilidade de objetivo e rota até a prova</strong><p>Combina objetivos, testes de 3000 m, volume recente, consistência, 11TSS, histórico e distância até a prova.</p></article>
+              <article><span>11TSS Advance</span><strong>Carga inteligente além do volume</strong><p>Classifica agressão, intensidade, variação de ritmo, esforço relativo, splits, características do treino e impacto na evolução.</p></article>
+              <article><span>IA de recuperação</span><strong>Sinais antes da queda de performance</strong><p>Identifica sono ruim, dor recorrente, tensão, fadiga neural, queda de recuperação, ansiedade e possível sobrecarga.</p></article>
+              <article><span>IA multidimensional</span><strong>Leitura completa do atleta</strong><p>Cruza treino, prova, dor, histórico, exames, imagens, percepção, objetivos, treinador e dados importados.</p></article>
+              <article><span>Base e kids</span><strong>Camada segura para jovens atletas</strong><p>Comunicação sem pressão excessiva, área de responsáveis, linguagem educativa e foco em evolução, aprendizado e segurança emocional.</p></article>
+              <article><span>Treinador no centro</span><strong>IA como copiloto técnico</strong><p>O treinador visualiza alertas, aprova recomendações, acompanha adesão, compara provas e transforma análise em ajustes reais.</p></article>
+              <article><span>Ecossistema conectado</span><strong>Strava, Garmin e wearables</strong><p>Estrutura preparada para integrar atividades, sensores, HRV, sono, frequência cardíaca, potência e novas fontes de dados.</p></article>
+            </div>
+
+            <div class="differentials-page-stack">
+              <section>
+                <span class="kicker">Módulos de IA para landing</span>
+                <h3>Ferramentas que posicionam o 11RUN como referência mundial</h3>
+                <div class="differentials-module-list">
+                  <article><strong>Analisador de Provas</strong><p>Engenheiro de performance com IA para analisar atividades do Strava, Garmin, FIT, GPX, TCX e registros internos.</p></article>
+                  <article><strong>Respiração Neural</strong><p>IA de neuromodulação respiratória para ansiedade pré-prova, recuperação, foco, sono e hiperalerta corporal.</p></article>
+                  <article><strong>Analisador Clínico e Imagens</strong><p>Leitura esportiva de exames e imagens com segurança, cautela médica e contexto de carga.</p></article>
+                  <article><strong>Dashboard Preditivo</strong><p>Probabilidade de metas, evolução, carga, testes, histórico e rota de performance.</p></article>
+                  <article><strong>Diário Inteligente</strong><p>Histórico cronológico com eventos de treino, dor, rotina, sono, VO2, nutrição e competição.</p></article>
+                  <article><strong>Central de Treinador e Equipe</strong><p>Visão operacional para decisões técnicas, acompanhamento de atletas e alertas de sobrecarga.</p></article>
+                </div>
+              </section>
+              <section>
+                <span class="kicker">Mensagem comercial</span>
+                <h3>Uma plataforma para vender como produto premium</h3>
+                <p>O 11RUN pode ser apresentado como o primeiro sistema de corrida com IA realmente multidisciplinar: performance, saúde, prova, respiração, recuperação, treinador, pais, base, equipe e predição em um único produto.</p>
+                <div class="differentials-copy-card">
+                  <strong>Frase principal para landing</strong>
+                  <p>O 11RUN transforma dados brutos de corrida em estratégia, evolução e decisões inteligentes para atletas, treinadores e equipes.</p>
+                </div>
+              </section>
+            </div>
+
+            <div class="differentials-page-band is-final">
+              <div>
+                <span class="kicker">Posicionamento</span>
+                <h3>Não é um app de treino comum. É um sistema operacional de performance com IA.</h3>
+              </div>
+              <p>Com esses diferenciais, a landing page deve vender o 11RUN como uma plataforma inédita, sofisticada e altamente tecnológica para corrida e endurance.</p>
+            </div>
           </section>
         </section>
 

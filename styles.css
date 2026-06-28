@@ -3436,6 +3436,313 @@ dialog {
   border-color: rgba(255, 122, 0, 0.36);
 }
 
+.race-analyzer-module,
+.race-analyzer-grid,
+.race-goal-list,
+.race-strategy-list,
+.race-segment-table,
+.race-signal-grid,
+.race-data-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.race-analyzer-module {
+  margin-top: 18px;
+}
+
+.race-analyzer-hero,
+.race-panel,
+.race-scoreboard article,
+.race-goal-card,
+.race-report-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.race-analyzer-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 22px;
+}
+
+.race-analyzer-hero h3 {
+  margin: 4px 0 8px;
+  color: var(--heading);
+  font-size: clamp(26px, 4vw, 46px);
+  font-weight: 560;
+  line-height: 1.04;
+}
+
+.race-analyzer-hero p,
+.race-panel p,
+.race-report-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.race-import-actions,
+.race-export-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.race-file-button {
+  cursor: pointer;
+}
+
+.race-scoreboard {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.race-scoreboard article,
+.race-panel,
+.race-report-card {
+  padding: 16px;
+}
+
+.race-scoreboard span,
+.race-goal-card span,
+.race-strategy-list span,
+.race-signal-grid span,
+.race-segment-table span {
+  color: var(--tone-primary);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.race-scoreboard strong,
+.race-goal-card strong,
+.race-strategy-list strong,
+.race-signal-grid strong,
+.race-report-card strong,
+.race-segment-table strong {
+  display: block;
+  margin: 6px 0;
+  color: var(--heading);
+  font-weight: 560;
+}
+
+.race-scoreboard p,
+.race-goal-card small,
+.race-strategy-list small,
+.race-signal-grid p,
+.race-segment-table p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.race-analyzer-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+.race-goal-card {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding: 13px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.race-goal-card:hover,
+.race-goal-card.is-active {
+  transform: translateY(-2px);
+  border-color: rgba(255, 122, 0, 0.45);
+  background: rgba(255, 122, 0, 0.08);
+}
+
+.race-data-grid,
+.race-signal-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.race-data-grid span,
+.race-signal-grid article,
+.race-strategy-list article,
+.race-segment-table article {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.race-data-grid .is-ok {
+  color: #8de3b0;
+}
+
+.race-data-grid .is-missing {
+  color: rgba(231, 227, 220, 0.58);
+}
+
+.race-projection-line {
+  display: grid;
+  gap: 12px;
+}
+
+.race-projection-line div {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 70px;
+  gap: 10px;
+  align-items: center;
+}
+
+.race-projection-line div::before {
+  content: "";
+  grid-column: 2;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset calc(var(--race-value, 0) * 1%) 0 0 rgba(255, 122, 0, 0.72);
+}
+
+.race-projection-line span {
+  grid-column: 1;
+  grid-row: 1;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.race-projection-line strong {
+  grid-column: 3;
+  grid-row: 1;
+  color: var(--heading);
+  font-weight: 560;
+  text-align: right;
+}
+
+.differentials-page,
+.differentials-page-grid,
+.differentials-page-stack,
+.differentials-module-list {
+  display: grid;
+  gap: 16px;
+}
+
+.differentials-page-hero,
+.differentials-page-band,
+.differentials-page-grid article,
+.differentials-page-stack section,
+.differentials-copy-card,
+.differentials-module-list article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.differentials-page-hero {
+  min-height: 58vh;
+  align-content: end;
+  padding: clamp(28px, 6vw, 70px);
+}
+
+.differentials-page-hero h1 {
+  max-width: 980px;
+  margin: 8px 0 14px;
+  color: var(--heading);
+  font-size: clamp(42px, 7vw, 88px);
+  font-weight: 560;
+  line-height: 0.94;
+}
+
+.differentials-page-hero p,
+.differentials-page-band p,
+.differentials-page-grid p,
+.differentials-page-stack p,
+.differentials-copy-card p,
+.differentials-module-list p {
+  max-width: 980px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.differentials-page-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.differentials-page-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.differentials-page-grid.is-featured {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.differentials-page-grid article,
+.differentials-page-band,
+.differentials-page-stack section,
+.differentials-copy-card,
+.differentials-module-list article {
+  padding: 18px;
+}
+
+.differentials-page-grid span {
+  color: var(--tone-primary);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.differentials-page-grid strong,
+.differentials-page-band h3,
+.differentials-page-stack h3,
+.differentials-copy-card strong,
+.differentials-module-list strong {
+  color: var(--heading);
+  font-weight: 560;
+}
+
+.differentials-page-grid strong {
+  display: block;
+  margin: 8px 0;
+  font-size: 19px;
+  line-height: 1.12;
+}
+
+.differentials-page-band {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.differentials-page-band h3,
+.differentials-page-stack h3 {
+  margin: 6px 0 0;
+  font-size: clamp(26px, 4vw, 48px);
+  line-height: 1;
+}
+
+.differentials-page-stack {
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
+.differentials-module-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+.differentials-page-band.is-final {
+  border-color: rgba(255, 122, 0, 0.36);
+}
+
 .settings-header {
   display: flex;
   justify-content: space-between;
@@ -6882,7 +7189,17 @@ nav a.is-active .nav-icon {
   .breathing-step-grid,
   .breathing-coach-grid,
   .breathing-education,
-  .differentials-grid {
+  .differentials-grid,
+  .race-analyzer-hero,
+  .race-scoreboard,
+  .race-analyzer-grid,
+  .race-data-grid,
+  .race-signal-grid,
+  .differentials-page-grid,
+  .differentials-page-grid.is-featured,
+  .differentials-page-band,
+  .differentials-page-stack,
+  .differentials-module-list {
     grid-template-columns: 1fr;
   }
 
@@ -6896,5 +7213,20 @@ nav a.is-active .nav-icon {
 
   .breathing-orb {
     width: min(240px, 78vw);
+  }
+
+  .race-import-actions,
+  .race-export-actions {
+    justify-content: stretch;
+  }
+
+  .race-import-actions > *,
+  .race-export-actions > * {
+    width: 100%;
+  }
+
+  .differentials-page-hero {
+    min-height: auto;
+    padding: 28px;
   }
 }

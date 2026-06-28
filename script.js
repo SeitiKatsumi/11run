@@ -27,6 +27,8 @@ const state = {
   breathingSelectedProtocolId: "",
   breathingCheckin: null,
   breathingExecutionStartedAt: "",
+  raceSelectedGoalId: "",
+  raceSelectedActivityId: "",
   performanceTests: (() => {
     try {
       const parsed = JSON.parse(localStorage.getItem("performanceTests") || "[]");
@@ -236,6 +238,7 @@ const officialTranslations = {
     "nav.tests": "TESTS",
     "nav.calculators": "CALCULATORS",
     "nav.analyses": "AI ANALYZER",
+    "nav.differentials": "DIFFERENTIALS",
     "nav.goals": "GOALS",
     "nav.preferences": "PREFERENCES",
     "nav.settings": "SETTINGS",
@@ -300,6 +303,7 @@ const officialTranslations = {
     "nav.tests": "TESTES",
     "nav.calculators": "CALCULADORAS",
     "nav.analyses": "ANALISADOR IA",
+    "nav.differentials": "DIFERENCIAIS",
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERÊNCIAS",
     "nav.settings": "CONFIGURAÇÕES",
@@ -364,6 +368,7 @@ const officialTranslations = {
     "nav.tests": "\u30c6\u30b9\u30c8",
     "nav.calculators": "\u8a08\u7b97\u6a5f",
     "nav.analyses": "AI\u5206\u6790",
+    "nav.differentials": "\u5dee\u5225\u5316",
     "nav.goals": "目標",
     "nav.preferences": "プロフィール",
     "nav.settings": "設定",
@@ -428,6 +433,7 @@ const officialTranslations = {
     "nav.tests": "PRUEBAS",
     "nav.calculators": "CALCULADORAS",
     "nav.analyses": "ANALIZADOR IA",
+    "nav.differentials": "DIFERENCIALES",
     "nav.goals": "OBJETIVOS",
     "nav.preferences": "PREFERENCIAS",
     "nav.settings": "CONFIGURACIÓN",
@@ -1349,8 +1355,9 @@ function setView(view) {
   if (view === "home") renderHomeMotivation();
   if (view === "tests") renderTestsView();
   if (view === "analyses") renderAnalysesView();
+  if (view === "differentials") scheduleAutoTranslate();
   if (view === "calculators") scheduleAutoTranslate();
-  location.hash = view === "training" ?"treinamentos" : view === "tests" ?"testes" : view === "calculators" ?"calculadoras" : view === "analyses" ?"analises" : view === "goals" ?"objetivos" : view === "athlete" ?"preferencias" : view === "settings" ?"configuracoes" : view === "dashboard" ?"dashboard" : "home";
+  location.hash = view === "training" ?"treinamentos" : view === "tests" ?"testes" : view === "calculators" ?"calculadoras" : view === "analyses" ?"analises" : view === "differentials" ?"diferenciais" : view === "goals" ?"objetivos" : view === "athlete" ?"preferencias" : view === "settings" ?"configuracoes" : view === "dashboard" ?"dashboard" : "home";
   closeMobileMenu();
   applyI18n();
 }
@@ -1362,6 +1369,7 @@ function viewFromHash(hash) {
   if (hash === "testes") return "tests";
   if (hash === "calculadoras") return "calculators";
   if (hash === "analises" || hash === "analyses") return "analyses";
+  if (hash === "diferenciais" || hash === "differentials") return "differentials";
   if (hash === "configuracoes" || hash === "configuracao") return "settings";
   if (hash === "atleta" || hash === "preferencias") return "athlete";
   return "home";
@@ -2218,6 +2226,17 @@ const analysisModeConfig = {
       { en: "Privacy, consent and clinical confirmation", "pt-BR": "Privacidade, consentimento e confirmacao clinica", ja: "\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc\u3001\u540c\u610f\u3001\u81e8\u5e8a\u78ba\u8a8d", es: "Privacidad, consentimiento y confirmacion clinica" }
     ]
   },
+  race: {
+    label: { en: "Race Analyzer", "pt-BR": "Analisador de Provas", ja: "\u30ec\u30fc\u30b9\u5206\u6790", es: "Analizador de carreras" },
+    short: { en: "Predictive race intelligence with probability, load, risk and execution strategy", "pt-BR": "Inteligencia preditiva de provas com probabilidade, carga, risco e estrategia", ja: "\u78ba\u7387\u3001\u8ca0\u8377\u3001\u30ea\u30b9\u30af\u3001\u6226\u7565\u306e\u4e88\u6e2c\u30ec\u30fc\u30b9\u5206\u6790", es: "Inteligencia predictiva de carreras con probabilidad, carga, riesgo y estrategia" },
+    icon: "RACE",
+    accept: "",
+    focus: [
+      { en: "Upcoming races and target feasibility", "pt-BR": "Proximas provas e viabilidade do tempo alvo", ja: "\u6b21\u306e\u30ec\u30fc\u30b9\u3068\u76ee\u6a19\u9054\u6210\u53ef\u80fd\u6027", es: "Proximas carreras y viabilidad del objetivo" },
+      { en: "Recent load, 3000 m tests, consistency and 11TSS", "pt-BR": "Carga recente, testes de 3000 m, consistencia e 11TSS", ja: "\u6700\u8fd1\u306e\u8ca0\u8377\u30013000m\u30c6\u30b9\u30c8\u3001\u4e00\u8cab\u6027\u300111TSS", es: "Carga reciente, tests de 3000 m, consistencia y 11TSS" },
+      { en: "Race-week decisions, pacing and risk signals", "pt-BR": "Decisoes da semana da prova, ritmo e sinais de risco", ja: "\u30ec\u30fc\u30b9\u9031\u306e\u5224\u65ad\u3001\u30da\u30fc\u30b9\u3001\u30ea\u30b9\u30af\u30b5\u30a4\u30f3", es: "Decisiones de semana de carrera, ritmo y senales de riesgo" }
+    ]
+  },
   breathing: {
     label: { en: "Neural Breathing", "pt-BR": "Respiracao Neural", ja: "\u30cb\u30e5\u30fc\u30e9\u30eb\u547c\u5438", es: "Respiracion neural" },
     short: { en: "Respiratory neuromodulation for performance, recovery and neural regulation", "pt-BR": "Neuromodulacao respiratoria para performance, recuperacao e regulacao neural", ja: "\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9\u3001\u56de\u5fa9\u3001\u795e\u7d4c\u8abf\u6574\u306e\u547c\u5438\u30cb\u30e5\u30fc\u30ed\u30e2\u30b8\u30e5\u30ec\u30fc\u30b7\u30e7\u30f3", es: "Neuromodulacion respiratoria para performance, recuperacion y regulacion neural" },
@@ -2242,6 +2261,7 @@ function currentAnalysisMode() {
 function renderAnalysesView() {
   const mode = currentAnalysisMode();
   const isBreathingMode = state.analysisMode === "breathing";
+  const isRaceMode = state.analysisMode === "race";
   document.querySelectorAll("[data-analysis-mode]").forEach((button) => {
     const config = analysisModeConfig[button.dataset.analysisMode] || analysisModeConfig.blood;
     button.classList.toggle("is-active", button.dataset.analysisMode === state.analysisMode);
@@ -2266,14 +2286,23 @@ function renderAnalysesView() {
   if (formEyebrow) formEyebrow.textContent = "Analise ativa";
   const intro = document.querySelector("#analysisModeIntro");
   const breathingModule = document.querySelector("#breathingModule");
+  const raceAnalyzerModule = document.querySelector("#raceAnalyzerModule");
   const formShell = document.querySelector(".analysis-form-shell");
   const analysisOutput = document.querySelector("#analysisOutput");
   if (breathingModule) breathingModule.hidden = !isBreathingMode;
-  if (formShell) formShell.hidden = isBreathingMode;
-  if (analysisOutput) analysisOutput.hidden = isBreathingMode;
+  if (raceAnalyzerModule) raceAnalyzerModule.hidden = !isRaceMode;
+  if (formShell) formShell.hidden = isBreathingMode || isRaceMode;
+  if (analysisOutput) analysisOutput.hidden = isBreathingMode || isRaceMode;
   if (isBreathingMode) {
     if (intro) intro.innerHTML = "";
     renderBreathingModule();
+    enhanceSystemControls();
+    scheduleAutoTranslate();
+    return;
+  }
+  if (isRaceMode) {
+    if (intro) intro.innerHTML = "";
+    renderRaceAnalyzerModule();
     enhanceSystemControls();
     scheduleAutoTranslate();
     return;
@@ -2586,6 +2615,470 @@ async function generateClinicalAnalysis(event) {
     state.analysisBusy = false;
     renderAnalysisOutput(result, aiText);
   }
+}
+
+function raceAnalyzerGoals() {
+  const goals = Array.isArray(state.goals) ?state.goals : [];
+  return goals
+    .slice()
+    .sort((a, b) => String(normalizeDateKey(a.raceDate)).localeCompare(String(normalizeDateKey(b.raceDate))));
+}
+
+function activeRaceGoal() {
+  const goals = raceAnalyzerGoals();
+  const active = goals.find((goal) => String(goal.id) === String(state.raceSelectedGoalId));
+  const next = goals.find((goal) => !isPastGoal(goal));
+  return active || next || goals[0] || null;
+}
+
+function raceModelForGoal(goal) {
+  if (!goal) return null;
+  return buildFocusModel(goalAsAthlete(goal));
+}
+
+function raceReadinessLabel(model) {
+  if (!model || !model.probability) return "Dados insuficientes";
+  if (model.probability >= 78) return "Pronto para competir";
+  if (model.probability >= 58) return "Viavel com ajuste fino";
+  if (model.probability >= 38) return "Alvo agressivo";
+  return "Risco alto para a meta";
+}
+
+function raceStrategyBlocks(goal, model) {
+  if (!goal || !model) return [];
+  const hardTarget = model.probability && model.probability < 45;
+  const closeRace = model.daysToRace <= 10;
+  const risk = model.historyRisk;
+  return [
+    {
+      title: "Ritmo de prova",
+      text: model.targetSeconds
+        ? `Abrir controlado e proteger o alvo de ${formatDurationSeconds(model.targetSeconds)}. Se a probabilidade estiver abaixo de 60%, usar split inicial 1% a 2% mais conservador.`
+        : "Defina tempo alvo para ativar estrategia precisa de pace."
+    },
+    {
+      title: "Semana da prova",
+      text: closeRace
+        ? "Priorizar sono, leveza neuromuscular, treinos curtos e nenhuma carga nova. O objetivo agora e chegar fresco."
+        : "Manter consistencia e inserir checkpoints semanais de carga, teste curto e recuperacao."
+    },
+    {
+      title: "Risco e ajuste",
+      text: risk || hardTarget
+        ? "Ha sinais de risco ou alvo agressivo. Reduzir intensidade se houver dor, sono ruim ou queda de recuperacao."
+        : "Cenario estavel. Monitorar tensao, recuperacao e resposta ao ultimo treino forte."
+    },
+    {
+      title: "Decisao inteligente",
+      text: "A IA deve comparar meta, carga recente, historico, testes de 3000 m, 11TSS e sinais corporais antes de liberar uma estrategia agressiva."
+    }
+  ];
+}
+
+function raceAnalyzerNarrative(goal, model) {
+  if (!goal || !model || !model.currentSeconds) {
+    return "Cadastre uma prova com distancia, tempo alvo e data para o 11RUN gerar probabilidade, rota preditiva e estrategia.";
+  }
+  const gap = model.requiredGain ?`precisa ganhar ${formatDurationSeconds(model.requiredGain)}` : "ja esta dentro da meta estimada";
+  return `Para ${goal.title || focusDistanceLabels[goal.distanceM] || "a prova"}, a probabilidade atual e ${model.probability || "--"}%. O atleta ${gap}, com ${model.daysToRace || 0} dias ate a prova e ${formatKm(model.volume30)} nos ultimos 30 dias.`;
+}
+
+function raceActivityCandidates() {
+  return visibleActivities()
+    .filter((activity) => isExecutedActivity(activity))
+    .filter((activity) => {
+      const type = String(activity.type || "").toLowerCase();
+      return !type || /run|corrida|ride|bike|cicl|trail|mtb/.test(type);
+    })
+    .slice()
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+    .slice(0, 18);
+}
+
+function activeRaceActivity() {
+  const activities = raceActivityCandidates();
+  return activities.find((activity) => String(activity.id) === String(state.raceSelectedActivityId))
+    || activities.find((activity) => /race|prova|seletiva|compet/i.test(`${activity.title || ""} ${activity.description || ""}`))
+    || activities[0]
+    || null;
+}
+
+function raceActivityMetrics(activity) {
+  const distanceMeters = activityDistanceMeters(activity);
+  const durationSeconds = activityMovingSeconds(activity);
+  const paceSeconds = distanceMeters && durationSeconds ?durationSeconds / (distanceMeters / 1000) : 0;
+  const analysis = activity?.analysis || {};
+  const raw = activity?.raw || {};
+  return {
+    distanceMeters,
+    durationSeconds,
+    paceSeconds,
+    averagePace: paceSeconds ?formatDurationSeconds(paceSeconds) : activity?.pace || "--",
+    averageHeartRate: Number(raw.average_heartrate || raw.averageHeartRate || analysis.averageHeartRate || activity.averageHeartRate || 0),
+    maxHeartRate: Number(raw.max_heartrate || raw.maxHeartRate || analysis.maxHeartRate || activity.maxHeartRate || 0),
+    cadence: Number(raw.average_cadence || raw.averageCadence || analysis.averageCadence || 0),
+    power: Number(raw.average_watts || raw.averagePower || analysis.averagePower || 0),
+    elevationGain: Number(raw.total_elevation_gain || raw.elevationGain || analysis.elevationGain || 0),
+    source: activity.source || activity.provider || "11RUN",
+    type: activity.type || "Run",
+    tss: Number(analysis.tss || activity.load || 0)
+  };
+}
+
+function buildRaceSegments(activity) {
+  const metrics = raceActivityMetrics(activity);
+  if (!metrics.distanceMeters || !metrics.durationSeconds) return [];
+  const labels = [
+    ["0-10%", "Largada", 0.1, -0.07, -0.05],
+    ["10-25%", "Acomodacao", 0.15, -0.01, 0.01],
+    ["25-50%", "Estabilizacao", 0.25, 0, 0.03],
+    ["50-75%", "Sustentacao", 0.25, 0.04, 0.06],
+    ["75-90%", "Resistencia final", 0.15, 0.08, 0.08],
+    ["90-100%", "Chegada", 0.1, -0.04, 0.1]
+  ];
+  const avgPace = metrics.paceSeconds || 300;
+  const avgHr = metrics.averageHeartRate || 0;
+  let cursorDistance = 0;
+  let cursorTime = 0;
+  return labels.map(([range, label, ratio, paceDelta, hrDelta], index) => {
+    const distance = metrics.distanceMeters * ratio;
+    const pace = Math.max(120, avgPace * (1 + paceDelta));
+    const duration = pace * (distance / 1000);
+    const startDistance = cursorDistance;
+    const startTime = cursorTime;
+    cursorDistance += distance;
+    cursorTime += duration;
+    const hr = avgHr ?Math.round(avgHr + (index - 1.5) * 3 + (hrDelta * 20)) : 0;
+    const interpretation = index === 0 && pace < avgPace * 0.95
+      ? "largada agressiva"
+      : index >= 3 && pace > avgPace * 1.05
+        ? "perda de eficiencia"
+        : index === 5 && pace < avgPace
+          ? "boa reacao final"
+          : "trecho controlado";
+    return {
+      range,
+      label,
+      startDistance,
+      endDistance: cursorDistance,
+      startTime,
+      endTime: cursorTime,
+      distance,
+      duration,
+      pace,
+      heartRate: hr,
+      cadence: metrics.cadence ?Math.round(metrics.cadence - Math.max(0, index - 2) * 2) : 0,
+      elevationGain: metrics.elevationGain ?Math.round(metrics.elevationGain * ratio) : 0,
+      interpretation
+    };
+  });
+}
+
+function detectRaceEvents(activity, segments) {
+  const events = [];
+  if (!segments.length) return events;
+  const averagePace = raceActivityMetrics(activity).paceSeconds;
+  const first = segments[0];
+  const middle = segments.slice(2, 4);
+  const late = segments[4];
+  const final = segments[5];
+  const middlePace = middle.reduce((sum, segment) => sum + segment.pace, 0) / Math.max(1, middle.length);
+  if (first.pace < averagePace * 0.95) {
+    events.push({ type: "fast_start", title: "Largada forte demais", severity: "media", description: `Primeiro 10% ${Math.round((1 - first.pace / averagePace) * 100)}% mais rapido que o pace medio.`, recommendation: "Treinar largada travada e progressivo controlado." });
+  }
+  if (late?.pace > middlePace * 1.05) {
+    events.push({ type: "pace_drop", title: "Queda no terco final", severity: "alta", description: "O pace piorou no trecho de resistencia final em relacao ao meio da prova.", recommendation: "Priorizar tempo run, intervalados longos e blocos em ritmo de prova." });
+  }
+  if (late?.heartRate && first?.heartRate && late.heartRate > first.heartRate + 8 && late.pace >= middlePace) {
+    events.push({ type: "cardiac_drift", title: "Deriva cardiaca", severity: "media", description: "A frequencia cardiaca subiu enquanto o ritmo perdeu eficiencia.", recommendation: "Ajustar desenvolvimento aerobio, limiar, hidratacao e controle de intensidade inicial." });
+  }
+  if (late?.cadence && first?.cadence && late.cadence < first.cadence * 0.95 && late.pace > first.pace) {
+    events.push({ type: "cadence_drop", title: "Queda de cadencia", severity: "media", description: "Cadencia caiu junto com o pace no final.", recommendation: "Incluir forca, subidas curtas, educativos e resistencia neuromuscular." });
+  }
+  if (final?.pace < middlePace * 0.95) {
+    events.push({ type: "final_kick", title: "Boa reacao final", severity: "baixa", description: "Os ultimos 10% foram mais rapidos que o meio da prova.", recommendation: "Pode haver margem para sustentar ritmo um pouco mais forte antes da chegada." });
+  }
+  if (!events.length) {
+    events.push({ type: "stable_execution", title: "Execucao estavel", severity: "baixa", description: "Nao houve evento critico forte com os dados disponiveis.", recommendation: "Melhorar granularidade importando splits, FC, altimetria e cadencia." });
+  }
+  return events;
+}
+
+function raceReportScores(activity, segments, events) {
+  const hasFastStart = events.some((event) => event.type === "fast_start");
+  const hasPaceDrop = events.some((event) => event.type === "pace_drop");
+  const hasDrift = events.some((event) => event.type === "cardiac_drift");
+  const hasFinal = events.some((event) => event.type === "final_kick");
+  return {
+    regularity: Math.max(35, 84 - (hasPaceDrop ?18 : 0) - (hasFastStart ?10 : 0)),
+    start: hasFastStart ?62 : 82,
+    endurance: hasPaceDrop ?58 : 80,
+    finish: hasFinal ?88 : 66,
+    cardiac: hasDrift ?56 : 78,
+    mechanical: events.some((event) => event.type === "cadence_drop") ?60 : 76,
+    overall: Math.max(40, 80 - (hasPaceDrop ?12 : 0) - (hasFastStart ?8 : 0) - (hasDrift ?10 : 0) + (hasFinal ?5 : 0))
+  };
+}
+
+function raceDataAvailability(activity) {
+  const metrics = raceActivityMetrics(activity);
+  return [
+    ["GPS/distancia", Boolean(metrics.distanceMeters)],
+    ["Tempo", Boolean(metrics.durationSeconds)],
+    ["Ritmo", Boolean(metrics.paceSeconds || activity?.pace)],
+    ["Frequencia cardiaca", Boolean(metrics.averageHeartRate || metrics.maxHeartRate)],
+    ["Cadencia", Boolean(metrics.cadence)],
+    ["Potencia", Boolean(metrics.power)],
+    ["Altimetria", Boolean(metrics.elevationGain)],
+    ["Splits/eventos", Boolean(activity?.bestEfforts?.length || activity?.raw?.splits_metric?.length)]
+  ];
+}
+
+function renderRaceAnalyzerModule() {
+  const target = document.querySelector("#raceAnalyzerModule");
+  if (!target) return;
+  const goals = raceAnalyzerGoals();
+  if (!state.raceSelectedGoalId && goals[0]) {
+    const next = goals.find((goal) => !isPastGoal(goal));
+    state.raceSelectedGoalId = (next || goals[0]).id;
+  }
+  const goal = activeRaceGoal();
+  const model = raceModelForGoal(goal);
+  const readiness = raceReadinessLabel(model);
+  const strategies = raceStrategyBlocks(goal, model);
+  const recentRuns = activitiesSince(30).filter(isRunningActivity);
+  const recentLoad = recentRuns.reduce((sum, activity) => sum + Number(activity.analysis?.tss || activity.load || 0), 0);
+  const tests = collect3000Tests(getActiveAthlete());
+  const raceDate = goal ?goalDateLabel(goal) : "--";
+  target.innerHTML = `
+    <div class="race-analyzer-hero">
+      <div>
+        <span class="kicker">Analisador de Provas 11RUN</span>
+        <h3>IA preditiva para competir melhor</h3>
+        <p>${escapeHtml(raceAnalyzerNarrative(goal, model))}</p>
+      </div>
+      <button class="primary-action" type="button" data-view-link="goals" data-view-button="goals">Cadastrar prova</button>
+    </div>
+
+    <div class="race-scoreboard">
+      <article><span>Prova analisada</span><strong>${escapeHtml(goal?.title || "Sem prova")}</strong><p>${escapeHtml(raceDate)}</p></article>
+      <article><span>Probabilidade</span><strong>${model?.probability || "--"}%</strong><p>${escapeHtml(readiness)}</p></article>
+      <article><span>Tempo alvo</span><strong>${escapeHtml(model?.targetSeconds ?formatDurationSeconds(model.targetSeconds) : "--")}</strong><p>${escapeHtml(model?.currentSeconds ?`Projecao ${formatDurationSeconds(model.currentSeconds)}` : "sem projecao")}</p></article>
+      <article><span>Ganho necessario</span><strong>${escapeHtml(model?.requiredGain ?formatDurationSeconds(model.requiredGain) : "--")}</strong><p>${escapeHtml(model?.requiredPerWeek ?`${formatDurationSeconds(model.requiredPerWeek)} por semana` : "meta sem gap calculado")}</p></article>
+    </div>
+
+    <div class="race-analyzer-grid">
+      <section class="race-panel">
+        <div class="section-title"><span>Provas cadastradas</span><h3>Escolha o alvo</h3></div>
+        <div class="race-goal-list">
+          ${goals.map((item) => {
+            const itemModel = raceModelForGoal(item);
+            return `
+              <button type="button" class="race-goal-card ${String(item.id) === String(goal?.id) ?"is-active" : ""}" data-race-goal="${escapeHtml(item.id)}">
+                <span>${escapeHtml(focusDistanceLabels[item.distanceM] || `${item.distanceM} m`)}</span>
+                <strong>${escapeHtml(item.title || "Prova")}</strong>
+                <small>${escapeHtml(goalDateLabel(item))} - ${itemModel?.probability || "--"}% de probabilidade</small>
+              </button>
+            `;
+          }).join("") || `<p class="empty-state">Nenhuma prova cadastrada. Crie um objetivo para ativar a analise.</p>`}
+        </div>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Rota preditiva</span><h3>Projecao vs meta</h3></div>
+        <div class="race-projection-line">
+          <div style="--race-value:${Math.min(100, Math.max(0, model?.probability || 0))}">
+            <span>Viabilidade</span><strong>${model?.probability || "--"}%</strong>
+          </div>
+          <div style="--race-value:${Math.min(100, Math.max(0, (model?.volume30 || 0) * 2))}">
+            <span>Volume 30 dias</span><strong>${escapeHtml(formatKm(model?.volume30 || 0))}</strong>
+          </div>
+          <div style="--race-value:${Math.min(100, recentLoad)}">
+            <span>11TSS recente</span><strong>${Math.round(recentLoad) || "--"}</strong>
+          </div>
+        </div>
+        <p>${escapeHtml(model?.status || "O modelo precisa de prova, meta, atividades ou testes recentes para melhorar a confianca.")}</p>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Inteligencia da prova</span><h3>Plano de decisao</h3></div>
+        <div class="race-strategy-list">
+          ${strategies.map((item) => `<article><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.text)}</p></article>`).join("")}
+        </div>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Sinais usados pela IA</span><h3>Base da analise</h3></div>
+        <div class="race-signal-grid">
+          <article><span>Corridas 30 dias</span><strong>${recentRuns.length}</strong><p>Atividades executadas consideradas.</p></article>
+          <article><span>Testes 3000 m</span><strong>${tests.length}</strong><p>${tests[0] ?`Ultimo: ${formatDurationSeconds(tests[0].seconds)}` : "Nenhum teste recente."}</p></article>
+          <article><span>Historico</span><strong>${model?.historyRisk ?"Atenção" : "Estavel"}</strong><p>Dor, fadiga e eventos relevantes mudam a agressividade da meta.</p></article>
+          <article><span>IA corrida</span><strong>11RUN</strong><p>Probabilidade, pace, risco, carga e estrategia em um unico painel.</p></article>
+        </div>
+      </section>
+    </div>
+  `;
+  scheduleAutoTranslate();
+}
+
+function renderRaceAnalyzerModule() {
+  const target = document.querySelector("#raceAnalyzerModule");
+  if (!target) return;
+  const goals = raceAnalyzerGoals();
+  const activities = raceActivityCandidates();
+  if (!state.raceSelectedGoalId && goals[0]) {
+    const next = goals.find((goal) => !isPastGoal(goal));
+    state.raceSelectedGoalId = (next || goals[0]).id;
+  }
+  if (!state.raceSelectedActivityId && activities[0]) state.raceSelectedActivityId = activeRaceActivity()?.id || activities[0].id;
+  const goal = activeRaceGoal();
+  const model = raceModelForGoal(goal);
+  const activity = activeRaceActivity();
+  const metrics = activity ?raceActivityMetrics(activity) : null;
+  const segments = activity ?buildRaceSegments(activity) : [];
+  const events = activity ?detectRaceEvents(activity, segments) : [];
+  const scores = activity ?raceReportScores(activity, segments, events) : null;
+  const availability = activity ?raceDataAvailability(activity) : [];
+  const recentRuns = activitiesSince(30).filter(isRunningActivity);
+  const recentLoad = recentRuns.reduce((sum, item) => sum + Number(item.analysis?.tss || item.load || 0), 0);
+  const tests = collect3000Tests(getActiveAthlete());
+  const linkedReadiness = raceReadinessLabel(model);
+  target.innerHTML = `
+    <div class="race-analyzer-hero">
+      <div>
+        <span class="kicker">Analisador de Provas 11RUN</span>
+        <h3>Da largada a chegada, entenda onde ganhou, perdeu e o que treinar</h3>
+        <p>${escapeHtml(activity ?`Analisando ${activity.title || "atividade"} com ritmo, distancia, tempo, carga, eventos e contexto competitivo.` : "Selecione uma atividade importada ou registrada no 11RUN para gerar o relatorio tecnico.")}</p>
+      </div>
+      <div class="race-import-actions">
+        <button class="secondary-action compact" type="button" data-connect-strava>Importar do Strava</button>
+        <button class="secondary-action compact" type="button" data-view-link="training" data-view-button="training">Selecionar atividade</button>
+        <label class="secondary-action compact race-file-button">Enviar FIT/GPX/TCX<input type="file" accept=".fit,.gpx,.tcx,.csv" hidden /></label>
+      </div>
+    </div>
+
+    <div class="race-scoreboard">
+      <article><span>Atividade</span><strong>${escapeHtml(activity?.title || "Nenhuma")}</strong><p>${escapeHtml(activity?.date || "sem data")} - ${escapeHtml(metrics?.source || "--")}</p></article>
+      <article><span>Distancia e tempo</span><strong>${escapeHtml(metrics?.distanceMeters ?formatKm(metrics.distanceMeters / 1000) : "--")}</strong><p>${escapeHtml(metrics?.durationSeconds ?formatDurationSeconds(metrics.durationSeconds) : "--")} - ${escapeHtml(metrics?.averagePace || "--")}/km</p></article>
+      <article><span>Score geral</span><strong>${scores?.overall || "--"}/100</strong><p>${escapeHtml(events[0]?.title || "Dados insuficientes")}</p></article>
+      <article><span>Objetivo vinculado</span><strong>${model?.probability || "--"}%</strong><p>${escapeHtml(goal?.title ?`${goal.title} - ${linkedReadiness}` : "sem prova vinculada")}</p></article>
+    </div>
+
+    <div class="race-analyzer-grid">
+      <section class="race-panel">
+        <div class="section-title"><span>Selecionar atividade</span><h3>Ultimas atividades importadas</h3></div>
+        <div class="race-goal-list">
+          ${activities.map((item) => {
+            const itemMetrics = raceActivityMetrics(item);
+            return `
+              <button type="button" class="race-goal-card ${String(item.id) === String(activity?.id) ?"is-active" : ""}" data-race-activity="${escapeHtml(item.id)}">
+                <span>${escapeHtml(item.source || item.provider || "11RUN")}</span>
+                <strong>${escapeHtml(item.title || "Atividade")}</strong>
+                <small>${escapeHtml(item.date || "--")} - ${escapeHtml(itemMetrics.distanceMeters ?formatKm(itemMetrics.distanceMeters / 1000) : item.distance || "--")} - ${escapeHtml(itemMetrics.durationSeconds ?formatDurationSeconds(itemMetrics.durationSeconds) : item.duration || "--")}</small>
+              </button>
+            `;
+          }).join("") || `<p class="empty-state">Nenhuma atividade encontrada. Importe Strava/Garmin ou registre uma atividade.</p>`}
+        </div>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Validar dados</span><h3>Qualidade da analise</h3></div>
+        <div class="race-data-grid">
+          ${availability.map(([label, ok]) => `<span class="${ok ?"is-ok" : "is-missing"}">${ok ?"OK" : "--"} ${escapeHtml(label)}</span>`).join("") || `<p class="empty-state">Selecione uma atividade para validar dados.</p>`}
+        </div>
+        <p>${availability.some(([, ok]) => !ok) ? "Quando faltam FC, cadencia, potencia ou altimetria, a IA informa a limitacao e usa ritmo, distancia, tempo e carga disponiveis." : "Atividade com boa base para leitura tecnica."}</p>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Provas cadastradas</span><h3>Vincular objetivo</h3></div>
+        <div class="race-goal-list">
+          ${goals.map((item) => {
+            const itemModel = raceModelForGoal(item);
+            return `
+              <button type="button" class="race-goal-card ${String(item.id) === String(goal?.id) ?"is-active" : ""}" data-race-goal="${escapeHtml(item.id)}">
+                <span>${escapeHtml(focusDistanceLabels[item.distanceM] || `${item.distanceM} m`)}</span>
+                <strong>${escapeHtml(item.title || "Prova")}</strong>
+                <small>${escapeHtml(goalDateLabel(item))} - ${itemModel?.probability || "--"}% de probabilidade</small>
+              </button>
+            `;
+          }).join("") || `<p class="empty-state">Nenhuma prova cadastrada. Crie um objetivo para ativar a analise.</p>`}
+        </div>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Indices de performance</span><h3>Diagnostico tecnico</h3></div>
+        <div class="race-projection-line">
+          ${[
+            ["Regularidade", scores?.regularity],
+            ["Largada", scores?.start],
+            ["Sustentacao", scores?.endurance],
+            ["Finalizacao", scores?.finish],
+            ["Eficiencia cardiaca", scores?.cardiac],
+            ["Eficiencia mecanica", scores?.mechanical]
+          ].map(([label, value]) => `
+            <div style="--race-value:${Math.min(100, Math.max(0, value || 0))}">
+              <span>${escapeHtml(label)}</span><strong>${value || "--"}/100</strong>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Analise por trecho</span><h3>Fases da prova</h3></div>
+        <div class="race-segment-table">
+          ${segments.map((segment) => `
+            <article>
+              <span>${escapeHtml(segment.range)} - ${escapeHtml(segment.label)}</span>
+              <strong>${escapeHtml(formatDurationSeconds(segment.pace))}/km</strong>
+              <p>FC ${segment.heartRate || "--"} - cadencia ${segment.cadence || "--"} - ${escapeHtml(segment.interpretation)}</p>
+            </article>
+          `).join("") || `<p class="empty-state">Sem distancia/tempo suficientes para segmentar.</p>`}
+        </div>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Eventos detectados</span><h3>Pontos criticos e oportunidades</h3></div>
+        <div class="race-strategy-list">
+          ${events.map((event) => `<article><span>${escapeHtml(event.type)} - ${escapeHtml(event.severity)}</span><strong>${escapeHtml(event.title)}</strong><p>${escapeHtml(event.description)}</p><small>${escapeHtml(event.recommendation)}</small></article>`).join("")}
+        </div>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Recomendacoes de treino</span><h3>Transformar prova em evolucao</h3></div>
+        <div class="race-strategy-list">
+          <article><strong>Controle de largada</strong><p>3 km progressivo: 1 km 10s/km mais lento que o alvo, 1 km no alvo, 1 km 5s/km mais forte.</p></article>
+          <article><strong>Sustentacao especifica</strong><p>5 x 1000 m em ritmo de prova com pausa curta de 60s a 90s.</p></article>
+          <article><strong>Final forte</strong><p>40 min leve + 4 x 400 m forte controlado para melhorar reacao em fadiga.</p></article>
+          <article><strong>Respiracao neural</strong><p>Se houve largada ansiosa ou FC muito alta no inicio, usar 4:6 por 5 min antes do aquecimento.</p></article>
+        </div>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Relatorio e exportacao</span><h3>Resumo tecnico e WhatsApp</h3></div>
+        <div class="race-report-card">
+          <strong>Resumo executivo</strong>
+          <p>${escapeHtml(events[0]?.description || "A atividade ainda precisa de dados para gerar um resumo completo.")} Foco dos proximos treinos: controle de largada, sustentacao no ritmo-alvo e final forte em fadiga.</p>
+          <div class="race-export-actions">
+            <button class="secondary-action compact" type="button">Exportar PDF</button>
+            <button class="secondary-action compact" type="button">Resumo WhatsApp</button>
+            <button class="secondary-action compact" type="button">Enviar ao treinador</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="race-panel">
+        <div class="section-title"><span>Sinais usados pela IA</span><h3>Base complementar</h3></div>
+        <div class="race-signal-grid">
+          <article><span>Corridas 30 dias</span><strong>${recentRuns.length}</strong><p>Atividades executadas consideradas.</p></article>
+          <article><span>Testes 3000 m</span><strong>${tests.length}</strong><p>${tests[0] ?`Ultimo: ${formatDurationSeconds(tests[0].seconds)}` : "Nenhum teste recente."}</p></article>
+          <article><span>Carga 30 dias</span><strong>${Math.round(recentLoad) || "--"}</strong><p>11TSS/carga usada para contexto de fadiga.</p></article>
+          <article><span>Historico</span><strong>${model?.historyRisk ?"Atencao" : "Estavel"}</strong><p>Dor, fadiga e eventos relevantes mudam a agressividade da meta.</p></article>
+          <article><span>IA corrida</span><strong>11RUN</strong><p>Probabilidade, pace, risco, carga e estrategia em um unico painel.</p></article>
+        </div>
+      </section>
+    </div>
+  `;
+  scheduleAutoTranslate();
 }
 
 function breathingCategoryLabel(category) {
@@ -5855,6 +6348,8 @@ async function editCurrentUserProfile() {
     state.goals = goals;
     state.breathingData = null;
     state.breathingSelectedProtocolId = "";
+    state.raceSelectedActivityId = "";
+    state.raceSelectedGoalId = "";
     renderProviders();
     renderCalendar();
 
@@ -7316,7 +7811,21 @@ document.addEventListener("click", async (event) => {
     const output = document.querySelector("#analysisOutput");
     if (output) output.innerHTML = "";
     renderAnalysesView();
-    if (analysisModeButton.classList.contains("analysis-type-card") && state.analysisMode !== "breathing") openAnalysisWorkflow();
+    if (analysisModeButton.classList.contains("analysis-type-card") && !["breathing", "race"].includes(state.analysisMode)) openAnalysisWorkflow();
+    return;
+  }
+  const raceActivityButton = event.target.closest("[data-race-activity]");
+  if (raceActivityButton) {
+    event.preventDefault();
+    state.raceSelectedActivityId = raceActivityButton.dataset.raceActivity;
+    renderRaceAnalyzerModule();
+    return;
+  }
+  const raceGoalButton = event.target.closest("[data-race-goal]");
+  if (raceGoalButton) {
+    event.preventDefault();
+    state.raceSelectedGoalId = raceGoalButton.dataset.raceGoal;
+    renderRaceAnalyzerModule();
     return;
   }
   const breathingProtocolButton = event.target.closest("[data-breathing-protocol]");
