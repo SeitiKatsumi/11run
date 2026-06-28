@@ -7230,3 +7230,229 @@ nav a.is-active .nav-icon {
     padding: 28px;
   }
 }
+
+/* Flat dashboard refinement */
+.dashboard-hero-panel::before,
+.dashboard-panel::before,
+html[data-theme="light"] .dashboard-hero-panel::before,
+html[data-theme="light"] .dashboard-panel::before {
+  display: none !important;
+  background: none !important;
+}
+
+.dashboard-hero-panel,
+.dashboard-panel,
+.dashboard-metric-card,
+.dashboard-goal-card,
+.dashboard-vo2-panel,
+.dashboard-tests,
+.dashboard-types,
+.dashboard-type-card,
+.dashboard-trend-card,
+.dashboard-priority-card,
+.dashboard-signal-card,
+.dashboard-action-card,
+.dashboard-mini-summary article {
+  background: var(--card) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.dashboard-grid {
+  align-items: start;
+}
+
+.dashboard-hero-panel {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+}
+
+.dashboard-command-center {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.78fr) minmax(360px, 1.22fr);
+  gap: 12px;
+}
+
+.dashboard-priority-card,
+.dashboard-signal-card,
+.dashboard-trend-card,
+.dashboard-action-card,
+.dashboard-mini-summary article {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.dashboard-priority-card {
+  min-height: 174px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboard-priority-card.is-primary {
+  border-color: rgba(255, 75, 11, 0.48);
+}
+
+.dashboard-priority-card span,
+.dashboard-signal-card span,
+.dashboard-action-card span,
+.dashboard-card-head span,
+.dashboard-mini-summary span {
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dashboard-priority-card h3 {
+  margin: 8px 0 6px;
+  color: var(--heading);
+  font-size: clamp(24px, 3vw, 42px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.dashboard-priority-card p,
+.dashboard-signal-card p,
+.dashboard-action-card strong,
+.dashboard-mini-summary p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dashboard-priority-card > strong {
+  color: var(--heading);
+  font-size: clamp(28px, 4vw, 52px);
+  line-height: 0.95;
+}
+
+.dashboard-priority-card > small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dashboard-priority-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-signal-card {
+  min-height: 118px;
+  padding: 14px;
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-signal-card strong,
+.dashboard-mini-summary strong {
+  display: block;
+  color: var(--heading);
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.dashboard-trend-card {
+  grid-column: 1 / -1;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.dashboard-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.dashboard-card-head strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--heading);
+  font-size: 18px;
+}
+
+.dashboard-trend-card .dashboard-trend-svg {
+  max-height: 290px;
+}
+
+.dashboard-trend-card .dash-grid {
+  stroke: rgba(255, 255, 255, 0.07);
+}
+
+.dashboard-quick-actions {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-action-card {
+  min-height: 82px;
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+  text-decoration: none;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+}
+
+.dashboard-action-card:hover {
+  border-color: rgba(255, 75, 11, 0.5);
+  transform: translateY(-1px);
+}
+
+.dashboard-section-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-mini-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-mini-summary article {
+  padding: 13px;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-command-center,
+  .dashboard-priority-grid,
+  .dashboard-quick-actions,
+  .dashboard-mini-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dashboard-trend-card,
+  .dashboard-quick-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-command-center,
+  .dashboard-priority-grid,
+  .dashboard-quick-actions,
+  .dashboard-mini-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-card-head {
+    display: grid;
+  }
+
+  .dashboard-priority-card {
+    min-height: 148px;
+  }
+}

@@ -633,12 +633,12 @@ const adminProfileUx = {
   athlete_master: {
     title: "Adicionar atleta master",
     summary: "Atleta Master",
-    description: "Cadastro para atletas adultos, veteranos e categorias master com provas foco, registros oficiais, performance e saude."
+    description: "Cadastro para atletas adultos, veteranos e categorias master com provas foco, registros oficiais, performance e saúde."
   },
   athlete_future: {
     title: "Adicionar atleta do futuro",
     summary: "Atleta do Futuro",
-    description: "Cadastro para base, menores, escolas e projetos, incluindo responsavel legal, protecao de dados e evolucao esportiva."
+    description: "Cadastro para base, menores, escolas e projetos, incluindo responsavel legal, protecao de dados e evolução esportiva."
   },
   athlete_scholarship: {
     title: "Adicionar atleta bolsista",
@@ -728,7 +728,7 @@ const profileSpecificBlocks = {
     { section: "Dados da equipe", fields: [["teamId", "ID da equipe"], ["teamName", "Nome da equipe"], ["tradeName", "Nome fantasia"], ["legalName", "Razao social"], ["companyDocument", "CNPJ ou documento equivalente"], ["teamType", "Tipo de equipe", "select", "teamType"], ["logoUrl", "Logo"], ["coverImageUrl", "Imagem de capa"], ["country", "Pais"], ["state", "Estado"], ["city", "Cidade"], ["address", "Endereco"], ["postalCode", "CEP"], ["mainTrainingLocation", "Local principal de treino"], ["secondaryTrainingLocations", "Locais secundarios de treino", "textarea"], ["foundedYear", "Ano de fundacao"], ["officialEmail", "E-mail oficial"], ["teamDescription", "Descricao da equipe", "textarea"], ["teamMission", "Missao da equipe", "textarea"], ["teamStatus", "Status da equipe", "select", "profileStatus"]] },
     { section: "Responsaveis", fields: [["primaryResponsibleName", "Nome do responsavel principal"], ["primaryResponsibleRole", "Cargo do responsavel"], ["primaryResponsibleEmail", "E-mail do responsavel"], ["primaryResponsibleWhatsApp", "WhatsApp do responsavel"], ["primaryResponsibleDocument", "Documento do responsavel"], ["mainCoachLinked", "Treinador principal vinculado"], ["teamAdministrators", "Administradores da equipe"], ["financialResponsible", "Responsavel financeiro"], ["technicalResponsible", "Responsavel tecnico"], ["minorAthleteResponsible", "Responsavel por atletas menores de idade"]] },
     { section: "Estrutura esportiva", fields: [["servedModalities", "Modalidades atendidas"], ["servedEvents", "Provas atendidas", "select", "focusEvents"], ["servedCategories", "Categorias atendidas"], ["servedAgeGroups", "Faixas etarias atendidas"], ["athleteLevel", "Nivel dos atletas"], ["athleteCount", "Quantidade de atletas"], ["coachCount", "Quantidade de treinadores"], ["trainingDays", "Dias de treino"], ["trainingHours", "Horarios de treino"], ["hasTrack", "Possui pista de atletismo", "checkbox"], ["hasGym", "Possui academia", "checkbox"], ["hasPhysiotherapy", "Possui fisioterapia", "checkbox"], ["hasNutrition", "Possui nutricao", "checkbox"], ["hasSportsPsychology", "Possui psicologia esportiva", "checkbox"], ["hasDoctor", "Possui medico", "checkbox"], ["hasMultidisciplinaryTeam", "Possui equipe multidisciplinar", "checkbox"], ["officialCompetitions", "Participa de competicoes oficiais", "checkbox"], ["mainCompetitions", "Competicoes principais", "textarea"], ["relevantResults", "Resultados relevantes", "textarea"], ["highlightAthletes", "Atletas de destaque", "textarea"]] },
-    { section: "Permissoes da equipe", fields: [["teamCanRegisterAthletes", "Pode cadastrar atletas", "checkbox"], ["teamCanInviteAthletes", "Pode convidar atletas", "checkbox"], ["teamCanInviteCoaches", "Pode convidar treinadores", "checkbox"], ["teamCanEditTeam", "Pode editar dados da equipe", "checkbox"], ["teamCanEditLinkedAthletes", "Pode editar atletas vinculados", "checkbox"], ["teamCanViewAthleteTechnicalData", "Pode visualizar dados tecnicos dos atletas", "checkbox"], ["teamCanViewPhysicalTests", "Pode visualizar testes fisicos", "checkbox"], ["teamCanViewCompetitiveHistory", "Pode visualizar historico competitivo", "checkbox"], ["teamCanGenerateReports", "Pode gerar relatorios", "checkbox"], ["teamCanRecommendScholarships", "Pode indicar atletas para bolsas", "checkbox"], ["teamCanPublishTryouts", "Pode publicar seletivas", "checkbox"], ["teamCanPublishEvents", "Pode publicar eventos", "checkbox"], ["teamCanReceiveSponsorContacts", "Pode receber contatos de patrocinadores", "checkbox"], ["teamCanAdmin", "Pode administrar equipe", "checkbox"], ["teamCanRemoveMembers", "Pode remover membros", "checkbox"]] }
+    { section: "Permissões da equipe", fields: [["teamCanRegisterAthletes", "Pode cadastrar atletas", "checkbox"], ["teamCanInviteAthletes", "Pode convidar atletas", "checkbox"], ["teamCanInviteCoaches", "Pode convidar treinadores", "checkbox"], ["teamCanEditTeam", "Pode editar dados da equipe", "checkbox"], ["teamCanEditLinkedAthletes", "Pode editar atletas vinculados", "checkbox"], ["teamCanViewAthleteTechnicalData", "Pode visualizar dados técnicos dos atletas", "checkbox"], ["teamCanViewPhysicalTests", "Pode visualizar testes físicos", "checkbox"], ["teamCanViewCompetitiveHistory", "Pode visualizar histórico competitivo", "checkbox"], ["teamCanGenerateReports", "Pode gerar relatórios", "checkbox"], ["teamCanRecommendScholarships", "Pode indicar atletas para bolsas", "checkbox"], ["teamCanPublishTryouts", "Pode publicar seletivas", "checkbox"], ["teamCanPublishEvents", "Pode publicar eventos", "checkbox"], ["teamCanReceiveSponsorContacts", "Pode receber contatos de patrocinadores", "checkbox"], ["teamCanAdmin", "Pode administrar equipe", "checkbox"], ["teamCanRemoveMembers", "Pode remover membros", "checkbox"]] }
   ],
   sponsor_investor: [
     { section: "Dados institucionais", fields: [["sponsorType", "Tipo de cadastro", "select", "sponsorType"], ["companyOrInvestorName", "Nome da empresa ou investidor"], ["tradeName", "Nome fantasia"], ["legalName", "Razão social"], ["companyDocument", "CNPJ ou CPF"], ["foreignDocument", "Documento estrangeiro"], ["segment", "Segmento"], ["logoUrl", "Logo"], ["institutionalDescription", "Descrição institucional", "textarea"], ["responsibleName", "Nome do responsável"], ["responsibleRole", "Cargo"], ["responsibleEmail", "E-mail"], ["responsibleWhatsApp", "WhatsApp"], ["department", "Departamento"], ["bestContactTime", "Melhor horário de contato"], ["internalCommercialOwner", "Responsável comercial interno 11run"]] },
@@ -2189,8 +2189,8 @@ const analysisModeConfig = {
     accept: ".pdf,.png,.jpg,.jpeg,.webp,.txt,.csv",
     focus: [
       { en: "Hemoglobin, hematocrit and red cell indices", "pt-BR": "Hemoglobina, hematocrito e indices vermelhos", ja: "\u30d8\u30e2\u30b0\u30ed\u30d3\u30f3\u3001\u30d8\u30de\u30c8\u30af\u30ea\u30c3\u30c8\u3001\u8d64\u8840\u7403\u6307\u6a19", es: "Hemoglobina, hematocrito e indices rojos" },
-      { en: "Iron, ferritin, B12, folate and inflammation signals", "pt-BR": "Ferro, ferritina, B12, folato e sinais inflamatorios", ja: "\u9244\u3001\u30d5\u30a7\u30ea\u30c1\u30f3\u3001B12\u3001\u8449\u9178\u3001\u708e\u75c7\u30b5\u30a4\u30f3", es: "Hierro, ferritina, B12, folato y senales inflamatorias" },
-      { en: "Training load compatibility and recovery risk", "pt-BR": "Compatibilidade com carga de treino e risco de recuperacao", ja: "\u30c8\u30ec\u30fc\u30cb\u30f3\u30b0\u8ca0\u8377\u3068\u56de\u5fa9\u30ea\u30b9\u30af", es: "Compatibilidad con carga de entrenamiento y riesgo de recuperacion" }
+      { en: "Iron, ferritin, B12, folate and inflammation signals", "pt-BR": "Ferro, ferritina, B12, folato e sinais inflamatórios", ja: "\u9244\u3001\u30d5\u30a7\u30ea\u30c1\u30f3\u3001B12\u3001\u8449\u9178\u3001\u708e\u75c7\u30b5\u30a4\u30f3", es: "Hierro, ferritina, B12, folato y senales inflamatorias" },
+      { en: "Training load compatibility and recovery risk", "pt-BR": "Compatibilidade com carga de treino e risco de recuperação", ja: "\u30c8\u30ec\u30fc\u30cb\u30f3\u30b0\u8ca0\u8377\u3068\u56de\u5fa9\u30ea\u30b9\u30af", es: "Compatibilidad con carga de entrenamiento y riesgo de recuperacion" }
     ]
   },
   xray: {
@@ -2217,35 +2217,35 @@ const analysisModeConfig = {
   },
   body: {
     label: { en: "Body image", "pt-BR": "Imagem Corporal", ja: "\u8eab\u4f53\u753b\u50cf", es: "Imagen corporal" },
-    short: { en: "Visual screening and systemic traits", "pt-BR": "Triagem visual e caracteristicas sistemicas", ja: "\u8996\u899a\u30b9\u30af\u30ea\u30fc\u30cb\u30f3\u30b0\u3068\u5168\u8eab\u7279\u6027", es: "Cribado visual y caracteristicas sistemicas" },
+    short: { en: "Visual screening and systemic traits", "pt-BR": "Triagem visual e características sistemicas", ja: "\u8996\u899a\u30b9\u30af\u30ea\u30fc\u30cb\u30f3\u30b0\u3068\u5168\u8eab\u7279\u6027", es: "Cribado visual y características sistemicas" },
     icon: "IMG",
     accept: ".png,.jpg,.jpeg,.webp,.pdf",
     focus: [
       { en: "Posture, asymmetry and visible overload clues", "pt-BR": "Postura, assimetria e pistas visuais de sobrecarga", ja: "\u59ff\u52e2\u3001\u975e\u5bfe\u79f0\u3001\u904e\u8ca0\u8377\u306e\u8996\u899a\u7684\u624b\u304c\u304b\u308a", es: "Postura, asimetria y pistas visuales de sobrecarga" },
-      { en: "Body composition trend only when comparable images exist", "pt-BR": "Tendencia de composicao corporal apenas com imagens comparaveis", ja: "\u6bd4\u8f03\u53ef\u80fd\u306a\u753b\u50cf\u304c\u3042\u308b\u5834\u5408\u306e\u307f\u4f53\u7d44\u6210\u50be\u5411", es: "Tendencia de composicion corporal solo con imagenes comparables" },
+      { en: "Body composition trend only when comparable images exist", "pt-BR": "Tendencia de composição corporal apenas com imagens comparaveis", ja: "\u6bd4\u8f03\u53ef\u80fd\u306a\u753b\u50cf\u304c\u3042\u308b\u5834\u5408\u306e\u307f\u4f53\u7d44\u6210\u50be\u5411", es: "Tendencia de composicion corporal solo con imagenes comparables" },
       { en: "Privacy, consent and clinical confirmation", "pt-BR": "Privacidade, consentimento e confirmacao clinica", ja: "\u30d7\u30e9\u30a4\u30d0\u30b7\u30fc\u3001\u540c\u610f\u3001\u81e8\u5e8a\u78ba\u8a8d", es: "Privacidad, consentimiento y confirmacion clinica" }
     ]
   },
   race: {
     label: { en: "Race Analyzer", "pt-BR": "Analisador de Provas", ja: "\u30ec\u30fc\u30b9\u5206\u6790", es: "Analizador de carreras" },
-    short: { en: "Predictive race intelligence with probability, load, risk and execution strategy", "pt-BR": "Inteligencia preditiva de provas com probabilidade, carga, risco e estrategia", ja: "\u78ba\u7387\u3001\u8ca0\u8377\u3001\u30ea\u30b9\u30af\u3001\u6226\u7565\u306e\u4e88\u6e2c\u30ec\u30fc\u30b9\u5206\u6790", es: "Inteligencia predictiva de carreras con probabilidad, carga, riesgo y estrategia" },
+    short: { en: "Predictive race intelligence with probability, load, risk and execution strategy", "pt-BR": "Inteligencia preditiva de provas com probabilidade, carga, risco e estratégia", ja: "\u78ba\u7387\u3001\u8ca0\u8377\u3001\u30ea\u30b9\u30af\u3001\u6226\u7565\u306e\u4e88\u6e2c\u30ec\u30fc\u30b9\u5206\u6790", es: "Inteligencia predictiva de carreras con probabilidad, carga, riesgo y estratégia" },
     icon: "RACE",
     accept: "",
     focus: [
-      { en: "Upcoming races and target feasibility", "pt-BR": "Proximas provas e viabilidade do tempo alvo", ja: "\u6b21\u306e\u30ec\u30fc\u30b9\u3068\u76ee\u6a19\u9054\u6210\u53ef\u80fd\u6027", es: "Proximas carreras y viabilidad del objetivo" },
-      { en: "Recent load, 3000 m tests, consistency and 11TSS", "pt-BR": "Carga recente, testes de 3000 m, consistencia e 11TSS", ja: "\u6700\u8fd1\u306e\u8ca0\u8377\u30013000m\u30c6\u30b9\u30c8\u3001\u4e00\u8cab\u6027\u300111TSS", es: "Carga reciente, tests de 3000 m, consistencia y 11TSS" },
-      { en: "Race-week decisions, pacing and risk signals", "pt-BR": "Decisoes da semana da prova, ritmo e sinais de risco", ja: "\u30ec\u30fc\u30b9\u9031\u306e\u5224\u65ad\u3001\u30da\u30fc\u30b9\u3001\u30ea\u30b9\u30af\u30b5\u30a4\u30f3", es: "Decisiones de semana de carrera, ritmo y senales de riesgo" }
+      { en: "Upcoming races and target feasibility", "pt-BR": "Próximas provas e viabilidade do tempo alvo", ja: "\u6b21\u306e\u30ec\u30fc\u30b9\u3068\u76ee\u6a19\u9054\u6210\u53ef\u80fd\u6027", es: "Proximas carreras y viabilidad del objetivo" },
+      { en: "Recent load, 3000 m tests, consistency and 11TSS", "pt-BR": "Carga recente, testes de 3000 m, consistência e 11TSS", ja: "\u6700\u8fd1\u306e\u8ca0\u8377\u30013000m\u30c6\u30b9\u30c8\u3001\u4e00\u8cab\u6027\u300111TSS", es: "Carga reciente, tests de 3000 m, consistencia y 11TSS" },
+      { en: "Race-week decisions, pacing and risk signals", "pt-BR": "Decisões da semana da prova, ritmo e sinais de risco", ja: "\u30ec\u30fc\u30b9\u9031\u306e\u5224\u65ad\u3001\u30da\u30fc\u30b9\u3001\u30ea\u30b9\u30af\u30b5\u30a4\u30f3", es: "Decisiones de semana de carrera, ritmo y senales de riesgo" }
     ]
   },
   breathing: {
-    label: { en: "Neural Breathing", "pt-BR": "Respiracao Neural", ja: "\u30cb\u30e5\u30fc\u30e9\u30eb\u547c\u5438", es: "Respiracion neural" },
-    short: { en: "Respiratory neuromodulation for performance, recovery and neural regulation", "pt-BR": "Neuromodulacao respiratoria para performance, recuperacao e regulacao neural", ja: "\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9\u3001\u56de\u5fa9\u3001\u795e\u7d4c\u8abf\u6574\u306e\u547c\u5438\u30cb\u30e5\u30fc\u30ed\u30e2\u30b8\u30e5\u30ec\u30fc\u30b7\u30e7\u30f3", es: "Neuromodulacion respiratoria para performance, recuperacion y regulacion neural" },
+    label: { en: "Neural Breathing", "pt-BR": "Respiração Neural", ja: "\u30cb\u30e5\u30fc\u30e9\u30eb\u547c\u5438", es: "Respiracion neural" },
+    short: { en: "Respiratory neuromodulation for performance, recovery and neural regulation", "pt-BR": "Neuromodulação respiratória para performance, recuperação e regulação neural", ja: "\u30d1\u30d5\u30a9\u30fc\u30de\u30f3\u30b9\u3001\u56de\u5fa9\u3001\u795e\u7d4c\u8abf\u6574\u306e\u547c\u5438\u30cb\u30e5\u30fc\u30ed\u30e2\u30b8\u30e5\u30ec\u30fc\u30b7\u30e7\u30f3", es: "Neuromodulacion respiratória para performance, recuperacion y regulacion neural" },
     icon: "BR",
     accept: "",
     focus: [
-      { en: "Pre-workout anxiety, recovery and body alertness", "pt-BR": "Ansiedade pre-treino, recuperacao e alerta corporal", ja: "\u30c8\u30ec\u30fc\u30cb\u30f3\u30b0\u524d\u4e0d\u5b89\u3001\u56de\u5fa9\u3001\u8eab\u4f53\u8b66\u6212", es: "Ansiedad pre-entreno, recuperacion y alerta corporal" },
+      { en: "Pre-workout anxiety, recovery and body alertness", "pt-BR": "Ansiedade pre-treino, recuperação e alerta corporal", ja: "\u30c8\u30ec\u30fc\u30cb\u30f3\u30b0\u524d\u4e0d\u5b89\u3001\u56de\u5fa9\u3001\u8eab\u4f53\u8b66\u6212", es: "Ansiedad pre-entreno, recuperacion y alerta corporal" },
       { en: "Guided protocols with check-in, checkout and AI insights", "pt-BR": "Protocolos guiados com check-in, checkout e insights de IA", ja: "\u30c1\u30a7\u30c3\u30af\u30a4\u30f3\u3001\u30c1\u30a7\u30c3\u30af\u30a2\u30a6\u30c8\u3001AI\u30a4\u30f3\u30b5\u30a4\u30c8", es: "Protocolos guiados con check-in, checkout e insights de IA" },
-      { en: "Safe sports education for athletes, coaches and families", "pt-BR": "Educacao esportiva segura para atletas, treinadores e familias", ja: "\u9078\u624b\u3001\u30b3\u30fc\u30c1\u3001\u5bb6\u65cf\u5411\u3051\u306e\u5b89\u5168\u306a\u6559\u80b2", es: "Educacion deportiva segura para atletas, entrenadores y familias" }
+      { en: "Safe sports education for athletes, coaches and families", "pt-BR": "Educação esportiva segura para atletas, treinadores e famílias", ja: "\u9078\u624b\u3001\u30b3\u30fc\u30c1\u3001\u5bb6\u65cf\u5411\u3051\u306e\u5b89\u5168\u306a\u6559\u80b2", es: "Educacion deportiva segura para atletas, entrenadores y famílias" }
     ]
   }
 };
@@ -2283,7 +2283,7 @@ function renderAnalysesView() {
   const formDescription = document.querySelector("#analysisFormDescription");
   if (formDescription) formDescription.textContent = analysisText(mode.short);
   const formEyebrow = document.querySelector("#analysisFormEyebrow");
-  if (formEyebrow) formEyebrow.textContent = "Analise ativa";
+  if (formEyebrow) formEyebrow.textContent = "Análise ativa";
   const intro = document.querySelector("#analysisModeIntro");
   const breathingModule = document.querySelector("#breathingModule");
   const raceAnalyzerModule = document.querySelector("#raceAnalyzerModule");
@@ -2393,7 +2393,7 @@ function buildAnalysisWizardSteps(form) {
   return [
     { label: "Identificacao", elements: visibleWizardElements(fields.slice(0, 4)) },
     { label: "Contexto", elements: visibleWizardElements(fields.slice(4)) },
-    { label: "Arquivos e analise", elements: visibleWizardElements([document.querySelector("#analysisFileList"), ...form.querySelectorAll(".analysis-action-row")]) }
+    { label: "Arquivos e análise", elements: visibleWizardElements([document.querySelector("#analysisFileList"), ...form.querySelectorAll(".analysis-action-row")]) }
   ].filter((step) => step.elements.length);
 }
 
@@ -2439,7 +2439,7 @@ function applyWorkflowStep() {
   if (next) {
     const finalStep = workflowState.step >= workflowState.steps.length - 1;
     next.textContent = finalStep
-      ? workflowState.type === "analysis" ?"Gerar analise" : "Salvar cadastro"
+      ? workflowState.type === "analysis" ?"Gerar análise" : "Salvar cadastro"
       : "Continuar";
   }
   saveWorkflowDraft();
@@ -2455,7 +2455,7 @@ function openWorkflowDialog({ type, title, description, shell, form, steps }) {
   workflowState.form = form;
   workflowState.steps = steps.filter((step) => step.elements?.length);
   workflowState.step = 0;
-  document.querySelector("#workflowEyebrow").textContent = type === "analysis" ?"Analise 11RUN" : "Cadastro 11RUN";
+  document.querySelector("#workflowEyebrow").textContent = type === "analysis" ?"Análise 11RUN" : "Cadastro 11RUN";
   document.querySelector("#workflowTitle").textContent = title;
   document.querySelector("#workflowDescription").textContent = description;
   body.innerHTML = "";
@@ -2502,19 +2502,19 @@ function openAnalysisWorkflow() {
 function buildAnalysisLocalResult(modeKey, values) {
   const recentRuns = activitiesSince(90).filter(isRunningActivity);
   const volume30 = activitiesSince(30).filter(isRunningActivity).reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
-  const loadSignal = recentRuns.length >= 36 ? "alto volume recente" : recentRuns.length >= 18 ? "boa consistencia recente" : "poucos treinos recentes registrados";
+  const loadSignal = recentRuns.length >= 36 ? "alto volume recente" : recentRuns.length >= 18 ? "boa consistência recente" : "poucos treinos recentes registrados";
   const report = `${values.reportText} ${values.trainingContext}`.toLowerCase();
   const flags = [];
   if (/dor|pain|les[aã]o|injury|edema|fratura|fracture|tend[aã]o|ligamento/i.test(report)) flags.push("risco musculo-esqueletico");
   if (/ferritina|ferro|hemoglobina|hemat[oó]crito|anemia|b12|folato/i.test(report)) flags.push("atencao hematologica/nutricional");
-  if (/sono|cansa|fadiga|fatigue|stress|estresse/i.test(report)) flags.push("recuperacao e fadiga");
+  if (/sono|cansa|fadiga|fatigue|stress|estresse/i.test(report)) flags.push("recuperação e fadiga");
   if (!flags.length) flags.push("monitoramento preventivo");
 
   const modeSpecific = {
     blood: [
       "Cruzar hemoglobina, hematocrito, VCM, HCM, RDW, leucocitos, plaquetas, ferritina, B12 e folato com a carga recente.",
-      "Se houver queda de hemoglobina/ferritina ou sinais inflamatorios, reduzir blocos intensos e priorizar recuperacao ate validacao clinica.",
-      "Nutricao: revisar ferro, proteina, energia disponivel, hidratacao e janela pos-treino conforme laudo e sintomas."
+      "Se houver queda de hemoglobina/ferritina ou sinais inflamatórios, reduzir blocos intensos e priorizar recuperação até validação clínica.",
+      "Nutricao: revisar ferro, proteina, energia disponivel, hidratação e janela pos-treino conforme laudo e sintomas."
     ],
     xray: [
       "Usar o laudo para confirmar se ha fratura, reacao de estresse, desalinhamento ou achado degenerativo.",
@@ -2527,8 +2527,8 @@ function buildAnalysisLocalResult(modeKey, values) {
       "Usar cross-training e forca terapeutica para preservar VO2 sem agravar o tecido."
     ],
     body: [
-      "Usar imagens apenas como triagem visual, comparando mesma luz, posicao, distancia e data.",
-      "Observar assimetrias, postura, controle de quadril/tornozelo, sinais de sobrecarga e evolucao corporal.",
+      "Usar imagens apenas como triagem visual, comparando mesma luz, posição, distância e data.",
+      "Observar assimetrias, postura, controle de quadril/tornozelo, sinais de sobrecarga e evolução corporal.",
       "Nao inferir diagnostico por foto isolada; confirmar achados com avaliacao profissional quando houver dor ou alteracao."
     ]
   };
@@ -2543,7 +2543,7 @@ function buildAnalysisLocalResult(modeKey, values) {
       { label: "Carga contextual", value: loadSignal }
     ],
     recommendations: modeSpecific[modeKey] || modeSpecific.blood,
-    caution: "Esta analise nao substitui medico, nutricionista, fisioterapeuta ou laudo oficial. Use como apoio para organizar perguntas, carga e proximos passos."
+    caution: "Esta análise não substitui médico, nutricionista, fisioterapeuta ou laudo oficial. Use como apoio para organizar perguntas, carga e próximos passos."
   };
 }
 
@@ -2554,8 +2554,8 @@ function renderAnalysisOutput(result, aiText = "", loading = false) {
     output.innerHTML = `
       <div class="analysis-loader">
         <i class="mini-loader" aria-hidden="true"></i>
-        <strong>Gerando analise multidimensional...</strong>
-        <span>Cruzando exame, historico, carga recente e contexto do atleta.</span>
+        <strong>Gerando análise multidimensional...</strong>
+        <span>Cruzando exame, histórico, carga recente e contexto do atleta.</span>
       </div>
     `;
     return;
@@ -2595,14 +2595,14 @@ async function generateClinicalAnalysis(event) {
   let aiText = "";
   try {
     const prompt = [
-      `Tipo de analise: ${analysisText(currentAnalysisMode().label)}`,
+      `Tipo de análise: ${analysisText(currentAnalysisMode().label)}`,
       `Data: ${values.examDate || ""}`,
       `Origem: ${values.source || ""}`,
       `Prioridade: ${values.priority || ""}`,
       `Laudo/valores: ${values.reportText || ""}`,
       `Contexto esportivo: ${values.trainingContext || ""}`,
       `Resumo local: ${result.recommendations.join(" | ")}`,
-      "Responda em portugues, de forma tecnica, objetiva, com diagnostico situacional, riscos, ajustes de treino e nutricionais quando aplicavel. Nao faca diagnostico medico definitivo."
+      "Responda em português, de forma técnica, objetiva, com diagnóstico situacional, riscos, ajustes de treino e nutricionais quando aplicável. Não faça diagnóstico médico definitivo."
     ].join("\n");
     const payload = await api("/api/ai/chat", {
       method: "POST",
@@ -2654,33 +2654,33 @@ function raceStrategyBlocks(goal, model) {
       title: "Ritmo de prova",
       text: model.targetSeconds
         ? `Abrir controlado e proteger o alvo de ${formatDurationSeconds(model.targetSeconds)}. Se a probabilidade estiver abaixo de 60%, usar split inicial 1% a 2% mais conservador.`
-        : "Defina tempo alvo para ativar estrategia precisa de pace."
+        : "Defina tempo alvo para ativar estratégia precisa de pace."
     },
     {
       title: "Semana da prova",
       text: closeRace
         ? "Priorizar sono, leveza neuromuscular, treinos curtos e nenhuma carga nova. O objetivo agora e chegar fresco."
-        : "Manter consistencia e inserir checkpoints semanais de carga, teste curto e recuperacao."
+        : "Manter consistência e inserir checkpoints semanais de carga, teste curto e recuperação."
     },
     {
       title: "Risco e ajuste",
       text: risk || hardTarget
-        ? "Ha sinais de risco ou alvo agressivo. Reduzir intensidade se houver dor, sono ruim ou queda de recuperacao."
-        : "Cenario estavel. Monitorar tensao, recuperacao e resposta ao ultimo treino forte."
+        ? "Ha sinais de risco ou alvo agressivo. Reduzir intensidade se houver dor, sono ruim ou queda de recuperação."
+        : "Cenário estável. Monitorar tensão, recuperação e resposta ao último treino forte."
     },
     {
       title: "Decisao inteligente",
-      text: "A IA deve comparar meta, carga recente, historico, testes de 3000 m, 11TSS e sinais corporais antes de liberar uma estrategia agressiva."
+      text: "A IA deve comparar meta, carga recente, histórico, testes de 3000 m, 11TSS e sinais corporais antes de liberar uma estratégia agressiva."
     }
   ];
 }
 
 function raceAnalyzerNarrative(goal, model) {
   if (!goal || !model || !model.currentSeconds) {
-    return "Cadastre uma prova com distancia, tempo alvo e data para o 11RUN gerar probabilidade, rota preditiva e estrategia.";
+    return "Cadastre uma prova com distância, tempo alvo e data para o 11RUN gerar probabilidade, rota preditiva e estratégia.";
   }
   const gap = model.requiredGain ?`precisa ganhar ${formatDurationSeconds(model.requiredGain)}` : "ja esta dentro da meta estimada";
-  return `Para ${goal.title || focusDistanceLabels[goal.distanceM] || "a prova"}, a probabilidade atual e ${model.probability || "--"}%. O atleta ${gap}, com ${model.daysToRace || 0} dias ate a prova e ${formatKm(model.volume30)} nos ultimos 30 dias.`;
+  return `Para ${goal.title || focusDistanceLabels[goal.distanceM] || "a prova"}, a probabilidade atual e ${model.probability || "--"}%. O atleta ${gap}, com ${model.daysToRace || 0} dias ate a prova e ${formatKm(model.volume30)} nos últimos 30 dias.`;
 }
 
 function raceActivityCandidates() {
@@ -2752,7 +2752,7 @@ function buildRaceSegments(activity) {
     const interpretation = index === 0 && pace < avgPace * 0.95
       ? "largada agressiva"
       : index >= 3 && pace > avgPace * 1.05
-        ? "perda de eficiencia"
+        ? "perda de eficiência"
         : index === 5 && pace < avgPace
           ? "boa reacao final"
           : "trecho controlado";
@@ -2790,16 +2790,16 @@ function detectRaceEvents(activity, segments) {
     events.push({ type: "pace_drop", title: "Queda no terco final", severity: "alta", description: "O pace piorou no trecho de resistencia final em relacao ao meio da prova.", recommendation: "Priorizar tempo run, intervalados longos e blocos em ritmo de prova." });
   }
   if (late?.heartRate && first?.heartRate && late.heartRate > first.heartRate + 8 && late.pace >= middlePace) {
-    events.push({ type: "cardiac_drift", title: "Deriva cardiaca", severity: "media", description: "A frequencia cardiaca subiu enquanto o ritmo perdeu eficiencia.", recommendation: "Ajustar desenvolvimento aerobio, limiar, hidratacao e controle de intensidade inicial." });
+    events.push({ type: "cardiac_drift", title: "Deriva cardíaca", severity: "media", description: "A frequência cardíaca subiu enquanto o ritmo perdeu eficiência.", recommendation: "Ajustar desenvolvimento aeróbio, limiar, hidratação e controle de intensidade inicial." });
   }
   if (late?.cadence && first?.cadence && late.cadence < first.cadence * 0.95 && late.pace > first.pace) {
-    events.push({ type: "cadence_drop", title: "Queda de cadencia", severity: "media", description: "Cadencia caiu junto com o pace no final.", recommendation: "Incluir forca, subidas curtas, educativos e resistencia neuromuscular." });
+    events.push({ type: "cadence_drop", title: "Queda de cadência", severity: "media", description: "Cadencia caiu junto com o pace no final.", recommendation: "Incluir forca, subidas curtas, educativos e resistencia neuromuscular." });
   }
   if (final?.pace < middlePace * 0.95) {
-    events.push({ type: "final_kick", title: "Boa reacao final", severity: "baixa", description: "Os ultimos 10% foram mais rapidos que o meio da prova.", recommendation: "Pode haver margem para sustentar ritmo um pouco mais forte antes da chegada." });
+    events.push({ type: "final_kick", title: "Boa reacao final", severity: "baixa", description: "Os últimos 10% foram mais rapidos que o meio da prova.", recommendation: "Pode haver margem para sustentar ritmo um pouco mais forte antes da chegada." });
   }
   if (!events.length) {
-    events.push({ type: "stable_execution", title: "Execucao estavel", severity: "baixa", description: "Nao houve evento critico forte com os dados disponiveis.", recommendation: "Melhorar granularidade importando splits, FC, altimetria e cadencia." });
+    events.push({ type: "stable_execution", title: "Execucao estavel", severity: "baixa", description: "Nao houve evento critico forte com os dados disponíveis.", recommendation: "Melhorar granularidade importando splits, FC, altimetria e cadência." });
   }
   return events;
 }
@@ -2823,10 +2823,10 @@ function raceReportScores(activity, segments, events) {
 function raceDataAvailability(activity) {
   const metrics = raceActivityMetrics(activity);
   return [
-    ["GPS/distancia", Boolean(metrics.distanceMeters)],
+    ["GPS/distância", Boolean(metrics.distanceMeters)],
     ["Tempo", Boolean(metrics.durationSeconds)],
     ["Ritmo", Boolean(metrics.paceSeconds || activity?.pace)],
-    ["Frequencia cardiaca", Boolean(metrics.averageHeartRate || metrics.maxHeartRate)],
+    ["Frequencia cardíaca", Boolean(metrics.averageHeartRate || metrics.maxHeartRate)],
     ["Cadencia", Boolean(metrics.cadence)],
     ["Potencia", Boolean(metrics.power)],
     ["Altimetria", Boolean(metrics.elevationGain)],
@@ -2863,7 +2863,7 @@ function renderRaceAnalyzerModule() {
     <div class="race-scoreboard">
       <article><span>Prova analisada</span><strong>${escapeHtml(goal?.title || "Sem prova")}</strong><p>${escapeHtml(raceDate)}</p></article>
       <article><span>Probabilidade</span><strong>${model?.probability || "--"}%</strong><p>${escapeHtml(readiness)}</p></article>
-      <article><span>Tempo alvo</span><strong>${escapeHtml(model?.targetSeconds ?formatDurationSeconds(model.targetSeconds) : "--")}</strong><p>${escapeHtml(model?.currentSeconds ?`Projecao ${formatDurationSeconds(model.currentSeconds)}` : "sem projecao")}</p></article>
+      <article><span>Tempo alvo</span><strong>${escapeHtml(model?.targetSeconds ?formatDurationSeconds(model.targetSeconds) : "--")}</strong><p>${escapeHtml(model?.currentSeconds ?`Projeção ${formatDurationSeconds(model.currentSeconds)}` : "sem projeção")}</p></article>
       <article><span>Ganho necessario</span><strong>${escapeHtml(model?.requiredGain ?formatDurationSeconds(model.requiredGain) : "--")}</strong><p>${escapeHtml(model?.requiredPerWeek ?`${formatDurationSeconds(model.requiredPerWeek)} por semana` : "meta sem gap calculado")}</p></article>
     </div>
 
@@ -2880,12 +2880,12 @@ function renderRaceAnalyzerModule() {
                 <small>${escapeHtml(goalDateLabel(item))} - ${itemModel?.probability || "--"}% de probabilidade</small>
               </button>
             `;
-          }).join("") || `<p class="empty-state">Nenhuma prova cadastrada. Crie um objetivo para ativar a analise.</p>`}
+          }).join("") || `<p class="empty-state">Nenhuma prova cadastrada. Crie um objetivo para ativar a análise.</p>`}
         </div>
       </section>
 
       <section class="race-panel">
-        <div class="section-title"><span>Rota preditiva</span><h3>Projecao vs meta</h3></div>
+        <div class="section-title"><span>Rota preditiva</span><h3>Projeção vs meta</h3></div>
         <div class="race-projection-line">
           <div style="--race-value:${Math.min(100, Math.max(0, model?.probability || 0))}">
             <span>Viabilidade</span><strong>${model?.probability || "--"}%</strong>
@@ -2901,19 +2901,19 @@ function renderRaceAnalyzerModule() {
       </section>
 
       <section class="race-panel">
-        <div class="section-title"><span>Inteligencia da prova</span><h3>Plano de decisao</h3></div>
+        <div class="section-title"><span>Inteligência da prova</span><h3>Plano de decisão</h3></div>
         <div class="race-strategy-list">
           ${strategies.map((item) => `<article><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.text)}</p></article>`).join("")}
         </div>
       </section>
 
       <section class="race-panel">
-        <div class="section-title"><span>Sinais usados pela IA</span><h3>Base da analise</h3></div>
+        <div class="section-title"><span>Sinais usados pela IA</span><h3>Base da análise</h3></div>
         <div class="race-signal-grid">
           <article><span>Corridas 30 dias</span><strong>${recentRuns.length}</strong><p>Atividades executadas consideradas.</p></article>
           <article><span>Testes 3000 m</span><strong>${tests.length}</strong><p>${tests[0] ?`Ultimo: ${formatDurationSeconds(tests[0].seconds)}` : "Nenhum teste recente."}</p></article>
           <article><span>Historico</span><strong>${model?.historyRisk ?"Atenção" : "Estavel"}</strong><p>Dor, fadiga e eventos relevantes mudam a agressividade da meta.</p></article>
-          <article><span>IA corrida</span><strong>11RUN</strong><p>Probabilidade, pace, risco, carga e estrategia em um unico painel.</p></article>
+          <article><span>IA corrida</span><strong>11RUN</strong><p>Probabilidade, pace, risco, carga e estratégia em um único painel.</p></article>
         </div>
       </section>
     </div>
@@ -2948,7 +2948,7 @@ function renderRaceAnalyzerModule() {
       <div>
         <span class="kicker">Analisador de Provas 11RUN</span>
         <h3>Da largada a chegada, entenda onde ganhou, perdeu e o que treinar</h3>
-        <p>${escapeHtml(activity ?`Analisando ${activity.title || "atividade"} com ritmo, distancia, tempo, carga, eventos e contexto competitivo.` : "Selecione uma atividade importada ou registrada no 11RUN para gerar o relatorio tecnico.")}</p>
+        <p>${escapeHtml(activity ?`Analisando ${activity.title || "atividade"} com ritmo, distância, tempo, carga, eventos e contexto competitivo.` : "Selecione uma atividade importada ou registrada no 11RUN para gerar o relatório técnico.")}</p>
       </div>
       <div class="race-import-actions">
         <button class="secondary-action compact" type="button" data-connect-strava>Importar do Strava</button>
@@ -2982,11 +2982,11 @@ function renderRaceAnalyzerModule() {
       </section>
 
       <section class="race-panel">
-        <div class="section-title"><span>Validar dados</span><h3>Qualidade da analise</h3></div>
+        <div class="section-title"><span>Validar dados</span><h3>Qualidade da análise</h3></div>
         <div class="race-data-grid">
           ${availability.map(([label, ok]) => `<span class="${ok ?"is-ok" : "is-missing"}">${ok ?"OK" : "--"} ${escapeHtml(label)}</span>`).join("") || `<p class="empty-state">Selecione uma atividade para validar dados.</p>`}
         </div>
-        <p>${availability.some(([, ok]) => !ok) ? "Quando faltam FC, cadencia, potencia ou altimetria, a IA informa a limitacao e usa ritmo, distancia, tempo e carga disponiveis." : "Atividade com boa base para leitura tecnica."}</p>
+        <p>${availability.some(([, ok]) => !ok) ? "Quando faltam FC, cadência, potência ou altimetria, a IA informa a limitação e usa ritmo, distância, tempo e carga disponíveis." : "Atividade com boa base para leitura técnica."}</p>
       </section>
 
       <section class="race-panel">
@@ -3001,7 +3001,7 @@ function renderRaceAnalyzerModule() {
                 <small>${escapeHtml(goalDateLabel(item))} - ${itemModel?.probability || "--"}% de probabilidade</small>
               </button>
             `;
-          }).join("") || `<p class="empty-state">Nenhuma prova cadastrada. Crie um objetivo para ativar a analise.</p>`}
+          }).join("") || `<p class="empty-state">Nenhuma prova cadastrada. Crie um objetivo para ativar a análise.</p>`}
         </div>
       </section>
 
@@ -3013,8 +3013,8 @@ function renderRaceAnalyzerModule() {
             ["Largada", scores?.start],
             ["Sustentacao", scores?.endurance],
             ["Finalizacao", scores?.finish],
-            ["Eficiencia cardiaca", scores?.cardiac],
-            ["Eficiencia mecanica", scores?.mechanical]
+            ["Eficiência cardíaca", scores?.cardiac],
+            ["Eficiência mecanica", scores?.mechanical]
           ].map(([label, value]) => `
             <div style="--race-value:${Math.min(100, Math.max(0, value || 0))}">
               <span>${escapeHtml(label)}</span><strong>${value || "--"}/100</strong>
@@ -3024,15 +3024,15 @@ function renderRaceAnalyzerModule() {
       </section>
 
       <section class="race-panel">
-        <div class="section-title"><span>Analise por trecho</span><h3>Fases da prova</h3></div>
+        <div class="section-title"><span>Análise por trecho</span><h3>Fases da prova</h3></div>
         <div class="race-segment-table">
           ${segments.map((segment) => `
             <article>
               <span>${escapeHtml(segment.range)} - ${escapeHtml(segment.label)}</span>
               <strong>${escapeHtml(formatDurationSeconds(segment.pace))}/km</strong>
-              <p>FC ${segment.heartRate || "--"} - cadencia ${segment.cadence || "--"} - ${escapeHtml(segment.interpretation)}</p>
+              <p>FC ${segment.heartRate || "--"} - cadência ${segment.cadence || "--"} - ${escapeHtml(segment.interpretation)}</p>
             </article>
-          `).join("") || `<p class="empty-state">Sem distancia/tempo suficientes para segmentar.</p>`}
+          `).join("") || `<p class="empty-state">Sem distância/tempo suficientes para segmentar.</p>`}
         </div>
       </section>
 
@@ -3044,12 +3044,12 @@ function renderRaceAnalyzerModule() {
       </section>
 
       <section class="race-panel">
-        <div class="section-title"><span>Recomendacoes de treino</span><h3>Transformar prova em evolucao</h3></div>
+        <div class="section-title"><span>Recomendações de treino</span><h3>Transformar prova em evolução</h3></div>
         <div class="race-strategy-list">
           <article><strong>Controle de largada</strong><p>3 km progressivo: 1 km 10s/km mais lento que o alvo, 1 km no alvo, 1 km 5s/km mais forte.</p></article>
           <article><strong>Sustentacao especifica</strong><p>5 x 1000 m em ritmo de prova com pausa curta de 60s a 90s.</p></article>
           <article><strong>Final forte</strong><p>40 min leve + 4 x 400 m forte controlado para melhorar reacao em fadiga.</p></article>
-          <article><strong>Respiracao neural</strong><p>Se houve largada ansiosa ou FC muito alta no inicio, usar 4:6 por 5 min antes do aquecimento.</p></article>
+          <article><strong>Respiração neural</strong><p>Se houve largada ansiosa ou FC muito alta no início, usar 4:6 por 5 min antes do aquecimento.</p></article>
         </div>
       </section>
 
@@ -3073,7 +3073,7 @@ function renderRaceAnalyzerModule() {
           <article><span>Testes 3000 m</span><strong>${tests.length}</strong><p>${tests[0] ?`Ultimo: ${formatDurationSeconds(tests[0].seconds)}` : "Nenhum teste recente."}</p></article>
           <article><span>Carga 30 dias</span><strong>${Math.round(recentLoad) || "--"}</strong><p>11TSS/carga usada para contexto de fadiga.</p></article>
           <article><span>Historico</span><strong>${model?.historyRisk ?"Atencao" : "Estavel"}</strong><p>Dor, fadiga e eventos relevantes mudam a agressividade da meta.</p></article>
-          <article><span>IA corrida</span><strong>11RUN</strong><p>Probabilidade, pace, risco, carga e estrategia em um unico painel.</p></article>
+          <article><span>IA corrida</span><strong>11RUN</strong><p>Probabilidade, pace, risco, carga e estratégia em um único painel.</p></article>
         </div>
       </section>
     </div>
@@ -3085,7 +3085,7 @@ function breathingCategoryLabel(category) {
   return {
     pre_treino: "Pre-treino",
     pre_prova: "Pre-prova",
-    recuperacao: "Recuperacao",
+    recuperacao: "Recuperação",
     ansiedade: "Ansiedade e hiperalerta",
     sono: "Sono",
     foco: "Foco",
@@ -4834,7 +4834,7 @@ function dashboardTrendSvg(series) {
     })
     .join("");
   return `
-    <svg class="dashboard-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Volume e 11TSS dos ultimos 90 dias">
+    <svg class="dashboard-trend-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Volume e 11TSS dos últimos 90 dias">
       <defs>
         <filter id="dashGlow">
           <feGaussianBlur stdDeviation="0.35" result="blur" />
@@ -4940,9 +4940,9 @@ function dashboardTestSvg(tests, athlete) {
     ["42 km", 42195]
   ];
   const zones = [
-    ["Regenerativo", paceRange(basePace, 1.55, 1.75), "recuperacao e volume facil"],
+    ["Regenerativo", paceRange(basePace, 1.55, 1.75), "recuperação e volume fácil"],
     ["Leve / base", paceRange(basePace, 1.35, 1.55), "rodagem sustentavel"],
-    ["Ritmo / tempo", paceRange(basePace, 1.14, 1.25), "controle aerobio forte"],
+    ["Ritmo / tempo", paceRange(basePace, 1.14, 1.25), "controle aeróbio forte"],
     ["Limiar", paceRange(basePace, 1.08, 1.14), "blocos progressivos"],
     ["VO2 / intervalado", paceRange(basePace, 0.98, 1.05), "series curtas e medias"]
   ];
@@ -5089,7 +5089,7 @@ function dashboardGoalProbability(goal, model) {
         <p>${escapeHtml(goalDateLabel(goal))} - ${model.daysToRace || "--"} dias</p>
         <div class="goal-probability-grid">
           <small><b>${escapeHtml(targetLabel)}</b> alvo</small>
-          <small><b>${escapeHtml(projectionLabel)}</b> projecao</small>
+          <small><b>${escapeHtml(projectionLabel)}</b> projeção</small>
           <small><b>${escapeHtml(gainLabel)}</b> ganho</small>
           <small><b>${escapeHtml(weekLabel)}</b> ritmo</small>
         </div>
@@ -5174,7 +5174,7 @@ function athleteHistoryText(athlete) {
     entry.vo2 ?`VO2 ${entry.vo2}` : "",
     entry.weightKg ?`peso ${entry.weightKg}` : "",
     entry.heartRate ?`FC ${entry.heartRate}` : "",
-    entry.power ?`potencia ${entry.power}` : "",
+    entry.power ?`potência ${entry.power}` : "",
     entry.pace ?`ritmo ${entry.pace}` : "",
     entry.sleepHours ?`sono ${entry.sleepHours}` : "",
     entry.perceivedEffort ?`esforco ${entry.perceivedEffort}` : "",
@@ -5223,7 +5223,7 @@ function buildChronologicalPerformanceAnalysis(athlete, tests = collect3000Tests
     if (!date) return;
     events.push({
       date,
-      type: entry.type === "vo2" ?"vo2" : "historico",
+      type: entry.type === "vo2" ?"vo2" : "histórico",
       label: [entry.title, entry.description, entry.originalContent, entry.tags?.join(" "), entry.vo2 ?`VO2 ${entry.vo2}` : "", entry.painScore !== "" ?`dor ${entry.painScore}` : ""].filter(Boolean).join(" - "),
       weight: chronologyWeight(date),
       vo2: Number(entry.vo2 || 0),
@@ -5272,11 +5272,11 @@ function buildChronologicalPerformanceAnalysis(athlete, tests = collect3000Tests
   const historyModifier = Math.max(-3.2, Math.min(2.2, positiveScore * 0.7 - riskScore * 1.25 - stalePenalty * 0.35));
   const probabilityModifier = Math.round(Math.max(-18, Math.min(12, trainingTrendModifier * 3 + historyModifier * 4)));
   const summary = [
-    latestTest ?`ultimo 3000 em ${latestTest.date.toLocaleDateString("pt-BR")} (${formatDurationSeconds(latestTest.seconds)})` : "sem teste de 3000 registrado",
+    latestTest ?`último 3000 em ${latestTest.date.toLocaleDateString("pt-BR")} (${formatDurationSeconds(latestTest.seconds)})` : "sem teste de 3000 registrado",
     latestVo2 ?`VO2 medido ${latestVo2.vo2} em ${latestVo2.date.toLocaleDateString("pt-BR")}` : "sem VO2 medido",
-    `${recent30.length} treinos nos ultimos 30 dias`,
+    `${recent30.length} treinos nos últimos 30 dias`,
     trendRatio ?`tendencia de volume ${(trendRatio * 100).toFixed(0)}% vs 30 dias anteriores` : "sem tendencia recente",
-    riskScore > 0.5 ?"historico recente exige prudencia" : "sem alerta cronologico dominante"
+    riskScore > 0.5 ?"histórico recente exige prudencia" : "sem alerta cronologico dominante"
   ].join(". ");
   return {
     generatedAt: new Date().toISOString(),
@@ -5569,18 +5569,81 @@ function latest3000Test(tests) {
     .sort((a, b) => b.date - a.date)[0] || tests[0] || null;
 }
 
+function dashboardNextGoal() {
+  return (state.goals || [])
+    .filter((goal) => !isPastGoal(goal))
+    .sort((a, b) => String(normalizeDateKey(a.raceDate)).localeCompare(String(normalizeDateKey(b.raceDate))))[0] || null;
+}
+
+function dashboardRecoverySignal(recent7, recent30) {
+  const load7 = recent7.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const load30 = recent30.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const expected7 = load30 ?load30 / 4.2 : 0;
+  if (!recent7.length) return { label: "Sem sinal", detail: "Registre ou importe treinos para ativar a leitura.", tone: "neutral", load7, expected7 };
+  if (expected7 && load7 > expected7 * 1.45) return { label: "Carga alta", detail: "Semana acima do padrão recente. Priorize recuperação e sinais corporais.", tone: "attention", load7, expected7 };
+  if (expected7 && load7 < expected7 * 0.55) return { label: "Carga baixa", detail: "Semana abaixo do padrão. Pode ser descarga, pausa ou falta de importação.", tone: "neutral", load7, expected7 };
+  return { label: "Equilibrado", detail: "Carga semanal compatível com os últimos 30 dias.", tone: "good", load7, expected7 };
+}
+
+function dashboardLatestRaceAnalysis() {
+  const activity = activeRaceActivity();
+  if (!activity) return null;
+  const segments = buildRaceSegments(activity);
+  const events = detectRaceEvents(activity, segments);
+  const scores = raceReportScores(activity, segments, events);
+  return { activity, event: events[0], scores };
+}
+
+function dashboardBreathingSignal() {
+  const sessions = state.breathingData?.sessions || [];
+  const latest = sessions[0];
+  if (!latest) {
+    return { label: "Respiração Neural", value: "Sem sessão", detail: "Use antes de prova, treino forte ou noite ruim." };
+  }
+  const anxietyBefore = Number((latest.checkin?.anxietyBefore ?? latest.checkin?.anxiety_before) || 0);
+  const anxietyAfter = Number((latest.checkout?.anxietyAfter ?? latest.checkout?.anxiety_after) || 0);
+  const tensionBefore = Number((latest.checkin?.tensionBefore ?? latest.checkin?.tension_before) || 0);
+  const tensionAfter = Number((latest.checkout?.tensionAfter ?? latest.checkout?.tension_after) || 0);
+  const reduction = Math.max(
+    anxietyBefore ?Math.round(((anxietyBefore - anxietyAfter) / anxietyBefore) * 100) : 0,
+    tensionBefore ?Math.round(((tensionBefore - tensionAfter) / tensionBefore) * 100) : 0
+  );
+  return {
+    label: "Respiração Neural",
+    value: reduction > 0 ?`${reduction}%` : "Registrada",
+    detail: latest.protocolName ?`${latest.protocolName} na última sessão.` : "Sessão respiratória registrada."
+  };
+}
+
+async function hydrateDashboardBreathing() {
+  if (state.dashboardBreathingHydrating || state.breathingData || state.view !== "dashboard") return;
+  state.dashboardBreathingHydrating = true;
+  try {
+    await loadBreathingData();
+    if (state.view === "dashboard") renderDashboard();
+  } catch {
+    // Sinal complementar. O dashboard segue funcional sem dados respiratórios.
+  } finally {
+    state.dashboardBreathingHydrating = false;
+  }
+}
+
 function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarget, vo2Target) {
-  const recent = activitiesSince(90).filter((activity) => isExecutedActivity(activity) && isRunningActivity(activity));
-  const volume90 = recent.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
-  const tss90 = recent.reduce((sum, activity) => sum + activityTss(activity), 0);
-  const monthlyAverage = volume90 / 3;
+  const recent90 = activitiesSince(90).filter((activity) => isExecutedActivity(activity) && isRunningActivity(activity));
+  const recent30 = activitiesSince(30).filter((activity) => isExecutedActivity(activity) && isRunningActivity(activity));
+  const recent7 = activitiesSince(7).filter((activity) => isExecutedActivity(activity) && isRunningActivity(activity));
+  const volume90 = recent90.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const volume30 = recent30.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const volume7 = recent7.reduce((sum, activity) => sum + parseDistanceKm(activity.distance), 0);
+  const tss30 = recent30.reduce((sum, activity) => sum + activityTss(activity), 0);
+  const tss90 = recent90.reduce((sum, activity) => sum + activityTss(activity), 0);
   const weeklyAverage = volume90 / (90 / 7);
   const tssAverage = tss90 / 3;
   const series = dashboardSeries(90);
   const athlete = getActiveAthlete();
   const tests = collect3000Tests(athlete);
   const lastTest = latest3000Test(tests);
-  const types = recent.reduce((acc, activity) => {
+  const types = recent90.reduce((acc, activity) => {
     const key = activity.trainingType || activity.feedback?.trainingType || "Treino";
     const distanceKm = parseDistanceKm(activity.distance);
     const seconds = activityMovingSeconds(activity);
@@ -5595,31 +5658,70 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
     return acc;
   }, {});
   const activeGoals = (state.goals || []).filter((goal) => !isPastGoal(goal));
+  const nextGoal = dashboardNextGoal();
+  const nextGoalModel = nextGoal ?buildFocusModel(goalAsAthlete(nextGoal)) : null;
+  const recovery = dashboardRecoverySignal(recent7, recent30);
+  const raceAnalysis = dashboardLatestRaceAnalysis();
+  const breathing = dashboardBreathingSignal();
+  const mainAction = recovery.tone === "attention"
+    ? "Reduzir agressividade e checar recuperação"
+    : nextGoal
+      ? "Ajustar semana para a próxima prova"
+      : "Cadastrar prova foco";
 
   highlightTarget.innerHTML = `
-    <div class="dashboard-cockpit">
-      <div class="dashboard-orbit" aria-hidden="true">
-        <span></span><span></span><span></span>
-        <strong>${Math.round(tss90)}</strong>
-        <small>11TSS</small>
-      </div>
-      <div class="dashboard-trend">
-        <div class="dashboard-legend">
-          <span><i class="legend-volume"></i>Volume</span>
-          <span><i class="legend-tss"></i>11TSS</span>
+    <div class="dashboard-command-center">
+      <section class="dashboard-priority-card">
+        <div>
+          <span>Estado do atleta</span>
+          <h3>${escapeHtml(recovery.label)}</h3>
+          <p>${escapeHtml(recovery.detail)}</p>
+        </div>
+        <strong>${escapeHtml(formatKm(volume7))}</strong>
+        <small>${recent7.length} sessões nos últimos 7 dias</small>
+      </section>
+      <section class="dashboard-priority-card is-primary">
+        <div>
+          <span>Próxima decisão</span>
+          <h3>${escapeHtml(mainAction)}</h3>
+          <p>${escapeHtml(nextGoal ?`${nextGoal.title || "Prova"} em ${goalDateLabel(nextGoal)} - ${nextGoalModel?.probability || "--"}% de probabilidade.` : "Defina uma prova para ativar rota preditiva, estratégia e alertas.")}</p>
+        </div>
+        <a class="secondary-action compact" href="#objetivos" data-view-link="goals">Objetivos</a>
+      </section>
+      <section class="dashboard-priority-grid">
+        <article class="dashboard-signal-card"><span>Volume 30 dias</span><strong>${escapeHtml(formatKm(volume30))}</strong><p>${recent30.length} atividades importadas</p></article>
+        <article class="dashboard-signal-card"><span>11TSS 30 dias</span><strong>${Math.round(tss30)}</strong><p>Carga acumulada recente</p></article>
+        <article class="dashboard-signal-card"><span>${escapeHtml(breathing.label)}</span><strong>${escapeHtml(breathing.value)}</strong><p>${escapeHtml(breathing.detail)}</p></article>
+        <article class="dashboard-signal-card"><span>Análise de prova</span><strong>${raceAnalysis?.scores?.overall || "--"}/100</strong><p>${escapeHtml(raceAnalysis?.event?.title || "Selecione uma atividade no Analisador de Provas")}</p></article>
+      </section>
+      <div class="dashboard-trend-card">
+        <div class="dashboard-card-head">
+          <div><span>Tendência 90 dias</span><strong>Volume e carga</strong></div>
+          <div class="dashboard-legend">
+            <span><i class="legend-volume"></i>Volume</span>
+            <span><i class="legend-tss"></i>11TSS</span>
+          </div>
         </div>
         ${dashboardTrendSvg(series)}
       </div>
-      <div class="dashboard-metrics">
-        <article class="dashboard-metric-card"><span>Volume mensal médio</span><strong>${escapeHtml(formatKm(monthlyAverage))}</strong><p>${recent.length} atividades nos últimos 90 dias</p></article>
-        <article class="dashboard-metric-card"><span>Volume semanal médio</span><strong>${escapeHtml(formatKm(weeklyAverage))}</strong><p>Média calculada em 90 dias</p></article>
-        <article class="dashboard-metric-card"><span>11TSS médio</span><strong>${Math.round(tssAverage)}</strong><p>Média mensal dos últimos 90 dias</p></article>
-        <article class="dashboard-metric-card"><span>Último teste de 3000</span><strong>${escapeHtml(lastTest ?formatDurationSeconds(lastTest.seconds) : "--")}</strong><p>${escapeHtml(lastTest ?`${lastTest.title || lastTest.source || "3000 m"} - ${lastTest.date ?lastTest.date.toLocaleDateString("pt-BR") : "sem data"}` : "Nenhum teste registrado")}</p></article>
+      <div class="dashboard-quick-actions">
+        <a class="dashboard-action-card" href="#analises" data-view-link="analyses"><span>Analisador IA</span><strong>Provas, exames e respiração</strong></a>
+        <a class="dashboard-action-card" href="#treinamentos" data-view-link="training"><span>Diário</span><strong>Treinos e carga</strong></a>
+        <a class="dashboard-action-card" href="#diferenciais" data-view-link="differentials"><span>Diferenciais</span><strong>Visão de produto</strong></a>
       </div>
     </div>
   `;
 
-  testTarget.innerHTML = dashboardTestSvg(tests, athlete);
+  testTarget.innerHTML = `
+    <div class="dashboard-section-stack">
+      ${dashboardTestSvg(tests, athlete)}
+      <div class="dashboard-mini-summary">
+        <article><span>Volume semanal médio</span><strong>${escapeHtml(formatKm(weeklyAverage))}</strong><p>Base dos últimos 90 dias</p></article>
+        <article><span>11TSS médio mensal</span><strong>${Math.round(tssAverage)}</strong><p>Carga média recente</p></article>
+        <article><span>Último 3000 m</span><strong>${escapeHtml(lastTest ?formatDurationSeconds(lastTest.seconds) : "--")}</strong><p>${escapeHtml(lastTest?.date ?lastTest.date.toLocaleDateString("pt-BR") : "sem teste")}</p></article>
+      </div>
+    </div>
+  `;
   typeTarget.innerHTML = dashboardTypeChart(types);
   goalTarget.innerHTML = activeGoals.length
     ?`
@@ -5632,6 +5734,7 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
     `
     : `<div class="empty-state">Crie objetivos para acompanhar status e rota preditiva.</div>`;
   vo2Target.innerHTML = dashboardVo2Panel(athlete, tests);
+  hydrateDashboardBreathing();
 }
 
 function chartRange() {
@@ -6692,7 +6795,7 @@ function inferHistoryRecord(raw = {}) {
     : "context";
   const tags = new Set(Array.isArray(raw.tags) ?raw.tags : []);
   [
-    ["performance", /ritmo|pace|tempo|prova|teste|3000|5000|vo2|potência|potencia/],
+    ["performance", /ritmo|pace|tempo|prova|teste|3000|5000|vo2|potência|potência/],
     ["saude", /dor|les|sono|fadiga|doente|inflama|recuper/],
     ["carga", /volume|km|tss|longão|longo|interval|treino/],
     ["evolucao", /melhor|evolu|progress|recorde|forte|consist/],
@@ -6705,13 +6808,13 @@ function inferHistoryRecord(raw = {}) {
     : /fadiga|sono|peso|ritmo|volume|cansa|desconforto/.test(content) ?"média"
     : "normal";
   const relation = [
-    /ritmo|pace|tempo|prova|teste|vo2|potência|potencia/.test(content) ?"performance" : "",
+    /ritmo|pace|tempo|prova|teste|vo2|potência|potência/.test(content) ?"performance" : "",
     /dor|les|fadiga|sono|recuper|doente/.test(content) ?"saúde/fadiga" : "",
-    /melhor|evolu|progress|consist|volume/.test(content) ?"evolução" : ""
+    /melhor|evolu|progress|consist|volume/.test(content) ?"evolucao" : ""
   ].filter(Boolean).join(", ") || "contexto";
   const possibleImpact = importance === "alta"
     ?"Pode alterar projeções, risco e leitura de resposta ao treino."
-    : relation.includes("saúde")
+    : relation.includes("saude")
       ?"Pode indicar necessidade de ajuste de carga e recuperação."
       : relation.includes("performance")
         ?"Ajuda a calibrar projeções e comparação de treinos similares."
