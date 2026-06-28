@@ -5014,7 +5014,7 @@ function dashboardTypeChart(types) {
       paceKm: stats.paceDistance ?Number(stats.seconds || 0) / Number(stats.paceDistance || 1) : 0
     }))
     .sort((a, b) => b.count - a.count);
-  if (!entries.length) return `<div class="empty-state">Classifique treinos para alimentar a distribuicao.</div>`;
+  if (!entries.length) return `<div class="empty-state">Classifique treinos para alimentar a distribuição.</div>`;
   const total = entries.reduce((sum, item) => sum + item.count, 0) || 1;
   const maxCount = Math.max(1, ...entries.map((item) => item.count));
   const maxVolume = Math.max(1, ...entries.map((item) => item.volume));
@@ -5023,17 +5023,17 @@ function dashboardTypeChart(types) {
     <div class="type-insights">
       <div class="type-summary-strip">
         <article>
-          <span>Sessoes</span>
+          <span>Sessões</span>
           <strong>${total}</strong>
           <p>${escapeHtml(entries.length)} tipos classificados</p>
         </article>
         <article>
           <span>Tipo dominante</span>
           <strong>${escapeHtml(dominant.type)}</strong>
-          <p>${Math.round((dominant.count / total) * 100)}% das sessoes</p>
+          <p>${Math.round((dominant.count / total) * 100)}% das sessões</p>
         </article>
         <article>
-          <span>Ritmo medio do lider</span>
+          <span>Ritmo médio do líder</span>
           <strong>${escapeHtml(formatPace(dominant.paceKm))}</strong>
           <p>${escapeHtml(formatKm(dominant.volume))} acumulados</p>
         </article>
@@ -5048,13 +5048,13 @@ function dashboardTypeChart(types) {
             <div class="type-insight-head">
               <div>
                 <span>${escapeHtml(item.type)}</span>
-                <strong>${item.count} sessoes</strong>
+                <strong>${item.count} sessões</strong>
               </div>
               <em>${pct.toFixed(0)}%</em>
             </div>
             <div class="type-insight-meter"><i></i></div>
             <div class="type-insight-metrics">
-              <span><b>${escapeHtml(formatPace(item.paceKm))}</b> ritmo medio</span>
+              <span><b>${escapeHtml(formatPace(item.paceKm))}</b> ritmo médio</span>
               <span><b>${escapeHtml(formatKm(item.volume))}</b> volume</span>
               <span><b>${Math.round(item.tss)}</b> 11TSS</span>
             </div>

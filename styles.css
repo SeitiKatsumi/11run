@@ -7456,3 +7456,175 @@ html[data-theme="light"] .dashboard-panel::before {
     min-height: 148px;
   }
 }
+
+/* Global flat UX refinement across modules */
+:root,
+html[data-theme="dark"],
+html[data-theme="light"] {
+  --page-background: var(--background);
+  --shadow: none;
+}
+
+body {
+  background: var(--background) !important;
+}
+
+.panel,
+.rail,
+.view-header,
+.page-header,
+.metric-card,
+.chart-panel,
+.chart-stats div,
+.calendar-month .day,
+.calendar-period .day,
+.period-week-card,
+.profile-edit-panel,
+.profile-history-panel,
+.profile-dynamic-card,
+.activity-card,
+.goal-card,
+.goal-route-stat,
+.roadmap-metric,
+.objective-card,
+.objective-progress-card,
+.test-card,
+.test-panel,
+.tests-lab-panel,
+.test-evolution,
+.vo2-estimate-card,
+.vo2-source-card,
+.type-card,
+.type-summary-strip article,
+.type-insight-card,
+.timeline-card,
+.timeline-item,
+.detail,
+.modal-panel,
+.workflow-dialog-content,
+.home-ai-agent,
+.home-ai-message,
+.analysis-create-intro,
+.analysis-type-card,
+.analysis-form-shell,
+.analysis-output,
+.analysis-result-card,
+.analysis-insight-card,
+.breathing-module,
+.breathing-hero,
+.breathing-stat-card,
+.breathing-protocol-card,
+.breathing-step-card,
+.breathing-coach-card,
+.breathing-history article,
+.breathing-education article,
+.race-analyzer-module,
+.race-analyzer-hero,
+.race-score-card,
+.race-data-card,
+.race-signal-card,
+.race-phase-card,
+.race-recommendation-card,
+.differentials-section,
+.differentials-hero,
+.differentials-grid article,
+.differentials-claim,
+.differentials-page-hero,
+.differentials-page-grid article,
+.differentials-page-band article,
+.differentials-module-list article,
+.admin-type-card,
+.admin-user-row,
+.bulk-editor-shell {
+  background-color: var(--card) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border-color: var(--border) !important;
+}
+
+.activity-card.is-planned,
+.calendar-month .activity.is-planned,
+.calendar-period .activity.is-planned,
+.empty-state,
+.type-insight-meter,
+.progress-track,
+.objective-progress-track,
+.test-mix-list article i,
+.breathing-orb,
+.race-score-meter,
+.race-data-meter,
+.race-signal-meter {
+  background-color: var(--muted-surface) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.activity-card,
+.calendar-month .activity,
+.calendar-period .activity {
+  background-color: var(--card) !important;
+  background-image: none !important;
+  border-color: var(--border) !important;
+}
+
+.analysis-type-card.is-active,
+.admin-type-card.is-active,
+.segmented button.is-active {
+  background: var(--primary) !important;
+  background-image: none !important;
+  color: var(--primary-foreground) !important;
+  border-color: var(--primary) !important;
+}
+
+.analysis-type-card.is-active *,
+.admin-type-card.is-active *,
+.segmented button.is-active * {
+  color: var(--primary-foreground) !important;
+}
+
+.type-insight-card::before {
+  background: var(--primary) !important;
+}
+
+.type-insight-meter {
+  border-color: var(--border) !important;
+}
+
+.type-insight-meter i,
+.type-bar i::after,
+.distribution-fill,
+.progress-fill,
+.type-bar-fill,
+.objective-progress,
+.test-mix-list article i::after,
+.breathing-orb::after,
+.race-score-meter i,
+.race-data-meter i,
+.race-signal-meter i {
+  background: var(--primary) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.dashboard-trend-svg .dash-line-volume,
+.dashboard-trend-svg .dash-line-tss,
+.performance-chart .volume-line,
+.performance-chart .tss-line,
+.goal-route .goal-route-optimistic,
+.volume-line {
+  filter: none !important;
+}
+
+.panel:hover,
+.metric-card:hover,
+.activity-card:hover,
+.goal-card:hover,
+.type-insight-card:hover,
+.analysis-type-card:hover,
+.breathing-protocol-card:hover,
+.race-data-card:hover,
+.differentials-grid article:hover,
+.differentials-page-grid article:hover {
+  border-color: rgba(255, 75, 11, 0.42) !important;
+  transform: translateY(-1px);
+}
