@@ -1201,8 +1201,18 @@ async function api(path, options = {}) {
     ...options
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error || `Erro HTTP ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(payload.error || `Erro HTTP ${response.status}`);
+    error.status = response.status;
+    error.payload = payload;
+    throw error;
+  }
   return payload;
+}
+
+function isAuthError(error) {
+  const message = String(error?.message || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return [401, 403].includes(Number(error?.status)) || message.includes("login obrigatorio") || message.includes("sessao");
 }
 
 const WAITLIST_BASE_COUNT = 11711;
@@ -1228,7 +1238,10 @@ function scheduleWaitlistModal() {
 function openWaitlistModal(manual = true) {
   const dialog = document.querySelector("#waitlistDialog");
   if (!dialog) return;
-  if (manual) sessionStorage.removeItem("waitlistModalDismissed");
+  if (manual) {
+    sessionStorage.removeItem("waitlistModalDismissed");
+    resetWaitlistModalToForm();
+  }
   if (!dialog.open) dialog.showModal();
   document.querySelector("#waitlistForm input[name='name']")?.focus();
 }
@@ -1244,6 +1257,30 @@ function setWaitlistMessage(message, isError = false) {
   if (!target) return;
   target.classList.toggle("is-error", isError);
   target.textContent = message;
+}
+
+function resetWaitlistModalToForm() {
+  const panel = document.querySelector(".waitlist-modal-panel");
+  const copy = document.querySelector(".waitlist-modal-copy");
+  const form = document.querySelector("#waitlistForm");
+  const success = document.querySelector("#waitlistSuccess");
+  panel?.classList.remove("is-success");
+  if (copy) copy.hidden = false;
+  if (form) form.hidden = false;
+  if (success) success.hidden = true;
+  setWaitlistMessage("");
+}
+
+function showWaitlistSuccess() {
+  const panel = document.querySelector(".waitlist-modal-panel");
+  const copy = document.querySelector(".waitlist-modal-copy");
+  const form = document.querySelector("#waitlistForm");
+  const success = document.querySelector("#waitlistSuccess");
+  panel?.classList.add("is-success");
+  if (copy) copy.hidden = true;
+  if (form) form.hidden = true;
+  if (success) success.hidden = false;
+  success?.querySelector("button")?.focus();
 }
 
 async function submitWaitlist(event) {
@@ -1266,7 +1303,7 @@ async function submitWaitlist(event) {
     });
     form.reset();
     sessionStorage.setItem("waitlistModalDismissed", "1");
-    setWaitlistMessage("Cadastro realizado com sucesso. Você entrou na lista de espera do ONZERUN. Nossa equipe entrará em contato quando novos acessos forem liberados.");
+    showWaitlistSuccess();
   } catch (error) {
     const duplicate = /já está cadastrado|cadastrado/i.test(error.message);
     setWaitlistMessage(duplicate ? "Este e-mail já está cadastrado na lista de espera." : "Não foi possível concluir seu cadastro agora. Tente novamente em alguns instantes.", true);
@@ -1279,6 +1316,14 @@ async function submitWaitlist(event) {
 }
 
 function showLogin(message = "") {
+  state.currentUser = null;
+  state.athletes = [];
+  state.activities = [];
+  state.goals = [];
+  state.integrations = {};
+  state.directory = { teams: [], coaches: [] };
+  state.selectedAthleteId = "";
+  localStorage.removeItem("selectedAthleteId");
   document.querySelector("#loginScreen").hidden = false;
   document.querySelector("#appShell").hidden = true;
   document.querySelector("#loginMessage").textContent = message;
@@ -1429,6 +1474,10 @@ function startOfMondayWeek(date) {
 }
 
 function setView(view) {
+  if (!state.currentUser) {
+    showLogin();
+    return;
+  }
   if (view === "settings" && !canManageAthletes()) view = "athlete";
   state.view = view;
   document.querySelectorAll("[data-view]").forEach((section) => section.classList.toggle("is-visible", section.dataset.view === view));
@@ -7971,22 +8020,23 @@ async function boot() {
     await loadSettings();
     if (canViewWaitlist()) await loadWaitlistSignups();
   } catch (error) {
-    if (error.message === "Login obrigatório.") showLogin();
-    else {
-      showApp();
-      renderPermissions();
-      renderProviders();
-      renderAthletes();
-      renderAthleteSelector();
-      renderAthleteIdentity();
-      renderCalendar();
-
-      renderTrainingInsights();
-      renderDashboard();
-      applyI18n();
-      setLog([`Erro ao carregar dados do banco: ${error.message}`], true);
-      setView(viewFromHash(initialHash));
+    if (!state.currentUser || isAuthError(error)) {
+      showLogin(isAuthError(error) ?"" : "Não foi possível validar sua sessão. Faça login para continuar.");
+      return;
     }
+    showApp();
+    renderPermissions();
+    renderProviders();
+    renderAthletes();
+    renderAthleteSelector();
+    renderAthleteIdentity();
+    renderCalendar();
+
+    renderTrainingInsights();
+    renderDashboard();
+    applyI18n();
+    setLog([`Erro ao carregar dados do banco: ${error.message}`], true);
+    setView(viewFromHash(initialHash));
     return;
   }
 
@@ -8135,6 +8185,12 @@ document.addEventListener("click", async (event) => {
   if (event.target.closest("[data-close-waitlist]")) {
     event.preventDefault();
     closeWaitlistModal();
+    return;
+  }
+  if (event.target.closest("[data-waitlist-more]")) {
+    event.preventDefault();
+    resetWaitlistModalToForm();
+    document.querySelector("#waitlistForm input[name='name']")?.focus();
     return;
   }
   const waitlistViewButton = event.target.closest("[data-view-waitlist]");
