@@ -29,6 +29,10 @@ const state = {
   breathingExecutionStartedAt: "",
   raceSelectedGoalId: "",
   raceSelectedActivityId: "",
+  waitlistSignups: [],
+  selectedWaitlistId: "",
+  waitlistLoading: false,
+  waitlistModalTimer: 0,
   performanceTests: (() => {
     try {
       const parsed = JSON.parse(localStorage.getItem("performanceTests") || "[]");
@@ -100,7 +104,7 @@ const translations = {
     "profile.collapse": "Fechar painel",
     "profile.close": "Fechar",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "Lançamento oficial no dia 01/07/2026"
+    "login.launch": "Lista de espera"
   },
   "pt-PT": {
     "nav.home": "INÍCIO",
@@ -114,7 +118,7 @@ const translations = {
     "profile.collapse": "Fechar painel",
     "profile.close": "Fechar",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "Lançamento oficial no dia 01/07/2026"
+    "login.launch": "Lista de espera"
   },
   en: {
     "nav.home": "HOME",
@@ -128,7 +132,7 @@ const translations = {
     "profile.collapse": "Close panel",
     "profile.close": "Close",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "Official launch on 01/07/2026"
+    "login.launch": "Lista de espera"
   },
   es: {
     "nav.home": "INICIO",
@@ -142,7 +146,7 @@ const translations = {
     "profile.collapse": "Cerrar panel",
     "profile.close": "Cerrar",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "Lanzamiento oficial el 01/07/2026"
+    "login.launch": "Lista de espera"
   },
   fr: {
     "nav.home": "ACCUEIL",
@@ -156,7 +160,7 @@ const translations = {
     "profile.collapse": "Fermer le panneau",
     "profile.close": "Fermer",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "Lancement officiel le 01/07/2026"
+    "login.launch": "Lista de espera"
   },
   de: {
     "nav.home": "START",
@@ -170,7 +174,7 @@ const translations = {
     "profile.collapse": "Panel schließen",
     "profile.close": "Schließen",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "Offizieller Start am 01.07.2026"
+    "login.launch": "Lista de espera"
   },
   ja: {
     "nav.home": "ホーム",
@@ -184,7 +188,7 @@ const translations = {
     "profile.collapse": "パネルを閉じる",
     "profile.close": "閉じる",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "正式リリース: 2026年7月1日"
+    "login.launch": "Lista de espera"
   },
   zh: {
     "nav.home": "首页",
@@ -198,7 +202,7 @@ const translations = {
     "profile.collapse": "关闭面板",
     "profile.close": "关闭",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "正式发布:2026年7月1日"
+    "login.launch": "Lista de espera"
   },
   sw: {
     "nav.home": "NYUMBANI",
@@ -212,7 +216,7 @@ const translations = {
     "profile.collapse": "Funga paneli",
     "profile.close": "Funga",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "Uzinduzi rasmi tarehe 01/07/2026"
+    "login.launch": "Lista de espera"
   }
 };
 
@@ -229,7 +233,7 @@ const officialTranslations = {
     "login.kicker": "Access",
     "login.title": "Sign in to your dashboard",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "Official launch on 01/07/2026",
+    "login.launch": "Lista de espera",
     "login.password": "Password",
     "login.submit": "Sign in",
     "nav.home": "HOME",
@@ -294,7 +298,7 @@ const officialTranslations = {
     "login.kicker": "Acesso",
     "login.title": "Entrar no painel",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "Lançamento oficial no dia 01/07/2026",
+    "login.launch": "Lista de espera",
     "login.password": "Senha",
     "login.submit": "Entrar",
     "nav.home": "HOME",
@@ -359,7 +363,7 @@ const officialTranslations = {
     "login.kicker": "アクセス",
     "login.title": "ダッシュボードにサインイン",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "正式リリース: 2026年7月1日",
+    "login.launch": "Lista de espera",
     "login.password": "パスワード",
     "login.submit": "サインイン",
     "nav.home": "ホーム",
@@ -424,7 +428,7 @@ const officialTranslations = {
     "login.kicker": "Acceso",
     "login.title": "Entrar al panel",
     "login.slogan": "The world's smartest AI-powered training manager.",
-    "login.launch": "Lanzamiento oficial el 01/07/2026",
+    "login.launch": "Lista de espera",
     "login.password": "Contraseña",
     "login.submit": "Entrar",
     "nav.home": "INICIO",
@@ -797,6 +801,10 @@ function isSuperAdmin() {
 
 function canManageAthletes() {
   return ["admin", "manager", "coach"].includes(state.currentUser?.role);
+}
+
+function canViewWaitlist() {
+  return ["admin", "manager"].includes(state.currentUser?.role);
 }
 
 function isMobileLayout() {
@@ -1197,11 +1205,86 @@ async function api(path, options = {}) {
   return payload;
 }
 
+const WAITLIST_BASE_COUNT = 11711;
+const WAITLIST_BASE_TIME = new Date("2026-07-01T00:00:00-03:00").getTime();
+
+function waitlistCurrentCount() {
+  const elapsedMinutes = Math.max(0, Math.floor((Date.now() - WAITLIST_BASE_TIME) / 60000));
+  return WAITLIST_BASE_COUNT + Math.floor(elapsedMinutes / 3) * 2;
+}
+
+function renderWaitlistCounter() {
+  const target = document.querySelector("#waitlistCounter");
+  if (!target) return;
+  target.innerHTML = `Lista de espera: <strong>${waitlistCurrentCount().toLocaleString("pt-BR")}</strong>`;
+}
+
+function scheduleWaitlistModal() {
+  if (sessionStorage.getItem("waitlistModalDismissed") === "1") return;
+  window.clearTimeout(state.waitlistModalTimer);
+  state.waitlistModalTimer = window.setTimeout(() => openWaitlistModal(false), 800);
+}
+
+function openWaitlistModal(manual = true) {
+  const dialog = document.querySelector("#waitlistDialog");
+  if (!dialog) return;
+  if (manual) sessionStorage.removeItem("waitlistModalDismissed");
+  if (!dialog.open) dialog.showModal();
+  document.querySelector("#waitlistForm input[name='name']")?.focus();
+}
+
+function closeWaitlistModal() {
+  const dialog = document.querySelector("#waitlistDialog");
+  if (dialog?.open) dialog.close();
+  sessionStorage.setItem("waitlistModalDismissed", "1");
+}
+
+function setWaitlistMessage(message, isError = false) {
+  const target = document.querySelector("#waitlistMessage");
+  if (!target) return;
+  target.classList.toggle("is-error", isError);
+  target.textContent = message;
+}
+
+async function submitWaitlist(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const submit = form.querySelector("[data-waitlist-submit]");
+  if (!form.reportValidity()) return;
+  const body = Object.fromEntries(new FormData(form).entries());
+  body.consent = Boolean(form.elements.consent.checked);
+  const originalText = submit?.textContent || "Entrar na lista de espera";
+  if (submit) {
+    submit.disabled = true;
+    submit.textContent = "Enviando...";
+  }
+  setWaitlistMessage("");
+  try {
+    await api("/api/waitlist", {
+      method: "POST",
+      body: JSON.stringify(body)
+    });
+    form.reset();
+    sessionStorage.setItem("waitlistModalDismissed", "1");
+    setWaitlistMessage("Cadastro realizado com sucesso. Você entrou na lista de espera do ONZERUN. Nossa equipe entrará em contato quando novos acessos forem liberados.");
+  } catch (error) {
+    const duplicate = /já está cadastrado|cadastrado/i.test(error.message);
+    setWaitlistMessage(duplicate ? "Este e-mail já está cadastrado na lista de espera." : "Não foi possível concluir seu cadastro agora. Tente novamente em alguns instantes.", true);
+  } finally {
+    if (submit) {
+      submit.disabled = false;
+      submit.textContent = originalText;
+    }
+  }
+}
+
 function showLogin(message = "") {
   document.querySelector("#loginScreen").hidden = false;
   document.querySelector("#appShell").hidden = true;
   document.querySelector("#loginMessage").textContent = message;
   applyI18n();
+  renderWaitlistCounter();
+  scheduleWaitlistModal();
 }
 
 function showApp() {
@@ -6410,8 +6493,12 @@ function renderAthleteIdentity() {
 function renderPermissions() {
   const manageable = canManageAthletes();
   const admin = isSuperAdmin();
+  const waitlistAllowed = canViewWaitlist();
   document.querySelectorAll(".manager-only").forEach((item) => {
     item.hidden = !manageable;
+  });
+  document.querySelectorAll("#waitlistAdminPanel").forEach((item) => {
+    item.hidden = !waitlistAllowed;
   });
   document.querySelectorAll(".athlete-list-panel").forEach((item) => {
     item.hidden = !manageable;
@@ -6649,6 +6736,147 @@ function renderAthletes() {
     </article>
   `;
   }).join("");
+}
+
+const waitlistStatusLabels = {
+  waiting: "aguardando liberação",
+  invited: "convite enviado",
+  approved: "acesso aprovado",
+  rejected: "fora do perfil no momento"
+};
+
+async function loadWaitlistSignups() {
+  if (!canManageAthletes()) return;
+  state.waitlistLoading = true;
+  try {
+    const payload = await api("/api/waitlist");
+    state.waitlistSignups = payload.signups || [];
+  } catch {
+    state.waitlistSignups = [];
+  } finally {
+    state.waitlistLoading = false;
+    renderWaitlistAdmin();
+  }
+}
+
+function filteredWaitlistSignups() {
+  const search = (document.querySelector("#waitlistFilterSearch")?.value || "").trim().toLowerCase();
+  const event = document.querySelector("#waitlistFilterEvent")?.value || "";
+  const status = document.querySelector("#waitlistFilterStatus")?.value || "";
+  return (state.waitlistSignups || []).filter((item) => {
+    const haystack = [item.name, item.email, item.whatsapp].filter(Boolean).join(" ").toLowerCase();
+    if (search && !haystack.includes(search)) return false;
+    if (event && item.mainEvent !== event) return false;
+    if (status && item.status !== status) return false;
+    return true;
+  });
+}
+
+function renderWaitlistAdmin() {
+  const body = document.querySelector("#waitlistTableBody");
+  const stats = document.querySelector("#waitlistAdminStats");
+  const detail = document.querySelector("#waitlistDetail");
+  if (!body) return;
+  const rows = filteredWaitlistSignups();
+  const total = state.waitlistSignups.length;
+  const byStatus = state.waitlistSignups.reduce((acc, item) => {
+    acc[item.status] = (acc[item.status] || 0) + 1;
+    return acc;
+  }, {});
+  if (stats) {
+    stats.innerHTML = ["waiting", "invited", "approved", "rejected"].map((status) => `
+      <article><span>${escapeHtml(status)}</span><strong>${byStatus[status] || 0}</strong></article>
+    `).join("") + `<article><span>Total</span><strong>${total}</strong></article>`;
+  }
+  if (state.waitlistLoading) {
+    body.innerHTML = `<tr><td colspan="8">Carregando lista de espera.</td></tr>`;
+    return;
+  }
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="8">Nenhum cadastro encontrado para os filtros atuais.</td></tr>`;
+  } else {
+    body.innerHTML = rows.map((item) => `
+      <tr class="${String(item.id) === String(state.selectedWaitlistId) ?"is-selected" : ""}">
+        <td>${escapeHtml(formatWaitlistDate(item.createdAt))}</td>
+        <td>${escapeHtml(item.name)}</td>
+        <td>${escapeHtml(item.email)}</td>
+        <td>${escapeHtml(item.whatsapp)}</td>
+        <td>${escapeHtml(item.mainEvent)}</td>
+        <td>${escapeHtml(item.personalBest)}</td>
+        <td>
+          <select class="waitlist-status-select" data-waitlist-status="${escapeHtml(item.id)}">
+            ${Object.keys(waitlistStatusLabels).map((status) => `<option value="${status}" ${item.status === status ?"selected" : ""}>${status}</option>`).join("")}
+          </select>
+        </td>
+        <td>
+          <div class="waitlist-actions">
+            <button class="secondary-action compact" type="button" data-view-waitlist="${escapeHtml(item.id)}">Detalhes</button>
+            <button class="secondary-action compact" type="button" data-copy-text="${escapeHtml(item.email)}">E-mail</button>
+            <button class="secondary-action compact" type="button" data-copy-text="${escapeHtml(item.whatsapp)}">WhatsApp</button>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+  }
+  const selected = state.waitlistSignups.find((item) => String(item.id) === String(state.selectedWaitlistId));
+  if (detail) {
+    detail.hidden = !selected;
+    detail.innerHTML = selected ?`
+      <div class="section-title"><span>Detalhes</span><h3>${escapeHtml(selected.name)}</h3></div>
+      <div class="waitlist-detail-grid">
+        <p><strong>E-mail</strong>${escapeHtml(selected.email)}</p>
+        <p><strong>WhatsApp</strong>${escapeHtml(selected.whatsapp)}</p>
+        <p><strong>Prova principal</strong>${escapeHtml(selected.mainEvent)}</p>
+        <p><strong>Melhor tempo</strong>${escapeHtml(selected.personalBest)}</p>
+        <p><strong>Status atual</strong>${escapeHtml(waitlistStatusLabels[selected.status] || selected.status)}</p>
+        <p><strong>Data de cadastro</strong>${escapeHtml(formatWaitlistDate(selected.createdAt))}</p>
+        <p><strong>Origem</strong>${escapeHtml(selected.source || "login_teaser")}</p>
+        <p><strong>Última atualização</strong>${escapeHtml(formatWaitlistDate(selected.updatedAt))}</p>
+      </div>
+    ` : "";
+  }
+}
+
+function formatWaitlistDate(value) {
+  const date = new Date(value || "");
+  return Number.isNaN(date.getTime()) ?"--" : date.toLocaleString("pt-BR");
+}
+
+async function updateWaitlistStatus(id, status) {
+  try {
+    const payload = await api(`/api/waitlist/${encodeURIComponent(id)}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status })
+    });
+    state.waitlistSignups = payload.signups || state.waitlistSignups.map((item) => String(item.id) === String(id) ?payload.signup : item);
+    renderWaitlistAdmin();
+    setAdminMessage("Status da lista de espera atualizado.");
+  } catch (error) {
+    setAdminMessage(error.message, true);
+    renderWaitlistAdmin();
+  }
+}
+
+function exportWaitlistCsv() {
+  const rows = filteredWaitlistSignups();
+  const header = ["Nome", "E-mail", "WhatsApp", "Prova principal", "Melhor tempo", "Status", "Data do cadastro"];
+  const csvRows = [header, ...rows.map((item) => [
+    item.name,
+    item.email,
+    item.whatsapp,
+    item.mainEvent,
+    item.personalBest,
+    item.status,
+    formatWaitlistDate(item.createdAt)
+  ])];
+  const csv = csvRows.map((row) => row.map((cell) => `"${String(cell || "").replaceAll('"', '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "lista-de-espera-onzerun.csv";
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 function setLog(items, isError = false) {
@@ -7741,6 +7969,7 @@ async function boot() {
     state.activities = await api("/api/activities");
     state.goals = await api("/api/goals");
     await loadSettings();
+    if (canViewWaitlist()) await loadWaitlistSignups();
   } catch (error) {
     if (error.message === "Login obrigatório.") showLogin();
     else {
@@ -7765,6 +7994,7 @@ async function boot() {
   renderPermissions();
   renderProviders();
   renderAthletes();
+  renderWaitlistAdmin();
   renderAthleteSelector();
   renderAthleteIdentity();
   renderCalendar();
@@ -7783,6 +8013,8 @@ async function boot() {
 }
 
 applyTheme();
+renderWaitlistCounter();
+window.setInterval(renderWaitlistCounter, 60000);
 if (shell && localStorage.getItem("railCollapsed") === "1") setRailCollapsed(true);
 if (menuToggle) menuToggle.addEventListener("click", toggleMenu);
 if (railBackdrop) railBackdrop.addEventListener("click", () => setMenuOpen(false));
@@ -7895,6 +8127,36 @@ calendar.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", async (event) => {
+  if (event.target.closest("[data-open-waitlist]")) {
+    event.preventDefault();
+    openWaitlistModal(true);
+    return;
+  }
+  if (event.target.closest("[data-close-waitlist]")) {
+    event.preventDefault();
+    closeWaitlistModal();
+    return;
+  }
+  const waitlistViewButton = event.target.closest("[data-view-waitlist]");
+  if (waitlistViewButton) {
+    event.preventDefault();
+    state.selectedWaitlistId = String(state.selectedWaitlistId) === String(waitlistViewButton.dataset.viewWaitlist) ?"" : waitlistViewButton.dataset.viewWaitlist;
+    renderWaitlistAdmin();
+    return;
+  }
+  const copyButton = event.target.closest("[data-copy-text]");
+  if (copyButton) {
+    event.preventDefault();
+    const text = copyButton.dataset.copyText || "";
+    await navigator.clipboard?.writeText(text);
+    setAdminMessage("Contato copiado.");
+    return;
+  }
+  if (event.target.closest("[data-export-waitlist]")) {
+    event.preventDefault();
+    exportWaitlistCsv();
+    return;
+  }
   const adminModeButton = event.target.closest("[data-admin-mode]");
   if (adminModeButton) {
     event.preventDefault();
@@ -8268,6 +8530,15 @@ document.addEventListener("click", async (event) => {
 });
 
 document.addEventListener("change", (event) => {
+  if (event.target?.matches("#waitlistFilterSearch, #waitlistFilterEvent, #waitlistFilterStatus")) {
+    renderWaitlistAdmin();
+    return;
+  }
+  const waitlistStatus = event.target?.closest("[data-waitlist-status]");
+  if (waitlistStatus) {
+    updateWaitlistStatus(waitlistStatus.dataset.waitlistStatus, waitlistStatus.value);
+    return;
+  }
   if (event.target?.matches("[data-language-select], #languageSelect")) {
     state.language = supportedLanguageOptions[event.target.value] ?event.target.value : "en";
     localStorage.setItem("appLanguage", state.language);
@@ -8308,6 +8579,9 @@ document.addEventListener("change", (event) => {
     renderAnalysisFiles();
   }
 });
+
+document.querySelector("#waitlistForm")?.addEventListener("submit", submitWaitlist);
+document.querySelector("#waitlistFilterSearch")?.addEventListener("input", renderWaitlistAdmin);
 
 document.addEventListener("keydown", (event) => {
   const savedTestCard = event.target.closest?.("[data-view-test-result]");

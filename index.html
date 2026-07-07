@@ -34,10 +34,66 @@
           <input name="password" type="password" autocomplete="current-password" required />
         </label>
         <button class="primary-action" type="submit" data-i18n="login.submit">Sign in</button>
+        <div class="login-waitlist-copy">
+          <span>Beta disponível apenas para atletas convidados.</span>
+          <button class="login-waitlist-link" type="button" data-open-waitlist>Quer acesso antecipado? Entre na lista de espera.</button>
+        </div>
         <p id="loginMessage" class="login-message"></p>
-        <p class="login-launch" data-i18n="login.launch">Lançamento oficial no dia 01/07/2026</p>
+        <p class="login-launch waitlist-counter" id="waitlistCounter">Lista de espera: 11.711</p>
       </form>
     </section>
+
+    <dialog id="waitlistDialog" class="profile-dialog waitlist-dialog">
+      <button class="close-button dialog-fixed-close" type="button" data-close-waitlist aria-label="Fechar">x</button>
+      <section class="modal-panel waitlist-modal-panel">
+        <div class="section-title">
+          <span>Acesso antecipado</span>
+          <h3>Lista de espera</h3>
+        </div>
+        <div class="waitlist-modal-copy">
+          <p>O ONZERUN foi liberado inicialmente para atletas de elite convidados para a versão beta. Em breve, novos acessos serão liberados para os primeiros atletas da fila de espera.</p>
+          <p>Serão liberados 1.000 acessos por mês, priorizando atletas de acordo com o nível competitivo informado no cadastro.</p>
+          <strong>Mais de 10 mil usuários já estão na lista de espera. A versão beta também conta com mais de 200 atletas ao redor do mundo que correm os 5.000m abaixo de 14 minutos.</strong>
+        </div>
+        <form id="waitlistForm" class="waitlist-form">
+          <label class="credential-field">
+            <span>Nome completo</span>
+            <input name="name" placeholder="Digite seu nome" autocomplete="name" required />
+          </label>
+          <label class="credential-field">
+            <span>E-mail</span>
+            <input name="email" type="email" placeholder="seunome@email.com" autocomplete="email" required />
+          </label>
+          <label class="credential-field">
+            <span>WhatsApp</span>
+            <input name="whatsapp" type="tel" placeholder="+55 (11) 99999-9999" autocomplete="tel" required />
+          </label>
+          <label class="credential-field">
+            <span>Prova principal</span>
+            <select name="main_event" required>
+              <option value="">Selecione</option>
+              <option value="800m">800m</option>
+              <option value="1500m">1500m</option>
+              <option value="3000m">3000m</option>
+              <option value="5000m">5000m</option>
+              <option value="10000m">10000m</option>
+              <option value="21k">21k</option>
+              <option value="42k">42k</option>
+            </select>
+          </label>
+          <label class="credential-field">
+            <span>Melhor tempo na prova</span>
+            <input name="personal_best" placeholder="Ex: 13:58, 29:40, 1:05:30" required />
+          </label>
+          <label class="waitlist-consent">
+            <input name="consent" type="checkbox" required />
+            <span>Aceito receber contato da equipe ONZERUN sobre a liberação de acesso e informações relacionadas à lista de espera.</span>
+          </label>
+          <button class="primary-action" type="submit" data-waitlist-submit>Entrar na lista de espera</button>
+          <p id="waitlistMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </section>
+    </dialog>
 
     <div class="shell" id="appShell" hidden>
       <button class="menu-toggle" id="menuToggle" type="button" aria-label="Alternar menu" aria-expanded="false">
@@ -1067,6 +1123,64 @@
                 <button class="primary-action compact" type="submit">Salvar IA</button>
                 <p id="aiSettingsMessage" class="form-message" aria-live="polite"></p>
               </form>
+            </section>
+
+            <section class="panel waitlist-admin-panel manager-only" id="waitlistAdminPanel" hidden>
+              <div class="section-title">
+                <span>Lista de espera</span>
+                <h3>Cadastros recebidos</h3>
+              </div>
+              <div class="waitlist-admin-toolbar">
+                <label class="credential-field">
+                  <span>Buscar</span>
+                  <input id="waitlistFilterSearch" placeholder="Nome, e-mail ou WhatsApp" />
+                </label>
+                <label class="credential-field">
+                  <span>Prova</span>
+                  <select id="waitlistFilterEvent">
+                    <option value="">Todas</option>
+                    <option value="800m">800m</option>
+                    <option value="1500m">1500m</option>
+                    <option value="3000m">3000m</option>
+                    <option value="5000m">5000m</option>
+                    <option value="10000m">10000m</option>
+                    <option value="21k">21k</option>
+                    <option value="42k">42k</option>
+                  </select>
+                </label>
+                <label class="credential-field">
+                  <span>Status</span>
+                  <select id="waitlistFilterStatus">
+                    <option value="">Todos</option>
+                    <option value="waiting">waiting</option>
+                    <option value="invited">invited</option>
+                    <option value="approved">approved</option>
+                    <option value="rejected">rejected</option>
+                  </select>
+                </label>
+                <button class="secondary-action compact" type="button" data-export-waitlist>Exportar CSV</button>
+              </div>
+              <div class="waitlist-admin-stats" id="waitlistAdminStats"></div>
+              <div class="waitlist-table-wrap">
+                <table class="waitlist-table">
+                  <thead>
+                    <tr>
+                      <th>Data do cadastro</th>
+                      <th>Nome</th>
+                      <th>E-mail</th>
+                      <th>WhatsApp</th>
+                      <th>Prova principal</th>
+                      <th>Melhor tempo</th>
+                      <th>Status</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="waitlistTableBody">
+                    <tr><td colspan="8">Carregando lista de espera.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div id="waitlistDetail" class="waitlist-detail" hidden></div>
             </section>
 
             <aside class="panel athlete-list-panel">

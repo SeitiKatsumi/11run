@@ -101,6 +101,22 @@ CREATE TABLE IF NOT EXISTS app_settings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS waitlist_signups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  whatsapp TEXT NOT NULL,
+  main_event TEXT NOT NULL,
+  personal_best TEXT NOT NULL,
+  consent BOOLEAN NOT NULL DEFAULT false,
+  status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'invited', 'approved', 'rejected')),
+  source TEXT NOT NULL DEFAULT 'login_teaser',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, email)
+);
+
 CREATE TABLE IF NOT EXISTS athlete_goals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -234,6 +250,8 @@ CREATE INDEX IF NOT EXISTS idx_athlete_profiles_coach ON athlete_profiles(coach_
 CREATE INDEX IF NOT EXISTS idx_activities_tenant_date ON activities(tenant_id, activity_date);
 CREATE INDEX IF NOT EXISTS idx_activities_status ON activities(tenant_id, athlete_user_id, status, activity_date);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_waitlist_tenant_created ON waitlist_signups(tenant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_waitlist_tenant_status ON waitlist_signups(tenant_id, status, main_event);
 CREATE INDEX IF NOT EXISTS idx_athlete_goals_athlete_date ON athlete_goals(tenant_id, athlete_user_id, race_date);
 CREATE INDEX IF NOT EXISTS idx_breathing_protocols_tenant ON breathing_protocols(tenant_id, category, age_group, is_active);
 CREATE INDEX IF NOT EXISTS idx_breathing_sessions_user ON breathing_sessions(tenant_id, user_id, started_at);

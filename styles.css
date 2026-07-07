@@ -7628,3 +7628,208 @@ body {
   border-color: rgba(255, 75, 11, 0.42) !important;
   transform: translateY(-1px);
 }
+
+/* Waitlist launch teaser */
+.login-waitlist-copy {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.login-waitlist-link {
+  width: 100%;
+  padding: 0;
+  color: var(--primary);
+  background: transparent;
+  border: 0;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+
+.waitlist-counter {
+  border: 1px solid rgba(255, 75, 11, 0.42);
+  background: rgba(255, 75, 11, 0.08) !important;
+  color: var(--foreground) !important;
+}
+
+.waitlist-counter strong {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.waitlist-dialog {
+  width: min(720px, calc(100vw - 28px));
+}
+
+.waitlist-modal-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.waitlist-modal-copy {
+  display: grid;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.waitlist-modal-copy p,
+.waitlist-modal-copy strong {
+  margin: 0;
+}
+
+.waitlist-modal-copy strong {
+  color: var(--foreground);
+  font-weight: 650;
+}
+
+.waitlist-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.waitlist-form .primary-action,
+.waitlist-form .form-message,
+.waitlist-consent {
+  grid-column: 1 / -1;
+}
+
+.waitlist-consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.waitlist-consent input {
+  margin-top: 3px;
+  accent-color: var(--primary);
+}
+
+.waitlist-admin-panel {
+  grid-column: 1 / -1;
+}
+
+.waitlist-admin-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(140px, 0.6fr) minmax(140px, 0.6fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.waitlist-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.waitlist-admin-stats article,
+.waitlist-detail {
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.waitlist-admin-stats span {
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.waitlist-admin-stats strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--foreground);
+  font-size: 22px;
+}
+
+.waitlist-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.waitlist-table {
+  width: 100%;
+  min-width: 960px;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font-size: 12px;
+}
+
+.waitlist-table th,
+.waitlist-table td {
+  padding: 11px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.waitlist-table th {
+  color: var(--primary);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.waitlist-table tr.is-selected td {
+  background: rgba(255, 75, 11, 0.06);
+}
+
+.waitlist-status-select {
+  min-width: 118px;
+  padding: 8px;
+  color: var(--foreground);
+  background: var(--muted-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.waitlist-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.waitlist-detail {
+  margin-top: 12px;
+}
+
+.waitlist-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.waitlist-detail-grid p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.waitlist-detail-grid strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--primary);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .waitlist-form,
+  .waitlist-admin-toolbar,
+  .waitlist-admin-stats,
+  .waitlist-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}

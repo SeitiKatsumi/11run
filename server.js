@@ -18,6 +18,7 @@ const ACTIVITIES_FILE = path.join(DATA_DIR, "activities.json");
 const ATHLETES_FILE = path.join(DATA_DIR, "athletes.json");
 const GOALS_FILE = path.join(DATA_DIR, "goals.json");
 const BREATHING_FILE = path.join(DATA_DIR, "breathing.json");
+const WAITLIST_FILE = path.join(DATA_DIR, "waitlist.json");
 const SCHEMA_FILE = path.join(ROOT, "db", "schema.sql");
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || `http://127.0.0.1:${PORT}`).replace(/\/$/, "");
 const DEFAULT_TENANT_SLUG = process.env.DEFAULT_TENANT_SLUG || "default";
@@ -241,6 +242,7 @@ function ensureDataFiles() {
   if (!fs.existsSync(INTEGRATIONS_FILE)) writeJson(INTEGRATIONS_FILE, defaultIntegrations());
   if (!fs.existsSync(ACTIVITIES_FILE)) writeJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
   if (!fs.existsSync(ATHLETES_FILE)) writeJson(ATHLETES_FILE, []);
+  if (!fs.existsSync(WAITLIST_FILE)) writeJson(WAITLIST_FILE, []);
   if (!fs.existsSync(BREATHING_FILE)) {
     writeJson(BREATHING_FILE, { protocols: DEFAULT_BREATHING_PROTOCOLS, sessions: [], insights: [], preferences: {} });
   }
@@ -256,6 +258,126 @@ function readJson(filePath, fallback) {
 
 function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+const WAITLIST_EVENTS = new Set(["800m", "1500m", "3000m", "5000m", "10000m", "21k", "42k"]);
+const WAITLIST_STATUS = new Set(["waiting", "invited", "approved", "rejected"]);
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function normalizeWaitlistSignup(input = {}) {
+  const name = String(input.name || "").trim().replace(/\s+/g, " ").slice(0, 140);
+  const email = normalizeEmail(input.email);
+  const whatsapp = String(input.whatsapp || "").trim().replace(/\s+/g, " ").slice(0, 40);
+  const mainEvent = String(input.main_event || input.mainEvent || "").trim();
+  const personalBest = String(input.personal_best || input.personalBest || "").trim().slice(0, 40);
+  const consent = input.consent === true || input.consent === "true" || input.consent === "on";
+  if (!name) throw httpError("Informe seu nome completo.", 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw httpError("Informe um e-mail válido.", 400);
+  if (!whatsapp || whatsapp.replace(/\D/g, "").length < 8) throw httpError("Informe um WhatsApp válido.", 400);
+  if (!WAITLIST_EVENTS.has(mainEvent)) throw httpError("Informe a prova principal.", 400);
+  if (!personalBest) throw httpError("Informe seu melhor tempo na prova.", 400);
+  if (!consent) throw httpError("O consentimento é obrigatório.", 400);
+  return {
+    name,
+    email,
+    whatsapp,
+    mainEvent,
+    personalBest,
+    consent,
+    status: WAITLIST_STATUS.has(input.status) ?input.status : "waiting",
+    source: String(input.source || "login_teaser").trim().slice(0, 60) || "login_teaser"
+  };
+}
+
+function formatWaitlistSignup(row = {}) {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    whatsapp: row.whatsapp,
+    mainEvent: row.main_event || row.mainEvent,
+    personalBest: row.personal_best || row.personalBest,
+    consent: Boolean(row.consent),
+    status: row.status || "waiting",
+    source: row.source || "login_teaser",
+    createdAt: row.created_at || row.createdAt,
+    updatedAt: row.updated_at || row.updatedAt
+  };
+}
+
+async function listWaitlistSignups(tenantId) {
+  if (!pool) {
+    return readJson(WAITLIST_FILE, []).map(formatWaitlistSignup)
+      .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+  }
+  const result = await query(
+    `SELECT * FROM waitlist_signups
+     WHERE tenant_id = $1
+     ORDER BY created_at DESC`,
+    [tenantId]
+  );
+  return result.rows.map(formatWaitlistSignup);
+}
+
+async function createWaitlistSignup(tenantId, input = {}) {
+  const signup = normalizeWaitlistSignup(input);
+  if (!pool) {
+    const items = readJson(WAITLIST_FILE, []);
+    if (items.some((item) => normalizeEmail(item.email) === signup.email)) {
+      throw httpError("Este e-mail já está cadastrado na lista de espera.", 409);
+    }
+    const now = new Date().toISOString();
+    const record = {
+      id: crypto.randomUUID(),
+      ...signup,
+      createdAt: now,
+      updatedAt: now
+    };
+    items.unshift(record);
+    writeJson(WAITLIST_FILE, items);
+    return formatWaitlistSignup(record);
+  }
+  try {
+    const result = await query(
+      `INSERT INTO waitlist_signups (
+         tenant_id, name, email, whatsapp, main_event, personal_best, consent, status, source
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [tenantId, signup.name, signup.email, signup.whatsapp, signup.mainEvent, signup.personalBest, signup.consent, signup.status, signup.source]
+    );
+    return formatWaitlistSignup(result.rows[0]);
+  } catch (error) {
+    if (String(error.code) === "23505") {
+      throw httpError("Este e-mail já está cadastrado na lista de espera.", 409);
+    }
+    throw error;
+  }
+}
+
+async function updateWaitlistStatus(tenantId, id, status) {
+  const nextStatus = String(status || "").trim();
+  if (!WAITLIST_STATUS.has(nextStatus)) throw httpError("Status inválido.", 400);
+  if (!pool) {
+    const items = readJson(WAITLIST_FILE, []);
+    const index = items.findIndex((item) => String(item.id) === String(id));
+    if (index < 0) throw httpError("Cadastro não encontrado.", 404);
+    items[index] = { ...items[index], status: nextStatus, updatedAt: new Date().toISOString() };
+    writeJson(WAITLIST_FILE, items);
+    return formatWaitlistSignup(items[index]);
+  }
+  const result = await query(
+    `UPDATE waitlist_signups
+     SET status = $3, updated_at = now()
+     WHERE tenant_id = $1 AND id = $2
+     RETURNING *`,
+    [tenantId, id, nextStatus]
+  );
+  if (!result.rows[0]) throw httpError("Cadastro não encontrado.", 404);
+  return formatWaitlistSignup(result.rows[0]);
 }
 
 function clone(value) {
@@ -3723,6 +3845,14 @@ async function handleApi(req, res, url) {
       return;
     }
 
+    if (req.method === "POST" && url.pathname === "/api/waitlist") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const body = await readRequestBody(req);
+      const signup = await createWaitlistSignup(tenant.id, body);
+      sendJson(res, 201, { signup });
+      return;
+    }
+
     if (req.method === "POST" && url.pathname === "/api/translate") {
       const body = await readRequestBody(req);
       const targetLanguage = normalizeTranslateTarget(body.targetLanguage || body.target || "en");
@@ -3868,6 +3998,25 @@ async function handleApi(req, res, url) {
       requireRole(user, ["admin"]);
       const body = await readRequestBody(req);
       sendJson(res, 200, await saveAppSettings(tenant.id, body));
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/waitlist") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
+      requireRole(user, ["admin", "manager"]);
+      sendJson(res, 200, { signups: await listWaitlistSignups(tenant.id) });
+      return;
+    }
+
+    const waitlistStatusRoute = url.pathname.match(/^\/api\/waitlist\/([^/]+)\/status$/);
+    if (waitlistStatusRoute && req.method === "PUT") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
+      requireRole(user, ["admin", "manager"]);
+      const body = await readRequestBody(req);
+      const signup = await updateWaitlistStatus(tenant.id, decodeURIComponent(waitlistStatusRoute[1]), body.status);
+      sendJson(res, 200, { signup, signups: await listWaitlistSignups(tenant.id) });
       return;
     }
 
