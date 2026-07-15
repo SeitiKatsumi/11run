@@ -3612,25 +3612,217 @@ async function testOpenAiSettings(tenantId) {
   };
 }
 
+function normalizeSearchText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function activityDistanceMeters(activity) {
+  const rawDistance = safeNumber(activity.distanceMeters, activity.raw?.distance);
+  return rawDistance || parseDistanceToMeters(activity.distance);
+}
+
+function activityDurationSeconds(activity) {
+  const rawDuration = safeNumber(activity.movingTimeSeconds, activity.elapsedTimeSeconds, activity.raw?.moving_time, activity.raw?.elapsed_time);
+  if (rawDuration) return rawDuration;
+  try {
+    return parseTimeToSeconds(activity.duration) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function activityLoadValue(activity) {
+  return safeNumber(activity.analysis?.tss, activity.load, activity.raw?.suffer_score, activity.raw?.relative_effort);
+}
+
+function activityDateTime(activity) {
+  const value = activity.raw?.start_date || activity.date || "";
+  const timestamp = value ?new Date(String(value).includes("T") ?value : `${value}T00:00:00`).getTime() : 0;
+  return Number.isFinite(timestamp) ?timestamp : 0;
+}
+
+function extractDistanceTargets(question) {
+  const text = normalizeSearchText(question).replace(/(\d),(\d)/g, "$1.$2");
+  const targets = [];
+  const regex = /(\d+(?:\.\d+)?)\s*(km|k|m)?\b/g;
+  let match;
+  while ((match = regex.exec(text))) {
+    const value = Number(match[1]);
+    const unit = match[2] || "";
+    if (!Number.isFinite(value) || value <= 0) continue;
+    if (unit === "km" || unit === "k") {
+      targets.push(Math.round(value * 1000));
+    } else if (unit === "m") {
+      targets.push(Math.round(value));
+    } else if (value >= 300 && value <= 50000) {
+      targets.push(Math.round(value));
+    }
+  }
+  return [...new Set(targets)];
+}
+
+function extractQuestionTerms(question) {
+  const ignored = new Set(["qual", "quais", "quando", "minha", "meu", "meus", "minhas", "foi", "foram", "sobre", "treino", "treinos", "atividade", "atividades", "prova", "provas", "corrida", "dados", "historico", "histórico", "mais", "menos", "com", "para", "por", "dos", "das", "que", "uma", "um"]);
+  return normalizeSearchText(question)
+    .split(/[^a-z0-9]+/)
+    .filter((term) => term.length > 2 && !ignored.has(term))
+    .slice(0, 24);
+}
+
+function compactBestEffortsForChat(activity) {
+  return (Array.isArray(activity.bestEfforts) ?activity.bestEfforts : [])
+    .slice()
+    .sort((a, b) => safeNumber(b.distanceMeters) - safeNumber(a.distanceMeters))
+    .slice(0, 8)
+    .map((effort) => ({
+      name: effort.name || "",
+      distance: effort.distanceMeters ?formatDistance(effort.distanceMeters) : "",
+      duration: effort.elapsedTimeSeconds ?formatDuration(effort.elapsedTimeSeconds) : "",
+      pace: effort.distanceMeters && effort.elapsedTimeSeconds ?formatPace(effort.distanceMeters, effort.elapsedTimeSeconds) : "",
+      startDate: effort.startDate || ""
+    }));
+}
+
 function compactActivityForSystemChat(activity) {
+  const meters = activityDistanceMeters(activity);
+  const seconds = activityDurationSeconds(activity);
   return {
     id: activity.id,
     date: activity.date,
     status: activity.status,
     title: activity.title,
     source: activity.source,
-    distance: activity.distance,
-    duration: activity.duration,
-    pace: activity.pace,
+    type: activity.type || "",
+    distance: activity.distance || (meters ?formatDistance(meters) : ""),
+    distanceMeters: meters || "",
+    duration: activity.duration || (seconds ?formatDuration(seconds) : ""),
+    durationSeconds: seconds || "",
+    pace: activity.pace || formatPace(meters, seconds),
     load: activity.load,
+    tss: activityLoadValue(activity) || "",
     trainingType: activity.trainingType,
     description: activity.description,
+    perceivedExertion: activity.perceivedExertion || "",
     feedback: activity.feedback || {},
+    bestEfforts: compactBestEffortsForChat(activity),
+    rawSignals: {
+      sportType: activity.raw?.sport_type || activity.raw?.type || "",
+      averageHeartRate: activity.raw?.average_heartrate || "",
+      maxHeartRate: activity.raw?.max_heartrate || "",
+      elevationGain: activity.raw?.total_elevation_gain || "",
+      locationCity: activity.raw?.location_city || "",
+      startDate: activity.raw?.start_date || ""
+    },
     is3000Test: Boolean(activity.is3000Test)
   };
 }
 
-function compactAthleteForSystemChat(athlete, activities, goals) {
+function scoreActivityForQuestion(activity, terms, distanceTargets) {
+  const compact = compactActivityForSystemChat(activity);
+  const searchable = normalizeSearchText([
+    compact.title,
+    compact.date,
+    compact.status,
+    compact.source,
+    compact.type,
+    compact.trainingType,
+    compact.description,
+    compact.feedback?.notes,
+    compact.feedback?.painLocation,
+    compact.rawSignals?.sportType,
+    compact.rawSignals?.locationCity,
+    compact.bestEfforts?.map((effort) => `${effort.name} ${effort.distance}`).join(" ")
+  ].join(" "));
+  let score = 0;
+  for (const term of terms) {
+    if (searchable.includes(term)) score += term.length > 4 ?3 : 2;
+  }
+  const meters = activityDistanceMeters(activity);
+  for (const target of distanceTargets) {
+    const tolerance = Math.max(35, target * 0.08);
+    if (meters && Math.abs(meters - target) <= tolerance) score += 10;
+    for (const effort of activity.bestEfforts || []) {
+      const effortMeters = safeNumber(effort.distanceMeters);
+      if (effortMeters && Math.abs(effortMeters - target) <= tolerance) score += 12;
+    }
+  }
+  if (/prova|teste|race|compet/i.test(searchable) || activity.is3000Test) score += 2;
+  return score;
+}
+
+function summarizeActivitiesForChat(activities) {
+  const now = Date.now();
+  const periods = {
+    last7d: { days: 7, sessions: 0, volumeKm: 0, load: 0 },
+    last30d: { days: 30, sessions: 0, volumeKm: 0, load: 0 },
+    last90d: { days: 90, sessions: 0, volumeKm: 0, load: 0 }
+  };
+  const byType = new Map();
+  let totalVolumeKm = 0;
+  let totalLoad = 0;
+  let executed = 0;
+  let planned = 0;
+  for (const activity of activities || []) {
+    const meters = activityDistanceMeters(activity);
+    const km = meters ?meters / 1000 : 0;
+    const load = activityLoadValue(activity);
+    const status = normalizeSearchText(activity.status);
+    if (status.includes("planned") || status.includes("planejado")) planned += 1;
+    else executed += 1;
+    totalVolumeKm += km;
+    totalLoad += load;
+    const type = activity.trainingType || activity.type || "Sem tipo";
+    const current = byType.get(type) || { sessions: 0, volumeKm: 0, load: 0 };
+    current.sessions += 1;
+    current.volumeKm += km;
+    current.load += load;
+    byType.set(type, current);
+    const timestamp = activityDateTime(activity);
+    if (!timestamp) continue;
+    for (const period of Object.values(periods)) {
+      if (now - timestamp <= period.days * 24 * 60 * 60 * 1000) {
+        period.sessions += 1;
+        period.volumeKm += km;
+        period.load += load;
+      }
+    }
+  }
+  return {
+    sessions: activities.length,
+    executed,
+    planned,
+    totalVolumeKm: Number(totalVolumeKm.toFixed(1)),
+    totalLoad: Math.round(totalLoad),
+    last7d: { sessions: periods.last7d.sessions, volumeKm: Number(periods.last7d.volumeKm.toFixed(1)), load: Math.round(periods.last7d.load) },
+    last30d: { sessions: periods.last30d.sessions, volumeKm: Number(periods.last30d.volumeKm.toFixed(1)), load: Math.round(periods.last30d.load) },
+    last90d: { sessions: periods.last90d.sessions, volumeKm: Number(periods.last90d.volumeKm.toFixed(1)), load: Math.round(periods.last90d.load) },
+    typeDistribution: [...byType.entries()]
+      .sort((a, b) => b[1].sessions - a[1].sessions)
+      .slice(0, 10)
+      .map(([type, data]) => ({
+        type,
+        sessions: data.sessions,
+        volumeKm: Number(data.volumeKm.toFixed(1)),
+        load: Math.round(data.load)
+      }))
+  };
+}
+
+function compactAthleteForSystemChat(athlete, activities, goals, question = "", recentLimit = 80) {
+  const terms = extractQuestionTerms(question);
+  const distanceTargets = extractDistanceTargets(question);
+  const sortedActivities = activities
+    .slice()
+    .sort((a, b) => activityDateTime(b) - activityDateTime(a));
+  const matchingActivities = sortedActivities
+    .map((activity) => ({ score: scoreActivityForQuestion(activity, terms, distanceTargets), activity }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || activityDateTime(b.activity) - activityDateTime(a.activity))
+    .slice(0, 18)
+    .map((item) => compactActivityForSystemChat(item.activity));
   return {
     id: athlete.id,
     name: athlete.name,
@@ -3645,50 +3837,108 @@ function compactAthleteForSystemChat(athlete, activities, goals) {
     historyTimeline: Array.isArray(athlete.historyTimeline) ?athlete.historyTimeline.slice(-40) : [],
     tests3000: Array.isArray(athlete.tests3000) ?athlete.tests3000.slice(-8) : [],
     goals: goals.slice(0, 12),
-    recentActivities: activities
-      .slice()
-      .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")))
-      .slice(0, 50)
-      .map(compactActivityForSystemChat)
+    activitySummary: summarizeActivitiesForChat(activities),
+    matchingActivities,
+    recentActivities: sortedActivities.slice(0, recentLimit).map(compactActivityForSystemChat)
   };
 }
 
-function localSystemSearch(question, context) {
-  const text = String(question || "").toLowerCase();
-  const hits = [];
-  for (const athlete of context.athletes || []) {
-    const athleteText = [athlete.name, athlete.email, athlete.teamName, athlete.coachName].join(" ").toLowerCase();
-    if (athleteText.includes(text) || text.includes(String(athlete.name || "").toLowerCase())) {
-      hits.push(`${athlete.name}: ${athlete.recentActivities?.length || 0} atividades recentes, ${athlete.goals?.length || 0} objetivos, equipe ${athlete.teamName || "sem equipe"}.`);
-    }
-    for (const activity of athlete.recentActivities || []) {
-      const activityText = [activity.title, activity.description, activity.trainingType, activity.date].join(" ").toLowerCase();
-      if (text.split(/\s+/).filter(Boolean).some((token) => token.length > 2 && activityText.includes(token))) {
-        hits.push(`${athlete.name} em ${activity.date}: ${activity.title} (${activity.distance || "--"}, ${activity.pace || "--"}, ${activity.status || "--"}).`);
-      }
-    }
-  }
-  return hits.slice(0, 10).join("\n") || "Nao encontrei correspondencia direta no indice local. Tente citar nome do atleta, data, tipo de treino, prova ou palavra do historico.";
+function formatChatActivityLine(athlete, activity) {
+  const metrics = [
+    activity.distance || "--",
+    activity.duration || "--",
+    activity.pace || "--",
+    activity.tss ?`${activity.tss} 11TSS` : "",
+    activity.trainingType || activity.type || ""
+  ].filter(Boolean).join(" | ");
+  const efforts = (activity.bestEfforts || [])
+    .slice(0, 3)
+    .map((effort) => `${effort.name || effort.distance}: ${effort.duration}${effort.pace ?` (${effort.pace})` : ""}`)
+    .join("; ");
+  return `- ${athlete.name}, ${activity.date || "sem data"}: ${activity.title || "atividade"} (${metrics})${efforts ?`. Melhores esforços: ${efforts}` : ""}`;
 }
 
-async function buildSystemChatContext(tenantId, user, selectedAthleteId = "") {
+function localConversationalTrainingAnswer(question, context) {
+  const normalized = normalizeSearchText(question);
+  const hits = [];
+  for (const athlete of context.athletes || []) {
+    for (const activity of athlete.matchingActivities || []) hits.push({ athlete, activity });
+  }
+  if (hits.length) {
+    return [
+      `Encontrei ${hits.length} registro(s) que combinam com a sua pergunta no banco do 11RUN.`,
+      ...hits.slice(0, 8).map((hit) => formatChatActivityLine(hit.athlete, hit.activity)),
+      "Posso detalhar ritmo, carga, melhores esforços, dor/feedback ou comparar com semanas anteriores se você pedir."
+    ].join("\n");
+  }
+
+  const wantsSummary = /resumo|como estou|volume|carga|semana|mes|m[eê]s|treinos?|atividades?|evolu/.test(normalized);
+  if (wantsSummary || !(context.athletes || []).length) {
+    const lines = [];
+    for (const athlete of context.athletes || []) {
+      const summary = athlete.activitySummary || {};
+      const latest = athlete.recentActivities?.[0];
+      lines.push([
+        `${athlete.name}: ${summary.sessions || 0} atividades no banco`,
+        `${summary.last7d?.volumeKm || 0} km nos últimos 7 dias`,
+        `${summary.last30d?.volumeKm || 0} km nos últimos 30 dias`,
+        `${summary.last90d?.volumeKm || 0} km nos últimos 90 dias`,
+        `${summary.last30d?.load || 0} 11TSS nos últimos 30 dias`,
+        latest ?`último registro em ${latest.date}: ${latest.title || "atividade"} (${latest.distance || "--"}, ${latest.pace || "--"})` : "sem atividade recente"
+      ].join("; "));
+    }
+    return lines.length
+      ?`Aqui está uma leitura rápida do banco:\n${lines.slice(0, 8).map((line) => `- ${line}`).join("\n")}`
+      : "Não encontrei atletas ou treinos acessíveis para este usuário. Selecione um atleta ou importe treinos para ativar a leitura da IA.";
+  }
+
+  const firstAthlete = context.athletes?.[0];
+  if (firstAthlete) {
+    const latest = firstAthlete.recentActivities?.slice(0, 5).map((activity) => formatChatActivityLine(firstAthlete, activity)).join("\n");
+    return [
+      "Não encontrei uma correspondência direta para essa pergunta, mas já consultei o banco do atleta selecionado.",
+      latest ?`Últimos registros disponíveis:\n${latest}` : "Ainda não há atividades recentes no contexto.",
+      "Tente citar distância, data, tipo de treino, local, prova, dor ou palavra do título para eu refinar a busca."
+    ].join("\n");
+  }
+  return "Não encontrei dados de treino acessíveis para responder. Faça login, selecione um atleta e confirme se há atividades importadas.";
+}
+
+function sanitizeChatHistory(history) {
+  return (Array.isArray(history) ?history : [])
+    .filter((message) => ["user", "assistant"].includes(message?.role))
+    .slice(-10)
+    .map((message) => ({
+      role: message.role,
+      content: String(message.content || "").trim().slice(0, 1600)
+    }))
+    .filter((message) => message.content);
+}
+
+async function buildSystemChatContext(tenantId, user, selectedAthleteId = "", question = "") {
   const athletes = await listAthletes(tenantId, user);
   const directory = await listDirectory(tenantId, user);
-  const visibleAthletes = selectedAthleteId && user?.role === "athlete"
-    ?athletes.filter((athlete) => String(athlete.id) === String(selectedAthleteId))
-    : athletes;
-  const compactAthletes = [];
-  for (const athlete of visibleAthletes.slice(0, 12)) {
+  const selected = selectedAthleteId
+    ?athletes.find((athlete) => String(athlete.id) === String(selectedAthleteId))
+    : null;
+  const visibleAthletes = selected
+    ?[selected]
+    : athletes.slice(0, 24);
+  const recentLimit = selected ?80 : 20;
+  const compactAthletes = await Promise.all(visibleAthletes.map(async (athlete) => {
     const [activities, goals] = await Promise.all([
       listActivities(tenantId, athlete.id),
       listGoals(tenantId, athlete.id)
     ]);
-    compactAthletes.push(compactAthleteForSystemChat(athlete, activities, goals));
-  }
+    return compactAthleteForSystemChat(athlete, activities, goals, question, recentLimit);
+  }));
   return {
     generatedAt: new Date().toISOString(),
     requester: user ?{ id: user.id, name: user.name, role: user.role, email: user.email } : null,
     selectedAthleteId,
+    scope: selected
+      ?`Contexto focado no atleta selecionado: ${selected.name}.`
+      :`Contexto com ${visibleAthletes.length} atleta(s) acessíveis para resposta rápida.`,
     directory: {
       teams: (directory.teams || []).slice(0, 30),
       coaches: (directory.coaches || []).slice(0, 30)
@@ -3697,29 +3947,39 @@ async function buildSystemChatContext(tenantId, user, selectedAthleteId = "") {
   };
 }
 
-async function answerSystemAiChat(tenantId, user, selectedAthleteId, question) {
+async function answerSystemAiChat(tenantId, user, selectedAthleteId, question, history = []) {
   const cleanQuestion = String(question || "").trim();
   if (!cleanQuestion) throw httpError("Digite uma pergunta para a IA.", 400);
-  const context = await buildSystemChatContext(tenantId, user, selectedAthleteId);
+  const cleanHistory = sanitizeChatHistory(history);
+  const context = await buildSystemChatContext(tenantId, user, selectedAthleteId, cleanQuestion);
+  const localAnswer = localConversationalTrainingAnswer(cleanQuestion, context);
   const settings = await getRawAppSettings(tenantId);
   const apiKey = settings.openai_api_key || settings.openaiApiKey || process.env.OPENAI_API_KEY || "";
   const model = settings.openai_model || settings.openaiModel || DEFAULT_OPENAI_MODEL;
   const enabled = Boolean(settings.openai_enabled || settings.openaiEnabled || process.env.OPENAI_API_KEY);
   const prompt = [
-    "Voce e o agente de busca e analise do sistema 11RUN.",
-    "Voce tem acesso ao contexto JSON abaixo. Responda em portugues do Brasil.",
-    "Se a pergunta pedir atividade especifica, cite atleta, data, titulo e metricas. Se pedir equipe/atleta, resuma o que existe no contexto.",
-    "Nao invente dados que nao estejam no JSON. Quando faltar dado, diga exatamente o que falta.",
-    "Pergunta:",
+    "Você é o chat conversacional da Home do 11RUN, uma IA de performance para corrida.",
+    "Responda em português do Brasil, com linguagem natural, direta e útil para atleta, treinador ou equipe.",
+    "Você tem acesso ao JSON do banco abaixo: atletas, objetivos, resumo de volume/carga e atividades recentes ou relevantes.",
+    "Use apenas dados do JSON. Não invente treino, tempo, dor, pace, carga, prova ou diagnóstico.",
+    "Quando encontrar uma atividade específica, cite atleta, data, título, distância, tempo, pace, 11TSS, tipo, melhores esforços e feedback disponível.",
+    "Quando a pergunta for ampla, faça leitura executiva: volume recente, carga, tendência, último treino e próximos dados úteis.",
+    "Se faltar dado, diga o que falta e faça uma pergunta curta para refinar.",
+    "Não diga que é uma busca textual. Aja como conversa com memória curta.",
+    "Histórico recente da conversa:",
+    JSON.stringify(cleanHistory, null, 2),
+    "Pergunta atual:",
     cleanQuestion,
-    "Contexto do banco:",
+    "Resposta local de apoio, já calculada a partir do banco:",
+    localAnswer,
+    "Contexto rápido do banco 11RUN:",
     JSON.stringify(context, null, 2)
   ].join("\n");
   if (!enabled || !apiKey) {
     return {
       ok: false,
       model: "indice local 11RUN",
-      text: localSystemSearch(cleanQuestion, context)
+      text: localAnswer
     };
   }
   try {
@@ -3728,13 +3988,13 @@ async function answerSystemAiChat(tenantId, user, selectedAthleteId, question) {
       ok: true,
       model: result.model || model,
       endpoint: result.endpoint || "openai",
-      text: result.text || localSystemSearch(cleanQuestion, context)
+      text: result.text || localAnswer
     };
   } catch (error) {
     return {
       ok: false,
       model,
-      text: `${publicOpenAiError(error)}\n\nBusca local:\n${localSystemSearch(cleanQuestion, context)}`
+      text: localAnswer || publicOpenAiError(error)
     };
   }
 }
@@ -4306,7 +4566,7 @@ async function handleApi(req, res, url) {
       const { tenant, user, athleteUserId } = await contextFromReq(req);
       requireUser(user);
       const body = await readRequestBody(req);
-      sendJson(res, 200, await answerSystemAiChat(tenant.id, user, athleteUserId, body.question));
+      sendJson(res, 200, await answerSystemAiChat(tenant.id, user, athleteUserId, body.question, body.history));
       return;
     }
 

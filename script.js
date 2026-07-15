@@ -257,8 +257,8 @@ const officialTranslations = {
     "home.title": "The world's smartest AI-powered training manager.",
     "home.loading": "Loading current cycle reading.",
     "home.ai.kicker": "11RUN AI",
-    "home.ai.title": "Search the system",
-    "home.ai.placeholder": "Ask about athlete, training, team, race or history",
+    "home.ai.title": "Performance chat",
+    "home.ai.placeholder": "Ask in natural language about workouts, races, load, pain or history",
     "home.ai.submit": "Send",
     "dashboard.kicker": "My dashboard",
     "dashboard.title": "Performance",
@@ -322,8 +322,8 @@ const officialTranslations = {
     "home.title": "The world's smartest AI-powered training manager.",
     "home.loading": "Carregando leitura do ciclo atual.",
     "home.ai.kicker": "IA 11RUN",
-    "home.ai.title": "Buscar no sistema",
-    "home.ai.placeholder": "Pergunte sobre atleta, treino, equipe, prova ou histórico",
+    "home.ai.title": "Chat de performance",
+    "home.ai.placeholder": "Pergunte em linguagem natural sobre treinos, provas, carga, dor ou histórico",
     "home.ai.submit": "Enviar",
     "dashboard.kicker": "Meu dashboard",
     "dashboard.title": "Performance",
@@ -387,8 +387,8 @@ const officialTranslations = {
     "home.title": "世界で最もスマートなAI搭載トレーニングマネージャー。",
     "home.loading": "現在のサイクルを読み込んでいます。",
     "home.ai.kicker": "11RUN AI",
-    "home.ai.title": "システムを検索",
-    "home.ai.placeholder": "アスリート、練習、チーム、大会、履歴について質問",
+    "home.ai.title": "Performance chat",
+    "home.ai.placeholder": "トレーニング、レース、負荷、痛み、履歴について自然な言葉で質問",
     "home.ai.submit": "送信",
     "dashboard.kicker": "マイダッシュボード",
     "dashboard.title": "パフォーマンス",
@@ -452,8 +452,8 @@ const officialTranslations = {
     "home.title": "El gestor de entrenamiento con IA más inteligente del mundo.",
     "home.loading": "Cargando lectura del ciclo actual.",
     "home.ai.kicker": "IA 11RUN",
-    "home.ai.title": "Buscar en el sistema",
-    "home.ai.placeholder": "Pregunta sobre atleta, entrenamiento, equipo, prueba o historial",
+    "home.ai.title": "Chat de performance",
+    "home.ai.placeholder": "Pregunta en lenguaje natural sobre entrenamientos, pruebas, carga, dolor o historial",
     "home.ai.submit": "Enviar",
     "dashboard.kicker": "Mi dashboard",
     "dashboard.title": "Performance",
@@ -497,6 +497,7 @@ const staticTextI18n = {
   "The world's smartest AI-powered training manager.": { en: "The world's smartest AI-powered training manager.", "pt-BR": "The world's smartest AI-powered training manager.", ja: "世界で最もスマートなAI搭載トレーニングマネージャー。", es: "El gestor de entrenamiento con IA más inteligente del mundo." },
   "Carregando leitura do ciclo atual.": { en: "Loading current cycle reading.", "pt-BR": "Carregando leitura do ciclo atual.", ja: "現在のサイクルを読み込んでいます。", es: "Cargando lectura del ciclo actual." },
   "Buscar no sistema": { en: "Search the system", "pt-BR": "Buscar no sistema", ja: "システムを検索", es: "Buscar en el sistema" },
+  "Chat de performance": { en: "Performance chat", "pt-BR": "Chat de performance", ja: "Performance chat", es: "Chat de performance" },
   "Meu dashboard": { en: "My dashboard", "pt-BR": "Meu dashboard", ja: "マイダッシュボード", es: "Mi dashboard" },
   "Performance": { en: "Performance", "pt-BR": "Performance", ja: "パフォーマンス", es: "Performance" },
   "Resumo": { en: "Summary", "pt-BR": "Resumo", ja: "概要", es: "Resumen" },
@@ -5647,7 +5648,7 @@ function renderHomeAiMessages() {
   if (!target) return;
   const messages = state.homeAiMessages.length ?state.homeAiMessages : [{
     role: "assistant",
-    content: "Pergunte em linguagem natural sobre treinos, atletas, equipes, objetivos, VO2, testes, dor, carga ou histórico cronológico."
+    content: "Converse comigo em linguagem natural. Eu consulto rapidamente os treinos do banco e cruzo histórico, carga, provas, dor, objetivos e evolução do atleta selecionado."
   }];
   target.innerHTML = messages.map((message) => `
     <article class="home-ai-message ${message.role === "user" ?"is-user" : "is-assistant"}">
@@ -5673,12 +5674,19 @@ async function askHomeAi(event) {
   state.homeAiMessages.push({ role: "user", content: question });
   input.value = "";
   state.homeAiBusy = true;
-  state.homeAiMessages.push({ role: "assistant", content: "Montando contexto do banco, cruzando atletas, treinos, objetivos e histórico..." });
+  const history = state.homeAiMessages
+    .filter((message) => ["user", "assistant"].includes(message.role))
+    .slice(-10)
+    .map((message) => ({
+      role: message.role,
+      content: String(message.content || "").slice(0, 1600)
+    }));
+  state.homeAiMessages.push({ role: "assistant", content: "Consultando o banco de treinos e montando uma resposta conversacional..." });
   renderHomeAiMessages();
   try {
     const payload = await api("/api/ai/chat", {
       method: "POST",
-      body: JSON.stringify({ question })
+      body: JSON.stringify({ question, history })
     });
     state.homeAiMessages[state.homeAiMessages.length - 1] = {
       role: "assistant",
