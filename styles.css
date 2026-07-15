@@ -4322,7 +4322,7 @@ select option:focus {
 .athlete-row-main {
   min-width: 0;
   display: grid;
-  grid-template-columns: 1.2fr 1.4fr 0.8fr 1fr 1fr 1fr;
+  grid-template-columns: 1.35fr 0.9fr 0.8fr 1fr 1fr 1fr;
   gap: 10px;
   align-items: center;
   color: var(--muted);
@@ -4335,6 +4335,17 @@ select option:focus {
 .athlete-row-main strong {
   color: var(--heading);
   font-weight: 560;
+}
+
+.athlete-row-main strong small,
+.athlete-row-main span small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 760;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .athlete-row-main span {

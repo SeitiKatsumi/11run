@@ -6848,7 +6848,7 @@ function renderAthletes() {
   const filtered = rows.filter((athlete) => {
     const profile = athlete.profileData || {};
     const profileLabel = profile.profileTypeLabel || profileTypeDefinitions[profile.profileType]?.label || athlete.roleLabel;
-    const haystack = [athlete.name, athlete.email, athlete.teamName, athlete.coachName, athlete.whatsapp, athlete.roleLabel, profileLabel]
+    const haystack = [athlete.name, profile.nativeName, profile.country, profile.university, profile.institution, athlete.teamName, athlete.coachName, athlete.roleLabel, profileLabel]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
@@ -6870,6 +6870,13 @@ function renderAthletes() {
     const isExpanded = String(athlete.id) === String(state.expandedAdminUserId);
     const profile = athlete.profileData || {};
     const profileLabel = profile.profileTypeLabel || profileTypeDefinitions[profile.profileType]?.label || athlete.roleLabel || "Atleta";
+    const summary = (state.adminUsers || []).find((user) => String(user.id) === String(athlete.id)) || {};
+    const nativeName = summary.nativeName || profile.nativeName || "";
+    const country = summary.country || profile.country || profile.countryNative || "--";
+    const university = summary.university || profile.university || profile.institution || athlete.teamName || "--";
+    const best5000 = summary.bestMark5000 || profile.personalBest5000m || athlete.bestTime || "--";
+    const weeklyLoad = summary.weeklyAverageLoad || 0;
+    const volume30 = summary.volume30Km || 0;
     const coachDetails = athlete.role === "coach" ?`
           <p><strong>Formação:</strong> ${escapeHtml(profile.education || "--")}</p>
           <p><strong>Especialidades:</strong> ${escapeHtml(profile.skills || "--")}</p>
@@ -6888,14 +6895,15 @@ function renderAthletes() {
     return `
     <article class="athlete-list-row ${String(athlete.id) === String(state.selectedAthleteId) ?"is-selected" : ""}">
       <button class="athlete-row-main" type="button" data-toggle-admin-user="${escapeHtml(athlete.id)}" aria-expanded="${isExpanded ?"true" : "false"}">
-        <strong>${escapeHtml(athlete.name)}</strong>
-        <span>${escapeHtml(athlete.email)}</span>
+        <strong>${escapeHtml(athlete.name)}${nativeName ?`<small>${escapeHtml(nativeName)}</small>` : ""}</strong>
         <span>${escapeHtml(profileLabel)}</span>
-        <span>${escapeHtml(athlete.teamName || "Sem equipe")}</span>
-        <span>${athlete.role === "athlete" ?escapeHtml(athlete.coachName || "Sem treinador") : "--"}</span>
-        <span>${escapeHtml(athlete.whatsapp || "WhatsApp não informado")}</span>
+        <span>${escapeHtml(country)}</span>
+        <span>${escapeHtml(university)}</span>
+        <span><strong>${escapeHtml(String(weeklyLoad))}</strong><small>11TSS/semana</small></span>
+        <span><strong>${escapeHtml(best5000)}</strong><small>melhor 5000m</small></span>
       </button>
       ${athlete.isTeamRecord ?"" : `<div class="athlete-item-actions">
+        <button class="primary-action compact" type="button" data-open-athlete-week="${escapeHtml(athlete.id)}">Ver semana</button>
         <button class="secondary-action compact" type="button" data-edit-athlete="${escapeHtml(athlete.id)}">Editar</button>
         <button class="danger-action" type="button" data-delete-athlete="${escapeHtml(athlete.id)}">Excluir</button>
       </div>`}
@@ -6903,6 +6911,9 @@ function renderAthletes() {
         <div class="athlete-row-details">
           <p><strong>Perfil:</strong> ${escapeHtml(profileLabel)}</p>
           <p><strong>Dados:</strong> ${escapeHtml(athlete.age || "--")} anos - ${escapeHtml(athlete.weightKg || "--")} kg - ${escapeHtml(athlete.heightCm || "--")} cm</p>
+          <p><strong>País:</strong> ${escapeHtml(country)}</p>
+          <p><strong>Melhor 5000m:</strong> ${escapeHtml(best5000)}</p>
+          <p><strong>Carga média:</strong> ${escapeHtml(String(weeklyLoad))} 11TSS/semana - ${escapeHtml(String(volume30))} km em 30 dias</p>
           <p><strong>Equipe:</strong> ${escapeHtml(athlete.teamName || "Não tenho")}</p>
           ${athlete.role === "athlete" ?`<p><strong>Treinador:</strong> ${escapeHtml(athlete.coachName || "Não tenho")}</p>` : ""}
           ${coachDetails}
@@ -6933,13 +6944,13 @@ function renderAdminUsersDashboard() {
   const stats = document.querySelector("#adminUsersStats");
   if (!body || !stats) return;
   if (!isSuperAdmin()) {
-    body.innerHTML = `<tr><td colspan="7">Acesso restrito ao super admin.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="6">Acesso restrito ao super admin.</td></tr>`;
     stats.innerHTML = "";
     return;
   }
   const search = (document.querySelector("#adminUsersSearch")?.value || "").trim().toLowerCase();
   const users = (state.adminUsers || []).filter((user) => {
-    const haystack = [user.name, user.nativeName, user.email, user.roleLabel, user.country, user.university, user.teamName]
+    const haystack = [user.name, user.nativeName, user.roleLabel, user.country, user.university, user.teamName]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
@@ -6960,10 +6971,36 @@ function renderAdminUsersDashboard() {
         <td>${escapeHtml(user.university || user.teamName || "--")}</td>
         <td><strong>${escapeHtml(String(user.weeklyAverageLoad || 0))}</strong><small>11TSS / semana</small></td>
         <td><strong>${escapeHtml(user.bestMark5000 || "--")}</strong><small>${escapeHtml(user.bestMarkDate || "sem data")}</small></td>
-        <td>${escapeHtml(user.email || "--")}</td>
       </tr>
     `).join("")
-    : `<tr><td colspan="7">Nenhum utilizador encontrado.</td></tr>`;
+    : `<tr><td colspan="6">Nenhum utilizador encontrado.</td></tr>`;
+}
+
+async function openAthleteTrainingWeek(athleteId) {
+  if (!athleteId) return;
+  state.selectedAthleteId = athleteId;
+  syncSelectedAthlete();
+  renderAthleteSelector();
+  renderAthleteIdentity();
+  try {
+    const [integrations, activities, goals] = await Promise.all([
+      api("/api/integrations"),
+      api("/api/activities"),
+      api("/api/goals")
+    ]);
+    state.integrations = integrations;
+    state.activities = activities;
+    state.goals = goals;
+    renderProviders();
+    renderCalendar();
+    renderTrainingInsights();
+    setView("training");
+    window.setTimeout(() => document.querySelector("#calendar")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    const athlete = getActiveAthlete();
+    setLog([`Semana de treino carregada: ${athlete?.name || "atleta"}.`]);
+  } catch (error) {
+    setLog([error.message || "Nao foi possivel abrir a semana do atleta."], true);
+  }
 }
 
 const waitlistStatusLabels = {
@@ -8582,6 +8619,13 @@ document.addEventListener("click", async (event) => {
   }
   if (event.target.closest("[data-save-bulk-activities]")) {
     await saveBulkActivities();
+    return;
+  }
+  const openAthleteWeekButton = event.target.closest("[data-open-athlete-week]");
+  if (openAthleteWeekButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    await openAthleteTrainingWeek(openAthleteWeekButton.dataset.openAthleteWeek);
     return;
   }
   const editButton = event.target.closest("[data-edit-athlete]");

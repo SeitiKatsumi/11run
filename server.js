@@ -2975,7 +2975,7 @@ async function listAdminUsersDashboard(tenantId) {
       stats: {
         totalUsers: rows.length,
         athletes: rows.filter((user) => user.role === "athlete").length,
-        kaidoAthletes: rows.filter((user) => user.university === "Kaido").length
+        kaidoAthletes: rows.filter((user) => user.role === "athlete" && user.university === "Kaido").length
       }
     };
   }
@@ -3034,7 +3034,7 @@ async function listAdminUsersDashboard(tenantId) {
       athletes: users.filter((user) => user.role === "athlete").length,
       coaches: users.filter((user) => user.role === "coach").length,
       admins: users.filter((user) => user.role === "admin").length,
-      kaidoAthletes: users.filter((user) => user.university === "Kaido").length
+      kaidoAthletes: users.filter((user) => user.role === "athlete" && user.university === "Kaido").length
     }
   };
 }
