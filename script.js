@@ -29,7 +29,11 @@ const state = {
   breathingExecutionStartedAt: "",
   raceSelectedGoalId: "",
   raceSelectedActivityId: "",
+  raceChatMessages: [],
+  raceChatBusy: false,
   waitlistSignups: [],
+  adminUsers: [],
+  adminUsersStats: null,
   selectedWaitlistId: "",
   waitlistLoading: false,
   waitlistModalTimer: 0,
@@ -957,7 +961,7 @@ function shouldAutoTranslateText(value = "") {
 function shouldSkipAutoTranslateNode(node) {
   if (!node || node.dataset?.i18n || node.dataset?.noAutoTranslate) return true;
   if (node.tagName === "OPTION" && node.closest("[data-language-select]")) return true;
-  if (node.closest("[data-no-auto-translate], .home-ai-messages, #loginMessage, #appVersion, #sidebarAthleteName")) return true;
+  if (node.closest("[data-no-auto-translate], .home-ai-messages, .race-chat-messages, #loginMessage, #appVersion, #sidebarAthleteName")) return true;
   if (["SCRIPT", "STYLE", "SVG"].includes(node.tagName)) return true;
   return false;
 }
@@ -2968,6 +2972,99 @@ function raceDataAvailability(activity) {
   ];
 }
 
+function raceChatDefaultMessages(activity) {
+  return [{
+    role: "assistant",
+    content: activity
+      ?`Pergunte sobre a prova ${activity.title || "selecionada"}: pacing, largada, final, carga, risco, treino da semana ou estratégia para repetir/melhorar.`
+      : "Selecione uma atividade para discutir a prova com a IA 11RUN."
+  }];
+}
+
+function buildRaceChatContext(activity, metrics, segments, events, scores, goal, model) {
+  return {
+    activity: activity ?{
+      id: activity.id,
+      date: activity.date,
+      title: activity.title,
+      source: activity.source,
+      distance: activity.distance,
+      duration: activity.duration,
+      pace: activity.pace,
+      load: activity.load,
+      trainingType: activity.trainingType,
+      description: activity.description
+    } : null,
+    metrics,
+    scores,
+    segments: segments.slice(0, 12),
+    events: events.slice(0, 8),
+    linkedGoal: goal ?{
+      title: goal.title,
+      distanceM: goal.distanceM,
+      targetTime: goal.targetTime,
+      raceDate: goal.raceDate
+    } : null,
+    model
+  };
+}
+
+function renderRaceChat(activity, context) {
+  const messages = state.raceChatMessages.length ?state.raceChatMessages : raceChatDefaultMessages(activity);
+  return `
+    <section class="race-panel race-chat-panel">
+      <div class="section-title"><span>IA conversacional</span><h3>Discutir a prova</h3></div>
+      <div class="race-chat-messages" id="raceChatMessages" aria-live="polite">
+        ${messages.map((message) => `
+          <article class="home-ai-message ${message.role === "user" ?"is-user" : "is-assistant"}">
+            <span>${message.role === "user" ?"Você" : "IA 11RUN"}</span>
+            <p>${escapeHtml(message.content)}</p>
+          </article>
+        `).join("")}
+      </div>
+      <form id="raceChatForm" class="home-ai-form" data-race-context="${escapeHtml(JSON.stringify(context || {}))}">
+        <input name="question" autocomplete="off" ${activity ?"" :"disabled"} placeholder="Pergunte sobre a prova, pacing, carga, risco ou próximos treinos" />
+        <button class="primary-action compact" type="submit" ${activity && !state.raceChatBusy ?"" :"disabled"}>${state.raceChatBusy ?"Analisando..." :"Enviar"}</button>
+      </form>
+    </section>
+  `;
+}
+
+async function askRaceChat(event) {
+  event.preventDefault();
+  const form = event.target?.id === "raceChatForm" ?event.target : document.querySelector("#raceChatForm");
+  const input = form?.elements?.question;
+  const question = String(input?.value || "").trim();
+  if (!question || state.raceChatBusy) return;
+  const context = form?.dataset?.raceContext || "{}";
+  state.raceChatMessages.push({ role: "user", content: question });
+  input.value = "";
+  state.raceChatBusy = true;
+  state.raceChatMessages.push({ role: "assistant", content: "Lendo prova, segmentos, carga e objetivo antes de responder..." });
+  renderRaceAnalyzerModule();
+  try {
+    const payload = await api("/api/ai/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        question: `Analise esta pergunta sobre uma prova usando o contexto JSON abaixo.\nPergunta: ${question}\nContexto da prova: ${context}`,
+        history: state.raceChatMessages.slice(-8)
+      })
+    });
+    state.raceChatMessages[state.raceChatMessages.length - 1] = {
+      role: "assistant",
+      content: payload.text || "Não consegui gerar resposta para essa prova."
+    };
+  } catch (error) {
+    state.raceChatMessages[state.raceChatMessages.length - 1] = {
+      role: "assistant",
+      content: friendlyAiError(error.message)
+    };
+  } finally {
+    state.raceChatBusy = false;
+    renderRaceAnalyzerModule();
+  }
+}
+
 function renderRaceAnalyzerModule() {
   const target = document.querySelector("#raceAnalyzerModule");
   if (!target) return;
@@ -3077,6 +3174,7 @@ function renderRaceAnalyzerModule() {
   const recentLoad = recentRuns.reduce((sum, item) => sum + Number(item.analysis?.tss || item.load || 0), 0);
   const tests = collect3000Tests(getActiveAthlete());
   const linkedReadiness = raceReadinessLabel(model);
+  const raceChatContext = buildRaceChatContext(activity, metrics, segments, events, scores, goal, model);
   target.innerHTML = `
     <div class="race-analyzer-hero">
       <div>
@@ -3210,6 +3308,7 @@ function renderRaceAnalyzerModule() {
           <article><span>IA corrida</span><strong>11RUN</strong><p>Probabilidade, pace, risco, carga e estratégia em um único painel.</p></article>
         </div>
       </section>
+      ${renderRaceChat(activity, raceChatContext)}
     </div>
   `;
   scheduleAutoTranslate();
@@ -5849,7 +5948,6 @@ function renderDashboardModern(highlightTarget, testTarget, typeTarget, goalTarg
       <div class="dashboard-quick-actions">
         <a class="dashboard-action-card" href="#analises" data-view-link="analyses"><span>Analisador IA</span><strong>Provas, exames e respiração</strong></a>
         <a class="dashboard-action-card" href="#treinamentos" data-view-link="training"><span>Diário</span><strong>Treinos e carga</strong></a>
-        <a class="dashboard-action-card" href="#diferenciais" data-view-link="differentials"><span>Diferenciais</span><strong>Visão de produto</strong></a>
       </div>
     </div>
   `;
@@ -6048,6 +6146,22 @@ function renderActivity(activity) {
   `;
 }
 
+function canAnalyzeRaceActivity(activity) {
+  return Boolean(activity && isRunningActivity(activity) && activityStatus(activity) !== "planned");
+}
+
+function analyzeRaceActivity(activityId) {
+  const activity = visibleActivities().find((item) => String(item.id) === String(activityId));
+  if (!activity) return;
+  state.analysisMode = "race";
+  state.raceSelectedActivityId = activity.id;
+  state.raceChatMessages = [];
+  if (dialog?.open) dialog.close();
+  setView("analyses");
+  renderAnalysesView();
+  window.setTimeout(() => document.querySelector("#raceAnalyzerModule")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+}
+
 function numericSelectOptions(start, end, step, selectedValue, suffix = "") {
   const selected = String(selectedValue ?? "");
   const emptySelected = selected === "" ?"selected" : "";
@@ -6241,6 +6355,9 @@ function openActivity(activityId) {
   const trainingType = activity.trainingType || feedback.trainingType || "Treino";
   const status = activityStatus(activity);
   const external = activity.externalUrl ?`<a class="detail-link" href="${escapeHtml(activity.externalUrl)}" target="_blank" rel="noreferrer">Abrir atividade original</a>` : "";
+  const raceAnalyzeButton = canAnalyzeRaceActivity(activity)
+    ?`<button class="primary-action compact" type="button" data-analyze-race-activity="${escapeHtml(activity.id)}">Analisar prova</button>`
+    : "";
   const workoutPlan = activity.workoutPlan;
   const workoutPlanPanel = workoutPlan?.steps?.length ?`
     <div class="workout-plan-preview">
@@ -6348,6 +6465,7 @@ function openActivity(activityId) {
         <button class="secondary-action compact" type="button" data-save-activity-feedback="${escapeHtml(activity.id)}">Salvar percepção</button>
       </div>
       <div class="provider-actions">
+        ${raceAnalyzeButton}
         <button class="secondary-action compact" type="button" data-set-activity-status="${escapeHtml(activity.id)}" data-status="${status === "planned" ?"executed" : "planned"}">${status === "planned" ?"Marcar como executado" : "Marcar como planejado"}</button>
         ${testFlagButton}
       </div>
@@ -6795,6 +6913,57 @@ function renderAthletes() {
     </article>
   `;
   }).join("");
+}
+
+async function loadAdminUsersDashboard() {
+  if (!isSuperAdmin()) return;
+  try {
+    const payload = await api("/api/admin/users");
+    state.adminUsers = payload.users || [];
+    state.adminUsersStats = payload.stats || null;
+  } catch {
+    state.adminUsers = [];
+    state.adminUsersStats = null;
+  }
+  renderAdminUsersDashboard();
+}
+
+function renderAdminUsersDashboard() {
+  const body = document.querySelector("#adminUsersTableBody");
+  const stats = document.querySelector("#adminUsersStats");
+  if (!body || !stats) return;
+  if (!isSuperAdmin()) {
+    body.innerHTML = `<tr><td colspan="7">Acesso restrito ao super admin.</td></tr>`;
+    stats.innerHTML = "";
+    return;
+  }
+  const search = (document.querySelector("#adminUsersSearch")?.value || "").trim().toLowerCase();
+  const users = (state.adminUsers || []).filter((user) => {
+    const haystack = [user.name, user.nativeName, user.email, user.roleLabel, user.country, user.university, user.teamName]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return !search || haystack.includes(search);
+  });
+  const summary = state.adminUsersStats || {};
+  stats.innerHTML = `
+    <article><span>Total</span><strong>${summary.totalUsers || state.adminUsers.length || 0}</strong></article>
+    <article><span>Atletas</span><strong>${summary.athletes || 0}</strong></article>
+    <article><span>Kaido</span><strong>${summary.kaidoAthletes || 0}</strong></article>
+  `;
+  body.innerHTML = users.length
+    ?users.map((user) => `
+      <tr>
+        <td><strong>${escapeHtml(user.name || "--")}</strong><small>${escapeHtml(user.nativeName || "")}</small></td>
+        <td>${escapeHtml(user.roleLabel || user.role || "--")}</td>
+        <td>${escapeHtml(user.country || "--")}</td>
+        <td>${escapeHtml(user.university || user.teamName || "--")}</td>
+        <td><strong>${escapeHtml(String(user.weeklyAverageLoad || 0))}</strong><small>11TSS / semana</small></td>
+        <td><strong>${escapeHtml(user.bestMark5000 || "--")}</strong><small>${escapeHtml(user.bestMarkDate || "sem data")}</small></td>
+        <td>${escapeHtml(user.email || "--")}</td>
+      </tr>
+    `).join("")
+    : `<tr><td colspan="7">Nenhum utilizador encontrado.</td></tr>`;
 }
 
 const waitlistStatusLabels = {
@@ -7442,6 +7611,7 @@ async function deleteAthlete(athleteId) {
     state.activities = state.selectedAthleteId ?await api("/api/activities") : [];
     state.goals = state.selectedAthleteId ?await api("/api/goals") : [];
     renderAthletes();
+    if (isSuperAdmin()) loadAdminUsersDashboard();
     renderAthleteSelector();
     renderAthleteIdentity();
     renderProviders();
@@ -7713,6 +7883,7 @@ async function saveAdminUser(event) {
     state.athletes = payload.athletes || [];
     await refreshDirectory();
     renderAthletes();
+    if (isSuperAdmin()) loadAdminUsersDashboard();
     renderAthleteSelector();
     renderAthleteIdentity();
     renderCalendar();
@@ -7751,6 +7922,7 @@ async function approveRelationshipRequest(athleteId) {
     state.athletes = payload.athletes || [];
     await refreshDirectory();
     renderAthletes();
+    if (isSuperAdmin()) loadAdminUsersDashboard();
     renderAthleteSelector();
     renderAthleteIdentity();
     setAdminMessage("Solicitação aprovada.");
@@ -8029,6 +8201,7 @@ async function boot() {
     state.goals = await api("/api/goals");
     await loadSettings();
     if (canViewWaitlist()) await loadWaitlistSignups();
+    if (isSuperAdmin()) await loadAdminUsersDashboard();
   } catch (error) {
     if (!state.currentUser || isAuthError(error)) {
       showLogin(isAuthError(error) ?"" : "Não foi possível validar sua sessão. Faça login para continuar.");
@@ -8054,6 +8227,7 @@ async function boot() {
   renderPermissions();
   renderProviders();
   renderAthletes();
+  renderAdminUsersDashboard();
   renderWaitlistAdmin();
   renderAthleteSelector();
   renderAthleteIdentity();
@@ -8187,6 +8361,12 @@ calendar.addEventListener("click", (event) => {
 });
 
 document.addEventListener("click", async (event) => {
+  const analyzeRaceButton = event.target.closest("[data-analyze-race-activity]");
+  if (analyzeRaceButton) {
+    event.preventDefault();
+    analyzeRaceActivity(analyzeRaceButton.dataset.analyzeRaceActivity);
+    return;
+  }
   if (event.target.closest("[data-open-waitlist]")) {
     event.preventDefault();
     openWaitlistModal(true);
@@ -8648,6 +8828,7 @@ document.addEventListener("change", (event) => {
 
 document.querySelector("#waitlistForm")?.addEventListener("submit", submitWaitlist);
 document.querySelector("#waitlistFilterSearch")?.addEventListener("input", renderWaitlistAdmin);
+document.querySelector("#adminUsersSearch")?.addEventListener("input", renderAdminUsersDashboard);
 
 document.addEventListener("keydown", (event) => {
   const savedTestCard = event.target.closest?.("[data-view-test-result]");
@@ -8663,6 +8844,9 @@ document.addEventListener("submit", async (event) => {
   }
   if (event.target?.id === "homeAiForm") {
     await askHomeAi(event);
+  }
+  if (event.target?.id === "raceChatForm") {
+    await askRaceChat(event);
   }
   if (event.target?.id === "analysisForm") {
     await generateClinicalAnalysis(event);

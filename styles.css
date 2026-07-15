@@ -3587,6 +3587,69 @@ dialog {
   color: rgba(231, 227, 220, 0.58);
 }
 
+.race-chat-panel {
+  grid-column: 1 / -1;
+}
+
+.race-chat-messages {
+  display: grid;
+  gap: 10px;
+  max-height: 320px;
+  overflow: auto;
+  margin-bottom: 12px;
+  padding-right: 4px;
+}
+
+.super-admin-users-panel {
+  grid-column: 1 / -1;
+}
+
+.admin-users-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(320px, auto);
+  gap: 14px;
+  align-items: end;
+}
+
+.admin-users-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.admin-users-stats article {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.admin-users-stats span,
+.admin-users-table small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.admin-users-stats strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--heading);
+  font-size: 22px;
+}
+
+.admin-users-table-wrap {
+  margin-top: 14px;
+  overflow: auto;
+}
+
+.admin-users-table td strong {
+  display: block;
+  color: var(--heading);
+}
+
 .race-projection-line {
   display: grid;
   gap: 12px;

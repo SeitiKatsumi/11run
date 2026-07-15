@@ -210,6 +210,245 @@ const DEMO_ACTIVITIES = [
   }
 ];
 
+const KAIDO_ATHLETE_NAMES = [
+  "Haruto Sato",
+  "Ren Tanaka",
+  "Yuto Suzuki",
+  "Sota Nakamura",
+  "Kaito Yamamoto",
+  "Daiki Kobayashi",
+  "Riku Watanabe",
+  "Hayato Ito",
+  "Toma Yamada",
+  "Itsuki Takahashi",
+  "Ryusei Kato",
+  "Shoma Yoshida",
+  "Akira Sasaki",
+  "Taisei Yamaguchi",
+  "Naoki Matsumoto",
+  "Keita Inoue",
+  "Tsubasa Kimura",
+  "Ryo Hayashi",
+  "Minato Shimizu",
+  "Kosei Saito",
+  "Aoi Mori",
+  "Hinata Abe",
+  "Rento Ikeda",
+  "Yusei Hashimoto",
+  "Shun Ishikawa",
+  "Takumi Maeda",
+  "Masato Fujita",
+  "Hiroto Ogawa",
+  "Kazuki Goto",
+  "Reo Okada"
+];
+
+const KAIDO_ATHLETE_NATIVE_NAMES = [
+  "佐藤 陽翔",
+  "田中 蓮",
+  "鈴木 悠斗",
+  "中村 蒼太",
+  "山本 海斗",
+  "小林 大輝",
+  "渡辺 陸",
+  "伊藤 隼人",
+  "山田 斗真",
+  "高橋 樹",
+  "加藤 琉生",
+  "吉田 翔真",
+  "佐々木 晶",
+  "山口 大成",
+  "松本 直樹",
+  "井上 圭太",
+  "木村 翼",
+  "林 遼",
+  "清水 湊",
+  "斎藤 康生",
+  "森 碧",
+  "阿部 陽向",
+  "池田 蓮斗",
+  "橋本 悠生",
+  "石川 駿",
+  "前田 拓海",
+  "藤田 雅人",
+  "小川 大翔",
+  "後藤 和樹",
+  "岡田 怜央"
+];
+
+function kaidoDateDaysAgo(daysAgo) {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() - daysAgo);
+  return formatDateOnly(date);
+}
+
+function kaidoPace(seconds, meters) {
+  return formatPace(meters, seconds);
+}
+
+function buildKaidoAthletes() {
+  return KAIDO_ATHLETE_NAMES.map((name, index) => {
+    const number = index + 1;
+    const bestSeconds = 801 + Math.round((49 * index) / (KAIDO_ATHLETE_NAMES.length - 1));
+    return {
+      id: `kaido-athlete-${String(number).padStart(2, "0")}`,
+      role: "athlete",
+      name,
+      email: `kaido.athlete${String(number).padStart(2, "0")}@11run.local`,
+      whatsapp: `+81 90 5000 ${String(1000 + number).slice(1)}`,
+      age: 19 + (index % 5),
+      weightKg: 55 + (index % 9),
+      heightCm: 168 + (index % 13),
+      teamName: "Universidade Kaido",
+      coachName: "Coach Kenji Mori",
+      coachEmail: "kenji.mori@kaido.local",
+      focusDistanceM: 5000,
+      targetTimeSeconds: Math.max(780, bestSeconds - 8),
+      targetDate: kaidoDateDaysAgo(-75),
+      bestTimeSeconds: bestSeconds,
+      bestTime: formatDuration(bestSeconds),
+      historyNotes: "Seed 11RUN: atleta universitario japones especialista em 5000m.",
+      historyTimeline: [
+        {
+          id: `kaido-history-${String(number).padStart(2, "0")}`,
+          type: "performance",
+          startDate: kaidoDateDaysAgo(28),
+          title: "Bloco Kaido 5000m",
+          description: "Ciclo simulado de 1 mes com base aerobica, limiar, VO2 e prova controle de 5000m.",
+          tags: ["kaido", "5000m", "japao"],
+          importance: "alta",
+          relation: "seed",
+          createdAt: new Date().toISOString()
+        }
+      ],
+      tests3000: [],
+      profileData: {
+        profileType: "athlete_scholarship",
+        profileTypeLabel: "Atleta universitario",
+        nativeName: KAIDO_ATHLETE_NATIVE_NAMES[index],
+        country: "Japão",
+        countryNative: "日本",
+        university: "Kaido",
+        universityNative: "海道大学",
+        institution: "Universidade Kaido",
+        institutionNative: "海道大学",
+        eventSpecialty: "5000m",
+        seedGroup: "kaido_5000m_japan",
+        personalBest5000m: formatDuration(bestSeconds)
+      },
+      createdAt: new Date().toISOString()
+    };
+  });
+}
+
+function buildKaidoActivitiesForAthlete(athlete, index) {
+  const baseLoad = 54 + (index % 6) * 4;
+  const bestSeconds = Number(athlete.bestTimeSeconds || 840);
+  const sessions = [
+    { ago: 29, titleJa: "有酸素ベース70分", titlePt: "Base aeróbica 70 min", meters: 14500, seconds: 3600 + index * 4, load: baseLoad + 34, type: "Leve / base", surface: "ロード", intensity: "Z2", rpe: 4, weather: "18°C, vento leve", mainJa: "70分の集団走。最後に100m流しを4本。", mainPt: "70 min em grupo com 4 strides de 100m no final.", descriptionJa: "海道大学外周で余裕を残す有酸素走。接地とリズムを確認。" },
+    { ago: 28, titleJa: "朝ジョグ＋補強", titlePt: "Jog matinal + força", meters: 9000, seconds: 2520 + index * 3, load: baseLoad + 8, type: "Técnica / educativos", surface: "芝生", intensity: "Z1/Z2", rpe: 3, weather: "17°C, seco", mainJa: "45分ジョグ、ドリル、体幹補強20分。", mainPt: "45 min fácil, drills e 20 min de core.", descriptionJa: "疲労を残さず可動域と体幹を整える日。" },
+    { ago: 27, titleJa: "1000m×6 5000mペース", titlePt: "6 x 1000m ritmo 5000m", meters: 12200, seconds: 3060 + index * 2, load: baseLoad + 78, type: "Intervalado", surface: "トラック", intensity: "VO2", rpe: 8, weather: "19°C, pista seca", mainJa: "1000m×6本、つなぎ200mジョグ。設定は5000m目標ペース。", mainPt: "6 x 1000m no ritmo de 5000m, 200m trote.", descriptionJa: "5000mの巡航速度を維持し、後半もフォームを崩さない。" },
+    { ago: 26, titleJa: "回復ジョグ50分", titlePt: "Recuperação 50 min", meters: 8200, seconds: 3000 + index * 2, load: baseLoad - 10, type: "Recuperação", surface: "ロード", intensity: "Z1", rpe: 2, weather: "16°C, nublado", mainJa: "50分ゆっくり。最後にストレッチ10分。", mainPt: "50 min muito leve e 10 min de alongamento.", descriptionJa: "前日のVO2刺激を吸収するための低負荷走。" },
+    { ago: 25, titleJa: "閾値走 15分×2", titlePt: "Limiar 2 x 15 min", meters: 13200, seconds: 3300 + index * 3, load: baseLoad + 58, type: "Limiar", surface: "公園周回", intensity: "LT", rpe: 7, weather: "20°C, úmido", mainJa: "15分閾値走を2本、間は3分ジョグ。", mainPt: "2 x 15 min em limiar com 3 min trote.", descriptionJa: "呼吸を乱し過ぎず、乳酸処理能力を高める。" },
+    { ago: 24, titleJa: "軽いジョグ＋流し", titlePt: "Leve + strides", meters: 10000, seconds: 2820 + index * 3, load: baseLoad + 12, type: "Leve / base", surface: "ロード", intensity: "Z2", rpe: 3, weather: "18°C", mainJa: "60分ジョグ、100m流し6本。", mainPt: "60 min leve e 6 strides de 100m.", descriptionJa: "翌日の距離走に向けて脚を軽く保つ。" },
+    { ago: 23, titleJa: "距離走18km", titlePt: "Longo 18 km", meters: 18000, seconds: 4620 + index * 5, load: baseLoad + 86, type: "Longo", surface: "ロード", intensity: "Z2/Z3", rpe: 6, weather: "21°C", mainJa: "18kmを集団でビルドアップ。ラスト3kmは少し速く。", mainPt: "18 km em grupo, progressivo nos 3 km finais.", descriptionJa: "箱根式の持久力作り。余裕を残して終える。" },
+    { ago: 22, titleJa: "リカバリー40分", titlePt: "Recovery 40 min", meters: 6500, seconds: 2400 + index * 2, load: baseLoad - 14, type: "Recuperação", surface: "芝生", intensity: "Z1", rpe: 2, weather: "18°C", mainJa: "40分の芝生ジョグ。足首と股関節のモビリティ。", mainPt: "40 min na grama, mobilidade de tornozelo e quadril.", descriptionJa: "衝撃を減らして翌週の質を守る。" },
+    { ago: 21, titleJa: "400m×12 経済性", titlePt: "12 x 400m economia", meters: 9800, seconds: 2440 + index * 2, load: baseLoad + 64, type: "Pista", surface: "トラック", intensity: "Repetição", rpe: 7, weather: "19°C", mainJa: "400m×12本。速いが力まない。レスト200mジョグ。", mainPt: "12 x 400m rápido e relaxado, 200m trote.", descriptionJa: "スピードを出しながら肩と顎の力みを抜く。" },
+    { ago: 20, titleJa: "有酸素ジョグ60分", titlePt: "Aeróbico 60 min", meters: 11500, seconds: 3300 + index * 4, load: baseLoad + 18, type: "Treino", surface: "ロード", intensity: "Z2", rpe: 4, weather: "18°C", mainJa: "60分一定。最後に補強15分。", mainPt: "60 min constante e 15 min de força.", descriptionJa: "週間ボリュームを積む安定走。" },
+    { ago: 19, titleJa: "坂ダッシュ10本", titlePt: "10 tiros em subida", meters: 9000, seconds: 2700 + index * 3, load: baseLoad + 52, type: "Subida", surface: "坂", intensity: "Neuromuscular", rpe: 7, weather: "17°C", mainJa: "45秒坂ダッシュ10本。下りは歩きとジョグで回復。", mainPt: "10 x 45s em subida, volta caminhando/trotando.", descriptionJa: "接地の強さと股関節伸展を作る。" },
+    { ago: 18, titleJa: "2000m×3 コントロール", titlePt: "3 x 2000m controlado", meters: 13200, seconds: 3200 + index * 3, load: baseLoad + 76, type: "Limiar", surface: "トラック", intensity: "LT/10K", rpe: 7, weather: "20°C", mainJa: "2000m×3本。10kmから閾値の間で安定させる。", mainPt: "3 x 2000m entre ritmo de 10 km e limiar.", descriptionJa: "呼吸と接地を一定にし、ラップのばらつきを抑える。" },
+    { ago: 17, titleJa: "回復ジョグ45分", titlePt: "Recuperação 45 min", meters: 7600, seconds: 2700 + index * 2, load: baseLoad - 8, type: "Recuperação", surface: "芝生", intensity: "Z1", rpe: 2, weather: "16°C", mainJa: "45分ゆっくり。フォーム動画を確認。", mainPt: "45 min leve e revisão de vídeo técnico.", descriptionJa: "疲労を抜きながらフォーム修正を入れる。" },
+    { ago: 16, titleJa: "ファルトレク12×1分", titlePt: "Fartlek 12 x 1 min", meters: 10800, seconds: 2780 + index * 3, load: baseLoad + 48, type: "Fartlek", surface: "公園", intensity: "Z4 curto", rpe: 6, weather: "19°C", mainJa: "1分速い/1分ゆっくりを12セット。", mainPt: "12 x 1 min forte / 1 min leve.", descriptionJa: "神経系を起こすが、乳酸を溜めすぎない。" },
+    { ago: 15, titleJa: "中距離ジョグ70分", titlePt: "Rodagem média 70 min", meters: 13500, seconds: 4200 + index * 4, load: baseLoad + 30, type: "Leve / base", surface: "ロード", intensity: "Z2", rpe: 4, weather: "21°C", mainJa: "70分の有酸素走。会話できる強度。", mainPt: "70 min aeróbico em ritmo conversável.", descriptionJa: "質の高い日を支えるためのボリューム。" },
+    { ago: 14, titleJa: "距離走20km", titlePt: "Longo 20 km", meters: 20000, seconds: 5040 + index * 5, load: baseLoad + 96, type: "Longo", surface: "ロード", intensity: "Z2/Z3", rpe: 6, weather: "22°C", mainJa: "20km集団走。後半は3:25/km付近まで自然に上げる。", mainPt: "20 km em grupo com progressão natural até ~3:25/km.", descriptionJa: "大学長距離らしい高い有酸素負荷の日。" },
+    { ago: 13, titleJa: "完全回復ジョグ", titlePt: "Jog de recuperação total", meters: 6500, seconds: 2400 + index * 2, load: baseLoad - 16, type: "Recuperação", surface: "芝生", intensity: "Z1", rpe: 2, weather: "18°C", mainJa: "40分以内。眠気と筋肉痛を確認。", mainPt: "Até 40 min, checando sono e dor muscular.", descriptionJa: "距離走のダメージを抜く。" },
+    { ago: 12, titleJa: "海道5000m記録会", titlePt: "Controle Kaido 5000m", meters: 5000, seconds: bestSeconds, load: baseLoad + 102, type: "Teste", surface: "トラック", intensity: "Race", rpe: 9, weather: "18°C, sem vento", mainJa: "5000mタイムトライアル。序盤は抑え、3000m以降で押す。", mainPt: "Time trial de 5000m: controlar início e pressionar após 3000m.", descriptionJa: "海道大学トラックでの5000m記録会。", isRace: true },
+    { ago: 11, titleJa: "レース後の回復走", titlePt: "Soltura pós-prova", meters: 7000, seconds: 2520 + index * 3, load: baseLoad - 12, type: "Recuperação", surface: "芝生", intensity: "Z1", rpe: 2, weather: "17°C", mainJa: "40〜45分ゆっくり。呼吸と脚の張りを確認。", mainPt: "40-45 min muito leve, checando respiração e pernas.", descriptionJa: "記録会後の神経疲労を下げる。" },
+    { ago: 10, titleJa: "ベース走65分", titlePt: "Base 65 min", meters: 12500, seconds: 3900 + index * 4, load: baseLoad + 22, type: "Leve / base", surface: "ロード", intensity: "Z2", rpe: 4, weather: "19°C", mainJa: "65分一定。ラストは流し4本。", mainPt: "65 min constante e 4 strides no final.", descriptionJa: "記録会後にリズムを戻す。" },
+    { ago: 9, titleJa: "1200m×5 VO2", titlePt: "5 x 1200m VO2", meters: 12600, seconds: 3060 + index * 3, load: baseLoad + 82, type: "Intervalado", surface: "トラック", intensity: "VO2", rpe: 8, weather: "20°C", mainJa: "1200m×5本。5000mより少し遅い巡航、レスト400m。", mainPt: "5 x 1200m ligeiramente mais lento que 5K, 400m trote.", descriptionJa: "VO2を刺激しながらオーバーペースを避ける。" },
+    { ago: 8, titleJa: "朝ジョグ50分", titlePt: "Jog 50 min", meters: 8500, seconds: 3000 + index * 3, load: baseLoad - 2, type: "Recuperação", surface: "ロード", intensity: "Z1/Z2", rpe: 3, weather: "17°C", mainJa: "50分の軽い朝ジョグ。補強は短め。", mainPt: "50 min leve pela manhã, força curta.", descriptionJa: "脚を重くしない範囲で血流を作る。" },
+    { ago: 7, titleJa: "テンポ走25分", titlePt: "Tempo 25 min", meters: 13800, seconds: 3460 + index * 3, load: baseLoad + 64, type: "Ritmo / tempo", surface: "公園周回", intensity: "Tempo", rpe: 7, weather: "21°C", mainJa: "25分テンポ走。入りを抑え、後半で安定。", mainPt: "25 min de tempo, controlando início e estabilizando no fim.", descriptionJa: "閾値より少し楽に、長く押す感覚を作る。" },
+    { ago: 6, titleJa: "リカバリー45分", titlePt: "Recovery 45 min", meters: 7600, seconds: 2700 + index * 2, load: baseLoad - 8, type: "Recuperação", surface: "芝生", intensity: "Z1", rpe: 2, weather: "18°C", mainJa: "45分芝生。足裏とふくらはぎの張りを確認。", mainPt: "45 min na grama, checando pé e panturrilha.", descriptionJa: "テンポ走の反応を確認する低負荷日。" },
+    { ago: 5, titleJa: "300m×12 速い動き", titlePt: "12 x 300m rápido controlado", meters: 9200, seconds: 2320 + index * 2, load: baseLoad + 66, type: "Pista", surface: "トラック", intensity: "Velocidade controlada", rpe: 7, weather: "19°C", mainJa: "300m×12本。速いがフォーム優先。", mainPt: "12 x 300m rápido, priorizando forma.", descriptionJa: "5000m終盤に必要な切り替えを作る。" },
+    { ago: 4, titleJa: "有酸素走60分", titlePt: "Aeróbico 60 min", meters: 11800, seconds: 3600 + index * 4, load: baseLoad + 18, type: "Treino", surface: "ロード", intensity: "Z2", rpe: 4, weather: "20°C", mainJa: "60分一定。ラストは流し6本。", mainPt: "60 min constante e 6 strides.", descriptionJa: "速い刺激の翌日に崩さず整える。" },
+    { ago: 3, titleJa: "閾値 1000m×8", titlePt: "8 x 1000m limiar", meters: 14000, seconds: 3440 + index * 3, load: baseLoad + 74, type: "Limiar", surface: "トラック", intensity: "LT", rpe: 7, weather: "18°C", mainJa: "1000m×8本を閾値付近。レスト60秒。", mainPt: "8 x 1000m em limiar, 60s de pausa.", descriptionJa: "短い休息で代謝を安定させる。" },
+    { ago: 2, titleJa: "回復ジョグ＋可動域", titlePt: "Recovery + mobilidade", meters: 7800, seconds: 2760 + index * 2, load: baseLoad - 6, type: "Recuperação", surface: "芝生", intensity: "Z1", rpe: 2, weather: "17°C", mainJa: "45分ゆっくり、股関節モビリティ15分。", mainPt: "45 min leve e 15 min de mobilidade de quadril.", descriptionJa: "疲労を抜きつつ可動域を戻す。" },
+    { ago: 1, titleJa: "月末ロング17km", titlePt: "Longo final 17 km", meters: 17000, seconds: 4380 + index * 5, load: baseLoad + 72, type: "Longo", surface: "ロード", intensity: "Z2", rpe: 5, weather: "19°C", mainJa: "17kmを安定して走り、最後まで余裕を残す。", mainPt: "17 km estável, terminando com margem.", descriptionJa: "1か月ブロックの締め。翌週へ疲労を残しすぎない。" },
+    { ago: 0, titleJa: "朝の確認ジョグ", titlePt: "Jog de controle matinal", meters: 6500, seconds: 2280 + index * 2, load: baseLoad - 12, type: "Recuperação", surface: "ロード", intensity: "Z1", rpe: 2, weather: "16°C", mainJa: "35〜40分。睡眠、HRV、脚の重さを記録。", mainPt: "35-40 min registrando sono, HRV e peso nas pernas.", descriptionJa: "次のサイクルに入る前の状態確認。" }
+  ];
+  return sessions.map((session, sessionIndex) => {
+    const date = kaidoDateDaysAgo(session.ago);
+    const providerActivityId = `${athlete.id}-${String(sessionIndex + 1).padStart(2, "0")}`;
+    return {
+      id: `kaido-${providerActivityId}`,
+      providerId: providerActivityId,
+      athleteUserId: athlete.id,
+      date,
+      title: session.titleJa,
+      source: "Kaido Seed",
+      provider: "kaido-seed",
+      type: "Run",
+      status: "executed",
+      description: session.descriptionJa,
+      distance: formatDistance(session.meters),
+      duration: formatDuration(session.seconds),
+      load: String(session.load),
+      pace: kaidoPace(session.seconds, session.meters),
+      externalUrl: "",
+      raw: {
+        manual: true,
+        seedGroup: "kaido_5000m_japan",
+        trainingType: session.type,
+        trainingTypeJa: session.titleJa,
+        sport_type: "Run",
+        originalLanguage: "ja",
+        surface: session.surface,
+        intensity: session.intensity,
+        perceivedExertion: session.rpe,
+        weather: session.weather,
+        warmup: { ja: "20分ジョグ、動的ストレッチ、流し", "pt-BR": "20 min de trote, mobilidade dinâmica e strides" },
+        mainSet: { ja: session.mainJa, "pt-BR": session.mainPt },
+        cooldown: { ja: "10〜20分ジョグ、補強またはストレッチ", "pt-BR": "10-20 min de trote, força curta ou alongamento" },
+        athleteFeedback: {
+          ja: session.rpe >= 8 ?"呼吸は強いがフォームは安定。" :"余裕あり。脚の反応は良好。",
+          "pt-BR": session.rpe >= 8 ?"Respiração forte, mas forma estável." :"Sob controle, pernas responderam bem."
+        },
+        translations: {
+          ja: { title: session.titleJa, description: session.descriptionJa, mainSet: session.mainJa },
+          "pt-BR": { title: session.titlePt, description: session.mainPt, type: session.type, objective: session.mainPt }
+        },
+        distance: session.meters,
+        moving_time: session.seconds,
+        elapsed_time: session.seconds,
+        start_date: `${date}T07:00:00+09:00`,
+        suffer_score: session.load,
+        total_elevation_gain: session.type === "Longo" ?90 : 20,
+        best_efforts: session.isRace ?[
+          { name: "5000m", distance: 5000, moving_time: session.seconds, elapsed_time: session.seconds, start_date: `${date}T07:00:00+09:00` }
+        ] : []
+      }
+    };
+  });
+}
+
+function seedKaidoLocalData() {
+  const athletes = readJson(ATHLETES_FILE, []);
+  const activities = readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
+  const seedAthletes = buildKaidoAthletes();
+  const seedEmails = new Set(seedAthletes.map((athlete) => athlete.email.toLowerCase()));
+  const nextAthletes = athletes.filter((athlete) => !seedEmails.has(String(athlete.email || "").toLowerCase()));
+  const nextActivities = activities.filter((activity) => activity.raw?.seedGroup !== "kaido_5000m_japan" && activity.provider !== "kaido-seed" && activity.source !== "Kaido Seed");
+  buildKaidoAthletes().forEach((athlete, index) => {
+    nextAthletes.push({ ...athlete, tenantId: "local-default" });
+    buildKaidoActivitiesForAthlete(athlete, index).forEach((activity) => {
+      nextActivities.push(activity);
+    });
+  });
+  writeJson(ATHLETES_FILE, nextAthletes);
+  writeJson(ACTIVITIES_FILE, nextActivities);
+}
+
 const BREATHING_AI_PROMPT = `Voce e a IA Respiracao Neural 11RUN, uma assistente especializada em neuromodulacao respiratoria aplicada ao esporte, endurance, corrida, ciclismo, jovens atletas e recuperacao neural.
 
 Sua funcao e ajudar atletas, pais e treinadores a escolherem, executarem e entenderem protocolos respiratorios seguros para regulacao do sistema nervoso, controle de ansiedade, recuperacao, foco e suporte ao desempenho.
@@ -246,6 +485,7 @@ function ensureDataFiles() {
   if (!fs.existsSync(BREATHING_FILE)) {
     writeJson(BREATHING_FILE, { protocols: DEFAULT_BREATHING_PROTOCOLS, sessions: [], insights: [], preferences: {} });
   }
+  seedKaidoLocalData();
 }
 
 function readJson(filePath, fallback) {
@@ -582,6 +822,7 @@ async function initDatabase() {
   await ensureDefaultAdmin(tenant.id);
   await ensureTenantIntegrations(tenant.id);
   await ensureBreathingProtocols(tenant.id);
+  await ensureKaidoSeedData(tenant.id);
 }
 
 async function getTenant(slug = DEFAULT_TENANT_SLUG) {
@@ -665,6 +906,123 @@ async function ensureDefaultAdmin(tenantId) {
   );
   await ensureTenantIntegrations(tenantId, adminId);
   await migrateGlobalStravaTokenToAthlete(tenantId, adminId);
+}
+
+async function ensureKaidoSeedData(tenantId) {
+  if (!pool) return;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const teamResult = await client.query(
+      `INSERT INTO teams (tenant_id, name, profile_data)
+       VALUES ($1, 'Universidade Kaido', $2)
+       ON CONFLICT (tenant_id, name)
+       DO UPDATE SET profile_data = teams.profile_data || EXCLUDED.profile_data
+       RETURNING id`,
+      [tenantId, JSON.stringify({ country: "Japão", university: "Kaido", seedGroup: "kaido_5000m_japan" })]
+    );
+    const teamId = teamResult.rows[0].id;
+    const coachResult = await client.query(
+      `INSERT INTO users (tenant_id, role, name, email, profile_data)
+       VALUES ($1, 'coach', 'Coach Kenji Mori', 'kenji.mori@kaido.local', $2)
+       ON CONFLICT (tenant_id, email)
+       DO UPDATE SET name = EXCLUDED.name,
+                     role = CASE WHEN users.role = 'athlete' THEN users.role ELSE 'coach' END,
+                     profile_data = users.profile_data || EXCLUDED.profile_data
+       RETURNING id`,
+      [tenantId, JSON.stringify({ country: "Japão", university: "Kaido", seedGroup: "kaido_5000m_japan" })]
+    );
+    const coachId = coachResult.rows[0].id;
+    for (const [index, athlete] of buildKaidoAthletes().entries()) {
+      const userResult = await client.query(
+        `INSERT INTO users (tenant_id, role, name, email, whatsapp, profile_data)
+         VALUES ($1, 'athlete', $2, $3, $4, $5)
+         ON CONFLICT (tenant_id, email)
+         DO UPDATE SET name = EXCLUDED.name,
+                       role = 'athlete',
+                       whatsapp = EXCLUDED.whatsapp,
+                       profile_data = users.profile_data || EXCLUDED.profile_data
+         RETURNING id`,
+        [tenantId, athlete.name, athlete.email, athlete.whatsapp, JSON.stringify(athlete.profileData)]
+      );
+      const userId = userResult.rows[0].id;
+      await client.query(
+        `INSERT INTO athlete_profiles (
+           user_id, team_id, coach_user_id, age, weight_kg, height_cm,
+           focus_distance_m, target_time_seconds, target_date, best_time_seconds,
+           history_notes, history_timeline, tests_3000
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, 5000, $7, $8, $9, $10, $11, '[]')
+         ON CONFLICT (user_id)
+         DO UPDATE SET team_id = EXCLUDED.team_id,
+                       coach_user_id = EXCLUDED.coach_user_id,
+                       age = EXCLUDED.age,
+                       weight_kg = EXCLUDED.weight_kg,
+                       height_cm = EXCLUDED.height_cm,
+                       focus_distance_m = 5000,
+                       target_time_seconds = EXCLUDED.target_time_seconds,
+                       target_date = EXCLUDED.target_date,
+                       best_time_seconds = EXCLUDED.best_time_seconds,
+                       history_notes = EXCLUDED.history_notes,
+                       history_timeline = EXCLUDED.history_timeline,
+                       updated_at = now()`,
+        [
+          userId,
+          teamId,
+          coachId,
+          athlete.age,
+          athlete.weightKg,
+          athlete.heightCm,
+          athlete.targetTimeSeconds,
+          athlete.targetDate,
+          athlete.bestTimeSeconds,
+          athlete.historyNotes,
+          JSON.stringify(athlete.historyTimeline)
+        ]
+      );
+      for (const activity of buildKaidoActivitiesForAthlete({ ...athlete, id: userId }, index)) {
+        await client.query(
+          `INSERT INTO activities (
+             tenant_id, athlete_user_id, provider, provider_activity_id, activity_date,
+             title, type, description, distance, duration, pace, load, external_url, status, raw
+           )
+           VALUES ($1, $2, 'kaido-seed', $3, $4, $5, $6, $7, $8, $9, $10, $11, '', 'executed', $12)
+           ON CONFLICT (tenant_id, provider, provider_activity_id)
+           DO UPDATE SET athlete_user_id = EXCLUDED.athlete_user_id,
+                         activity_date = EXCLUDED.activity_date,
+                         title = EXCLUDED.title,
+                         type = EXCLUDED.type,
+                         description = EXCLUDED.description,
+                         distance = EXCLUDED.distance,
+                         duration = EXCLUDED.duration,
+                         pace = EXCLUDED.pace,
+                         load = EXCLUDED.load,
+                         raw = EXCLUDED.raw,
+                         updated_at = now()`,
+          [
+            tenantId,
+            userId,
+            activity.providerId,
+            activity.date,
+            activity.title,
+            activity.type,
+            activity.description,
+            activity.distance,
+            activity.duration,
+            activity.pace,
+            activity.load,
+            JSON.stringify(activity.raw || {})
+          ]
+        );
+      }
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function ensureTenantIntegrations(tenantId, athleteUserId = null) {
@@ -2514,10 +2872,12 @@ function formatDateOnly(value) {
 
 async function listActivities(tenantId, athleteUserId = null) {
   if (!pool) {
-    return readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES).map((activity) => ({
-      ...activity,
-      is3000Test: Boolean(activity?.is3000Test || activity?.raw?.flags?.is3000Test)
-    }));
+    return readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES)
+      .filter((activity) => !athleteUserId || !activity.athleteUserId || String(activity.athleteUserId) === String(athleteUserId))
+      .map((activity) => ({
+        ...activity,
+        is3000Test: Boolean(activity?.is3000Test || activity?.raw?.flags?.is3000Test)
+      }));
   }
   const params = athleteUserId ?[tenantId, athleteUserId] : [tenantId];
   const result = await query(
@@ -2543,6 +2903,140 @@ async function listActivities(tenantId, athleteUserId = null) {
     params
   );
   return result.rows.map(activityRowToApi);
+}
+
+function best5000FromActivities(activities = [], fallbackSeconds = 0) {
+  let best = fallbackSeconds ?{ seconds: Number(fallbackSeconds), date: "", source: "perfil" } : null;
+  for (const activity of activities) {
+    const activityMeters = activityDistanceMeters(activity);
+    const activitySeconds = activityDurationSeconds(activity);
+    const candidates = [];
+    if (activityMeters && Math.abs(activityMeters - 5000) <= 250 && activitySeconds) {
+      candidates.push({ seconds: activitySeconds, date: activity.date || "", source: activity.title || activity.source || "atividade" });
+    }
+    for (const effort of activity.bestEfforts || []) {
+      const effortMeters = safeNumber(effort.distanceMeters);
+      const effortSeconds = safeNumber(effort.elapsedTimeSeconds, effort.movingTimeSeconds);
+      if (effortMeters && Math.abs(effortMeters - 5000) <= 150 && effortSeconds) {
+        candidates.push({ seconds: effortSeconds, date: effort.startDate || activity.date || "", source: effort.name || activity.title || "best effort" });
+      }
+    }
+    for (const candidate of candidates) {
+      if (!best || candidate.seconds < best.seconds) best = candidate;
+    }
+  }
+  return best;
+}
+
+function userDashboardSummary(user, activities = []) {
+  const now = Date.now();
+  const recent30 = activities.filter((activity) => {
+    const timestamp = activityDateTime(activity);
+    return timestamp && now - timestamp <= 30 * 24 * 60 * 60 * 1000;
+  });
+  const recent90 = activities.filter((activity) => {
+    const timestamp = activityDateTime(activity);
+    return timestamp && now - timestamp <= 90 * 24 * 60 * 60 * 1000;
+  });
+  const load30 = recent30.reduce((sum, activity) => sum + activityLoadValue(activity), 0);
+  const best5000 = best5000FromActivities(recent90, user.bestTimeSeconds || user.best_time_seconds || 0);
+  const profile = user.profileData || parseJsonObject(user.profile_data);
+  return {
+    id: user.id,
+    name: user.name,
+    nativeName: profile.nativeName || "",
+    email: user.email || "",
+    role: user.role,
+    roleLabel: {
+      admin: "Super admin",
+      manager: "Equipe",
+      coach: "Treinador",
+      athlete: "Atleta"
+    }[user.role] || user.role,
+    country: profile.country || profile.countryNative || "",
+    university: profile.university || profile.institution || profile.universityNative || "",
+    teamName: user.teamName || user.team_name || "",
+    weeklyAverageLoad: Math.round(load30 / (30 / 7)),
+    bestMark5000: best5000 ?formatDuration(best5000.seconds) : "--",
+    bestMarkSeconds: best5000?.seconds || "",
+    bestMarkDate: best5000?.date ?formatDateOnly(best5000.date) : "",
+    activities30d: recent30.length,
+    volume30Km: Number(recent30.reduce((sum, activity) => sum + activityDistanceMeters(activity) / 1000, 0).toFixed(1))
+  };
+}
+
+async function listAdminUsersDashboard(tenantId) {
+  if (!pool) {
+    const users = readJson(ATHLETES_FILE, []);
+    const activities = readJson(ACTIVITIES_FILE, DEMO_ACTIVITIES);
+    const rows = users.map((user) => userDashboardSummary(user, activities.filter((activity) => String(activity.athleteUserId || "") === String(user.id))));
+    return {
+      users: rows.sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+      stats: {
+        totalUsers: rows.length,
+        athletes: rows.filter((user) => user.role === "athlete").length,
+        kaidoAthletes: rows.filter((user) => user.university === "Kaido").length
+      }
+    };
+  }
+  const userResult = await query(
+    `SELECT u.id, u.role, u.name, u.email, u.whatsapp, u.profile_data, u.created_at,
+            ap.best_time_seconds, ap.focus_distance_m,
+            t.name AS team_name
+       FROM users u
+       LEFT JOIN athlete_profiles ap ON ap.user_id = u.id
+       LEFT JOIN teams t ON t.id = ap.team_id
+      WHERE u.tenant_id = $1
+      ORDER BY u.created_at DESC`,
+    [tenantId]
+  );
+  const activityResult = await query(
+    `SELECT provider,
+            provider_activity_id,
+            athlete_user_id,
+            activity_date,
+            to_char(activity_date, 'YYYY-MM-DD') AS activity_date_key,
+            title,
+            type,
+            description,
+            distance,
+            duration,
+            pace,
+            load,
+            external_url,
+            status,
+            planned_activity_id,
+            raw
+       FROM activities
+      WHERE tenant_id = $1
+        AND activity_date >= CURRENT_DATE - interval '90 days'
+      ORDER BY activity_date ASC`,
+    [tenantId]
+  );
+  const grouped = new Map();
+  activityResult.rows.forEach((row) => {
+    const activity = activityRowToApi(row);
+    const id = String(row.athlete_user_id || "");
+    if (!id) return;
+    if (!grouped.has(id)) grouped.set(id, []);
+    grouped.get(id).push(activity);
+  });
+  const users = userResult.rows.map((row) => userDashboardSummary({
+    ...row,
+    profileData: parseJsonObject(row.profile_data),
+    bestTimeSeconds: row.best_time_seconds,
+    teamName: row.team_name || ""
+  }, grouped.get(String(row.id)) || []));
+  return {
+    users,
+    stats: {
+      totalUsers: users.length,
+      athletes: users.filter((user) => user.role === "athlete").length,
+      coaches: users.filter((user) => user.role === "coach").length,
+      admins: users.filter((user) => user.role === "admin").length,
+      kaidoAthletes: users.filter((user) => user.university === "Kaido").length
+    }
+  };
 }
 
 async function flagActivityAs3000Test(tenantId, athleteUserId, activityId, enabled) {
@@ -4249,6 +4743,14 @@ async function handleApi(req, res, url) {
       const user = await getSessionUser(req, tenant.id);
       requireRole(user, ["admin"]);
       sendJson(res, 200, await getAppSettings(tenant.id));
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/admin/users") {
+      const tenant = await getTenant(tenantSlugFromReq(req));
+      const user = await getSessionUser(req, tenant.id);
+      requireRole(user, ["admin"]);
+      sendJson(res, 200, await listAdminUsersDashboard(tenant.id));
       return;
     }
 
