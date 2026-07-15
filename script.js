@@ -257,7 +257,7 @@ const officialTranslations = {
     "home.title": "The world's smartest AI-powered training manager.",
     "home.loading": "Loading current cycle reading.",
     "home.ai.kicker": "11RUN AI",
-    "home.ai.title": "Performance chat",
+    "home.ai.title": "Performance AI",
     "home.ai.placeholder": "Ask in natural language about workouts, races, load, pain or history",
     "home.ai.submit": "Send",
     "dashboard.kicker": "My dashboard",
@@ -322,7 +322,7 @@ const officialTranslations = {
     "home.title": "The world's smartest AI-powered training manager.",
     "home.loading": "Carregando leitura do ciclo atual.",
     "home.ai.kicker": "IA 11RUN",
-    "home.ai.title": "Chat de performance",
+    "home.ai.title": "IA de performance",
     "home.ai.placeholder": "Pergunte em linguagem natural sobre treinos, provas, carga, dor ou histórico",
     "home.ai.submit": "Enviar",
     "dashboard.kicker": "Meu dashboard",
@@ -387,7 +387,7 @@ const officialTranslations = {
     "home.title": "世界で最もスマートなAI搭載トレーニングマネージャー。",
     "home.loading": "現在のサイクルを読み込んでいます。",
     "home.ai.kicker": "11RUN AI",
-    "home.ai.title": "Performance chat",
+    "home.ai.title": "Performance AI",
     "home.ai.placeholder": "トレーニング、レース、負荷、痛み、履歴について自然な言葉で質問",
     "home.ai.submit": "送信",
     "dashboard.kicker": "マイダッシュボード",
@@ -452,7 +452,7 @@ const officialTranslations = {
     "home.title": "El gestor de entrenamiento con IA más inteligente del mundo.",
     "home.loading": "Cargando lectura del ciclo actual.",
     "home.ai.kicker": "IA 11RUN",
-    "home.ai.title": "Chat de performance",
+    "home.ai.title": "IA de performance",
     "home.ai.placeholder": "Pregunta en lenguaje natural sobre entrenamientos, pruebas, carga, dolor o historial",
     "home.ai.submit": "Enviar",
     "dashboard.kicker": "Mi dashboard",
@@ -498,6 +498,7 @@ const staticTextI18n = {
   "Carregando leitura do ciclo atual.": { en: "Loading current cycle reading.", "pt-BR": "Carregando leitura do ciclo atual.", ja: "現在のサイクルを読み込んでいます。", es: "Cargando lectura del ciclo actual." },
   "Buscar no sistema": { en: "Search the system", "pt-BR": "Buscar no sistema", ja: "システムを検索", es: "Buscar en el sistema" },
   "Chat de performance": { en: "Performance chat", "pt-BR": "Chat de performance", ja: "Performance chat", es: "Chat de performance" },
+  "IA de performance": { en: "Performance AI", "pt-BR": "IA de performance", ja: "Performance AI", es: "IA de performance" },
   "Meu dashboard": { en: "My dashboard", "pt-BR": "Meu dashboard", ja: "マイダッシュボード", es: "Mi dashboard" },
   "Performance": { en: "Performance", "pt-BR": "Performance", ja: "パフォーマンス", es: "Performance" },
   "Resumo": { en: "Summary", "pt-BR": "Resumo", ja: "概要", es: "Resumen" },
@@ -5667,8 +5668,9 @@ function renderHomeAiMessages() {
 
 async function askHomeAi(event) {
   event.preventDefault();
-  const form = event.currentTarget;
-  const input = form.elements.question;
+  const form = event.target?.id === "homeAiForm" ?event.target : document.querySelector("#homeAiForm");
+  const input = form?.elements?.question;
+  if (!input) return;
   const question = String(input?.value || "").trim();
   if (!question || state.homeAiBusy) return;
   state.homeAiMessages.push({ role: "user", content: question });
