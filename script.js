@@ -16,6 +16,8 @@ const state = {
   dashboardAnalysis: null,
   homeAiMessages: [],
   homeAiBusy: false,
+  experienceProfile: "",
+  agentPendingView: "",
   testMode: "3000",
   analysisMode: "blood",
   analysisBusy: false,
@@ -1341,7 +1343,9 @@ function showLogin(message = "") {
 function showApp() {
   document.querySelector("#loginScreen").hidden = true;
   document.querySelector("#appShell").hidden = false;
+  setRailCollapsed(true);
   applyI18n();
+  window.setTimeout(initializeAgentExperience, 0);
 }
 
 async function logoutUser() {
@@ -5741,6 +5745,155 @@ function renderHomeMotivation() {
   if (!target) return;
   target.textContent = buildHomeMotivation();
   renderHomeAiMessages();
+  renderAgentHome();
+}
+
+const agentExperiences = {
+  athlete: {
+    label: "Atleta",
+    greeting: (name) => `${dayGreeting()}, ${name}. O que vamos conquistar hoje?`,
+    suggestions: [
+      { label: "Ver meu treino de hoje", view: "training", text: "Vou abrir seu planejamento no dia de hoje e destacar o que merece atenção antes de começar." },
+      { label: "Enviar um treino", view: "training", text: "Vou levar você ao diário de treinos para importar ou cadastrar a atividade com o mínimo de passos." },
+      { label: "Analisar uma atividade", view: "analyses", text: "Vou ativar o analisador e usar seu histórico recente como contexto para a leitura." }
+    ]
+  },
+  coach: {
+    label: "Treinador",
+    greeting: (name) => `${dayGreeting()}, ${name}. Em quem vamos trabalhar hoje?`,
+    suggestions: [
+      { label: "Adicionar treino para atleta", view: "training", text: "Primeiro vamos escolher o atleta. Depois eu abro o construtor de treino já no contexto certo." },
+      { label: "Ver análises de um atleta", view: "analyses", text: "Vou abrir as análises e manter o atleta selecionado como contexto da conversa." },
+      { label: "Revisar evolução do grupo", view: "dashboard", text: "Vou reunir carga, aderência e evolução recente para você enxergar onde agir primeiro." }
+    ]
+  },
+  team: {
+    label: "Equipe",
+    greeting: (name) => `${dayGreeting()}, ${name}. Onde colocamos a atenção da equipe hoje?`,
+    suggestions: [
+      { label: "Analisar um treinador", view: "dashboard", text: "Vou cruzar planejamento, aderência e evolução dos atletas vinculados ao treinador." },
+      { label: "Acompanhar um atleta", view: "analyses", text: "Vou ativar a análise individual e pedir apenas o atleta que você quer acompanhar." },
+      { label: "Ler a equipe como um todo", view: "dashboard", text: "Vou reunir carga, evolução, aderência e sinais de risco em uma visão única da equipe." }
+    ]
+  }
+};
+
+function dayGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+function agentProfileStorageKey() {
+  const identity = state.currentUser?.id || state.currentUser?.email || "local";
+  return `11runExperienceProfile:${identity}`;
+}
+
+function inferredExperienceProfile() {
+  if (state.currentUser?.role === "coach") return "coach";
+  if (["admin", "manager"].includes(state.currentUser?.role)) return "team";
+  return "athlete";
+}
+
+function initializeAgentExperience(forceChoice = false) {
+  if (!state.currentUser) return;
+  const saved = localStorage.getItem(agentProfileStorageKey());
+  state.experienceProfile = agentExperiences[saved] ?saved : inferredExperienceProfile();
+  renderAgentHome();
+  if (!saved || forceChoice) {
+    const dialog = document.querySelector("#experienceProfileDialog");
+    if (dialog && !dialog.open) dialog.showModal();
+  }
+}
+
+function renderAgentHome() {
+  const profile = agentExperiences[state.experienceProfile] || agentExperiences[inferredExperienceProfile()];
+  if (!profile) return;
+  const firstName = String(state.currentUser?.name || "vamos").trim().split(/\s+/)[0];
+  const greeting = document.querySelector("#agentGreeting");
+  const roleLabel = document.querySelector("#agentProfileLabel");
+  const footnote = document.querySelector("#agentRoleFootnote");
+  const date = document.querySelector("#agentToday");
+  const motivation = document.querySelector("#homeMotivationNew");
+  const suggestions = document.querySelector("#agentSuggestions");
+  if (greeting) greeting.textContent = profile.greeting(firstName);
+  if (roleLabel) roleLabel.textContent = profile.label;
+  if (footnote) footnote.textContent = profile.label;
+  if (date) date.textContent = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date()).replace(".", "");
+  if (motivation) motivation.textContent = profile.label === "Atleta"
+    ?buildHomeMotivation()
+    : "Eu encontro o módulo certo e conduzo você por um passo de cada vez.";
+  if (suggestions) {
+    suggestions.innerHTML = profile.suggestions.map((item, index) => `
+      <button class="agent-suggestion" type="button" data-agent-suggestion="${index}">
+        <span>↗</span>${escapeHtml(item.label)}
+      </button>
+    `).join("");
+  }
+}
+
+function selectAgentSuggestion(index) {
+  const profile = agentExperiences[state.experienceProfile] || agentExperiences.athlete;
+  const suggestion = profile.suggestions[Number(index)];
+  if (!suggestion) return;
+  state.agentPendingView = suggestion.view;
+  const workflow = document.querySelector("#agentWorkflow");
+  const text = document.querySelector("#agentWorkflowText");
+  const step = document.querySelector("#agentWorkflowStep");
+  const action = document.querySelector("#agentWorkflowAction");
+  if (workflow) workflow.hidden = false;
+  if (step) step.textContent = "Contexto entendido";
+  if (text) text.textContent = suggestion.text;
+  if (action) action.textContent = `Continuar para ${suggestion.label}`;
+}
+
+function openAgentTool() {
+  const target = state.agentPendingView || "home";
+  const workflow = document.querySelector("#agentWorkflow");
+  if (workflow) workflow.hidden = true;
+  setView(target);
+}
+
+function renderAgentConversation() {
+  const target = document.querySelector("#agentConversation");
+  if (!target) return;
+  target.innerHTML = state.homeAiMessages.slice(-4).map((message) => `
+    <article class="home-ai-message ${message.role === "user" ?"is-user" : "is-assistant"}">
+      <span>${message.role === "user" ?"Você" : "Agente 11"}</span>
+      <p>${escapeHtml(message.content)}</p>
+    </article>
+  `).join("");
+  target.scrollTop = target.scrollHeight;
+}
+
+async function askAgentHome(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const input = form?.elements?.question;
+  const question = String(input?.value || "").trim();
+  if (!question || state.homeAiBusy) return;
+  input.value = "";
+  state.homeAiMessages.push({ role: "user", content: question });
+  state.homeAiBusy = true;
+  state.homeAiMessages.push({ role: "assistant", content: "Entendi. Estou cruzando seu contexto e escolhendo a ferramenta certa…" });
+  renderAgentConversation();
+  try {
+    const history = state.homeAiMessages.slice(-10).map(({ role, content }) => ({ role, content }));
+    const payload = await api("/api/ai/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        question: `[Perfil ${agentExperiences[state.experienceProfile]?.label || "Atleta"}] ${question}`,
+        history
+      })
+    });
+    state.homeAiMessages[state.homeAiMessages.length - 1] = { role: "assistant", content: payload.text || "Vamos resolver isso juntos." };
+  } catch (error) {
+    state.homeAiMessages[state.homeAiMessages.length - 1] = { role: "assistant", content: friendlyAiError(error.message) };
+  } finally {
+    state.homeAiBusy = false;
+    renderAgentConversation();
+  }
 }
 
 function renderHomeAiMessages() {
@@ -8873,6 +9026,42 @@ document.addEventListener("change", (event) => {
 document.querySelector("#waitlistForm")?.addEventListener("submit", submitWaitlist);
 document.querySelector("#waitlistFilterSearch")?.addEventListener("input", renderWaitlistAdmin);
 document.querySelector("#adminUsersSearch")?.addEventListener("input", renderAdminUsersDashboard);
+document.querySelector("[data-change-experience-profile]")?.addEventListener("click", () => initializeAgentExperience(true));
+document.querySelectorAll("[data-experience-profile]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const profile = button.dataset.experienceProfile;
+    if (!agentExperiences[profile]) return;
+    state.experienceProfile = profile;
+    localStorage.setItem(agentProfileStorageKey(), profile);
+    document.querySelector("#experienceProfileDialog")?.close();
+    const workflow = document.querySelector("#agentWorkflow");
+    if (workflow) workflow.hidden = true;
+    renderAgentHome();
+  });
+});
+document.querySelector("#agentSuggestions")?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-agent-suggestion]");
+  if (button) selectAgentSuggestion(button.dataset.agentSuggestion);
+});
+document.querySelector("#agentWorkflowAction")?.addEventListener("click", openAgentTool);
+document.querySelector("#agentHomeForm")?.addEventListener("submit", askAgentHome);
+document.querySelector("[data-agent-voice]")?.addEventListener("click", () => {
+  const input = document.querySelector("#agentHomeForm input");
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) {
+    if (input) {
+      input.focus();
+      input.placeholder = "Digite seu pedido — voz não disponível neste navegador";
+    }
+    return;
+  }
+  const recognition = new Recognition();
+  recognition.lang = "pt-BR";
+  recognition.onresult = (event) => {
+    if (input) input.value = event.results[0][0].transcript;
+  };
+  recognition.start();
+});
 
 document.addEventListener("keydown", (event) => {
   const savedTestCard = event.target.closest?.("[data-view-test-result]");

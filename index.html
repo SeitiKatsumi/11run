@@ -154,6 +154,38 @@
 
       <main>
         <section class="view home-view is-visible" data-view="home">
+          <div class="agent-start">
+            <header class="agent-topbar">
+              <img src="assets/logo-orange-white.png" alt="11RUN" />
+              <button class="agent-profile-button" type="button" data-change-experience-profile>
+                <span id="agentProfileLabel">Atleta</span>
+                <small>alterar perfil</small>
+              </button>
+            </header>
+            <div class="agent-runner" aria-hidden="true"><img src="assets/hero-runner.png" alt="" /></div>
+            <section class="agent-stage" aria-labelledby="agentGreeting">
+              <div class="agent-status"><i></i><strong>AGENTE 11</strong><span>pronto para ajudar</span></div>
+              <h1 id="agentGreeting">Bom dia. O que vamos conquistar hoje?</h1>
+              <p id="homeMotivationNew" class="agent-context">Carregando seu contexto de performance.</p>
+              <form id="agentHomeForm" class="agent-command">
+                <input name="question" autocomplete="off" aria-label="Comando para o Agente 11" placeholder="Conte o que você precisa..." />
+                <button class="agent-voice" type="button" data-agent-voice aria-label="Usar comando de voz"><span aria-hidden="true">●</span></button>
+                <button class="agent-send" type="submit" aria-label="Enviar comando">↑</button>
+              </form>
+              <div id="agentSuggestions" class="agent-suggestions" aria-label="Sugestões do Agente 11"></div>
+              <div id="agentWorkflow" class="agent-workflow" hidden aria-live="polite">
+                <div class="agent-workflow-head">
+                  <span id="agentWorkflowStep">Entendendo</span>
+                  <div class="agent-workflow-progress"><i></i><i></i><i></i></div>
+                </div>
+                <p id="agentWorkflowText"></p>
+                <button id="agentWorkflowAction" class="primary-action compact" type="button">Continuar</button>
+              </div>
+              <div id="agentConversation" class="home-ai-messages agent-conversation" aria-live="polite"></div>
+              <footer class="agent-footnote"><span id="agentRoleFootnote">Atleta</span><i></i><span id="agentToday"></span><i></i><a href="privacy.html">Privacidade</a></footer>
+            </section>
+          </div>
+          <div class="legacy-home" hidden>
           <div class="hero">
             <img class="hero-bg" src="assets/hero-runner.png" alt="Corredora futurista em cidade tecnológica" />
             <div class="hero-shade"></div>
@@ -174,6 +206,7 @@
                 <button class="primary-action compact" type="submit">Enviar</button>
               </form>
             </aside>
+          </div>
           </div>
         </section>
 
@@ -1316,6 +1349,20 @@
       </div>
     </div>
 
+    <dialog id="experienceProfileDialog" class="experience-dialog">
+      <section class="experience-panel">
+        <img src="assets/logo-orange-white.png" alt="11RUN" />
+        <span class="experience-eyebrow">PRIMEIRO PASSO</span>
+        <h2>Como você vive a corrida?</h2>
+        <p>Isso ajuda o Agente 11 a conduzir cada conversa do jeito certo. Você poderá mudar depois.</p>
+        <div class="experience-options">
+          <button type="button" data-experience-profile="athlete"><strong>Atleta</strong><span>Meus treinos, evolução e objetivos</span></button>
+          <button type="button" data-experience-profile="coach"><strong>Treinador</strong><span>Planejamento e análise de atletas</span></button>
+          <button type="button" data-experience-profile="team"><strong>Equipe</strong><span>Visão de atletas, treinadores e operação</span></button>
+        </div>
+        <small>O Agente 11 mostrará apenas o próximo passo útil.</small>
+      </section>
+    </dialog>
     <script src="script.js"></script>
   </body>
 </html>
